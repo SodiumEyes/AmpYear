@@ -16,20 +16,22 @@ namespace AmpYear
 			POWER_TURN,
 			SAS,
 			ASAS,
-			RCS
+			RCS,
+			FLIGHT_COMPUTER
 		}
 
 		//Constants
 
 		public const double MANAGER_ACTIVE_DRAIN = 1.0 / 240.0;
-		public const double ASAS_DRAIN = 1.0 / 60.0;
+		public const double ASAS_DRAIN = 2.0 / 60.0;
 		public const double RCS_DRAIN = 1.0 / 60.0;
+		public const double FLIGHT_COMPUTER_DRAIN = 4.0 / 60.0;
 
-		public const double TURN_ROT_POWER_DRAIN_FACTOR = 1.0 / 64.0;
+		public const double TURN_ROT_POWER_DRAIN_FACTOR = 1.0 / 60.0;
 		public const float TURN_INACTIVE_ROT_FACTOR = 0.1f;
 
 		public const double SAS_BASE_DRAIN = 1.0 / 60.0;
-		public const double SAS_ROT_POW_DRAIN_FACTOR = 1.0 / 40.0;
+		public const double SAS_ROT_POW_DRAIN_FACTOR = 1.0 / 120.0;
 		public const double SAS_TORQUE_DRAIN_FACTOR = 1.0 / 80.0;
 		public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 10.0;
 		public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.5f;
@@ -42,7 +44,7 @@ namespace AmpYear
 
 		public const float WINDOW_WIDTH = 200;
 		public const float WINDOW_BASE_HEIGHT = 140;
-		public const float SECTION_HEIGHT_SUBSYSTEM = 200;
+		public const float SECTION_HEIGHT_SUBSYSTEM = 240;
 		public const float SECTION_HEIGHT_RESERVE = 120;
 
 		public const double DRAIN_ESTIMATE_INTERVAL = 0.5;
@@ -66,6 +68,9 @@ namespace AmpYear
 			get;
 		}
 
+		private RemoteTech.FlightComputer flightComputer;
+		private RemoteTech.FlightComputerGUI flightComputerGUI;
+
 		private bool managerEnabled = true;
 		private bool[] subsystemToggle = new bool [Enum.GetValues(typeof(Subsystem)).Length];
 		private double[] subsystemDrain = new double [Enum.GetValues(typeof(Subsystem)).Length];
@@ -88,6 +93,8 @@ namespace AmpYear
 		double estimateLastTotalCharge = 0.0;
 
 		double estimatedDrain = 0.0;
+
+		bool sasWasFirst = false;
 
 		//GUI Properties
 
@@ -122,12 +129,17 @@ namespace AmpYear
 					subsystemToggle[i] = false;
 				}
 				subsystemToggle[(int)Subsystem.TURNING] = true;
+				subsystemToggle[(int)Subsystem.ASAS] = true;
 
 				try
 				{
 					part.vessel.OnFlyByWire += new FlightInputCallback(this.flightControl);
 				}
 				catch { }
+
+				flightComputerGUI = new RemoteTech.FlightComputerGUI();
+				flightComputer = new RemoteTech.FlightComputer(part, flightComputerGUI);
+				flightComputerGUI.computer = flightComputer;
 			}
 		}
 
@@ -329,6 +341,9 @@ namespace AmpYear
 				case Subsystem.ASAS:
 					return subsystemEnabled(Subsystem.SAS);
 
+				case Subsystem.FLIGHT_COMPUTER:
+					return flightComputer.AttitudeActive;
+
 				default:
 					return true;
 			}
@@ -350,6 +365,9 @@ namespace AmpYear
 
 				case Subsystem.ASAS:
 					return ASAS_DRAIN;
+
+				case Subsystem.FLIGHT_COMPUTER:
+					return FLIGHT_COMPUTER_DRAIN;
 
 				case Subsystem.POWER_TURN:
 					return sasAdditionalRotPower * POWER_TURN_DRAIN_FACTOR;
@@ -379,6 +397,12 @@ namespace AmpYear
 				case Subsystem.POWER_TURN:
 					return turningFactor * subsystemActiveDrain(subsystem);
 
+				case Subsystem.FLIGHT_COMPUTER:
+					if (flightComputer.AttitudeActive)
+						return subsystemActiveDrain(subsystem);
+					else
+						return 0.0;
+
 				default:
 					return subsystemActiveDrain(subsystem);
 			}
@@ -389,7 +413,7 @@ namespace AmpYear
 			switch (subsystem)
 			{
 				case Subsystem.TURNING:
-					return "Turn";
+					return "Turning";
 
 				case Subsystem.POWER_TURN:
 					return "PowerTurn";
@@ -402,6 +426,9 @@ namespace AmpYear
 
 				case Subsystem.ASAS:
 					return "ASAS";
+
+				case Subsystem.FLIGHT_COMPUTER:
+					return "FlightComp.";
 
 				default:
 					return String.Empty;
@@ -417,8 +444,42 @@ namespace AmpYear
 			if (vessel.ActionGroups[KSPActionGroup.RCS] && !subsystemActive(Subsystem.RCS))
 				vessel.ActionGroups.SetGroup(KSPActionGroup.RCS, false);
 
-			if (vessel.ActionGroups[KSPActionGroup.SAS] && !subsystemActive(Subsystem.SAS))
-				vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+			if (vessel.ActionGroups[KSPActionGroup.SAS]) {
+
+				if (!subsystemActive(Subsystem.SAS))
+					vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+				else
+				{
+					if (subsystemActive(Subsystem.FLIGHT_COMPUTER))
+					{
+						//Both SAS and flight computer are active
+						if (sasWasFirst)
+						{
+							//Turn off SAS if the flight computer was turned on second
+							vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+							sasWasFirst = false;
+						}
+						else {
+							//Turn off flight computer if SAS was turned on second
+							sasWasFirst = true;
+							foreach (RemoteTech.AttitudeStateButton button in flightComputerGUI.attitudeButtons)
+							{
+								button.on = false;
+								button.Update();
+							}
+						}
+					}
+					else
+						sasWasFirst = true; 
+				}
+				
+				
+			}
+
+			if (subsystemActive(Subsystem.FLIGHT_COMPUTER) && !subsystemActive(Subsystem.SAS)) 
+				sasWasFirst = false;
+
+			flightComputerGUI.update();
 
 			//Calculate total drain from subsystems
 			double subsystem_drain = 0.0;
@@ -464,6 +525,9 @@ namespace AmpYear
 
 		private void flightControl(FlightCtrlState state)
 		{
+			if ((subsystemActive(Subsystem.TURNING) || subsystemActive(Subsystem.RCS)) && subsystemActive(Subsystem.FLIGHT_COMPUTER))
+				flightComputer.drive(state);
+
 			if (!subsystemActive(Subsystem.TURNING))
 			{
 				//Reduce the turning rate if turning subsystem isn't active
@@ -527,17 +591,29 @@ namespace AmpYear
 		{
 			if (partIsActive && isPrimaryPart)
 			{
-				GUILayoutOption[] options = new GUILayoutOption[1];
-				options[0] = GUILayout.MaxWidth(WINDOW_WIDTH);
-
-				windowPos.height = WINDOW_BASE_HEIGHT;
-				if (sectionGUIEnabledSubsystem)
-					windowPos.height += SECTION_HEIGHT_SUBSYSTEM;
-				if (sectionGUIEnabledReserve)
-					windowPos.height += SECTION_HEIGHT_RESERVE;
 
 				GUI.skin = HighLogic.Skin;
-				windowPos = GUI.Window(windowID, windowPos, window, "AmpYear Power Manager");
+				windowPos = GUILayout.Window(
+					windowID,
+					windowPos,
+					window,
+					"AmpYear Power Manager",
+					GUILayout.Width(WINDOW_WIDTH),
+					GUILayout.Height(WINDOW_BASE_HEIGHT)
+					);
+
+				if (subsystemEnabled(Subsystem.FLIGHT_COMPUTER))
+				{
+					RemoteTech.RTShared.AttitudePos
+						= GUILayout.Window(
+						flightComputerGUI.ATTITUDE_ID,
+						RemoteTech.RTShared.AttitudePos,
+						flightComputerGUI.AttitudeGUI,
+						"Attitude",
+						GUILayout.Width(30),
+						GUILayout.Height(60)
+						);
+				}
 			}
 		}
 
@@ -552,6 +628,7 @@ namespace AmpYear
 			subsystemConsumptionStyle = new GUIStyle(GUI.skin.label);
 			subsystemConsumptionStyle.alignment = TextAnchor.LowerRight;
 			subsystemConsumptionStyle.stretchWidth = true;
+			subsystemConsumptionStyle.margin.top = 4;
 
 			powerSinkStyle = new GUIStyle(GUI.skin.label);
 			powerSinkStyle.alignment = TextAnchor.LowerLeft;
@@ -567,9 +644,6 @@ namespace AmpYear
 			warningStyle.stretchWidth = true;
 			warningStyle.fontStyle = FontStyle.Bold;
 			warningStyle.normal.textColor = Color.red;
-
-			subsystemButtonOptions = new GUILayoutOption[1];
-			subsystemButtonOptions[0] = GUILayout.MinWidth(WINDOW_WIDTH / 2.0f);
 
 			GUILayout.BeginVertical();
 
@@ -662,7 +736,7 @@ namespace AmpYear
 		{
 			setSubsystemEnabled(
 				subsystem,
-				GUILayout.Toggle(subsystemEnabled(subsystem), subsystemName(subsystem), GUI.skin.button, subsystemButtonOptions)
+				GUILayout.Toggle(subsystemEnabled(subsystem), subsystemName(subsystem), GUI.skin.button, GUILayout.Width(WINDOW_WIDTH / 2.0f))
 				);
 		}
 
@@ -688,7 +762,7 @@ namespace AmpYear
 			else
 				subsystemConsumptionStyle.normal.textColor = Color.green;
 
-			GUILayout.Label(drain.ToString("0.000"), subsystemConsumptionStyle);
+			GUILayout.Label(drain.ToString("0.000")+"/s", subsystemConsumptionStyle);
 		}
 
 	}

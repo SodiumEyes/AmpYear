@@ -48,7 +48,12 @@
   <ItemGroup>
     <Compile Include="AmpYearModule.cs" />
     <Compile Include="AmpYearPart.cs" />
+    <Compile Include="FlightComputer.cs" />
+    <Compile Include="FlightComputerGUI.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RTShared.cs" />
+    <Compile Include="RTUtils.cs" />
+    <Compile Include="StructsAndEnums.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
