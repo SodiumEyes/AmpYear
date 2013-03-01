@@ -22,25 +22,25 @@ namespace AmpYear
 
 		//Constants
 
-		public const double MANAGER_ACTIVE_DRAIN = 1.0 / 240.0;
+		public const double MANAGER_ACTIVE_DRAIN = 1.0 / 300.0;
 		public const double ASAS_DRAIN = 2.0 / 60.0;
 		public const double RCS_DRAIN = 1.0 / 60.0;
-		public const double FLIGHT_COMPUTER_DRAIN = 4.0 / 60.0;
+		public const double FLIGHT_COMPUTER_DRAIN = 1.0 / 2.0;
 
-		public const double TURN_ROT_POWER_DRAIN_FACTOR = 1.0 / 60.0;
+		public const double TURN_ROT_POWER_DRAIN_FACTOR = 1.0 / 40.0;
 		public const float TURN_INACTIVE_ROT_FACTOR = 0.1f;
 
 		public const double SAS_BASE_DRAIN = 1.0 / 60.0;
-		public const double SAS_ROT_POW_DRAIN_FACTOR = 1.0 / 120.0;
-		public const double SAS_TORQUE_DRAIN_FACTOR = 1.0 / 80.0;
-		public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 10.0;
-		public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.5f;
+		public const double SAS_ROT_POW_DRAIN_FACTOR = 1.0 / 80.0;
+		public const double SAS_TORQUE_DRAIN_FACTOR = 1.0 / 160.0;
+		public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
+		public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.25f;
 
 		public const double RESERVE_TRANSFER_INCREMENT_FACTOR = 0.25;
 		public const int MAX_TRANSFER_ATTEMPTS = 4;
 
 		public const double RECHARGE_RESERVE_THRESHOLD = 0.95;
-		public const double RECHARGE_RESERVE_RATE = 2.0 / 60.0;
+		public const double RECHARGE_RESERVE_RATE = 30.0 / 60.0;
 
 		public const float WINDOW_WIDTH = 200;
 		public const float WINDOW_BASE_HEIGHT = 140;
@@ -217,7 +217,7 @@ namespace AmpYear
 				//Update command module rot-power to account for power turn
 				if (commandPod != null && command_module_correct)
 				{
-					if (subsystemActive(Subsystem.POWER_TURN))
+					if (subsystemPowered(Subsystem.POWER_TURN))
 						commandPod.rotPower = commandPodDefaultRotPower + sasAdditionalRotPower;
 					else
 						commandPod.rotPower = commandPodDefaultRotPower;
@@ -246,6 +246,8 @@ namespace AmpYear
 
 			if (isPrimaryPart)
 				subsystemUpdate();
+			else if (ayPart != null)
+				ayPart.ASASActive = false;
 
 		}
 
@@ -330,7 +332,7 @@ namespace AmpYear
 
 		public bool subsystemActive(Subsystem subsystem)
 		{
-			if (!managerIsActive || !subsystemEnabled(subsystem) || !hasPower)
+			if (!subsystemEnabled(subsystem))
 				return false;
 
 			switch (subsystem)
@@ -342,12 +344,16 @@ namespace AmpYear
 					return subsystemEnabled(Subsystem.SAS);
 
 				case Subsystem.FLIGHT_COMPUTER:
-					return flightComputer.AttitudeActive;
+					return subsystemEnabled(Subsystem.TURNING) && flightComputer.AttitudeActive;
 
 				default:
 					return true;
 			}
-			
+		}
+
+		public bool subsystemPowered(Subsystem subsystem)
+		{
+			return hasPower && managerIsActive && subsystemActive(subsystem);
 		}
 
 		public double subsystemActiveDrain(Subsystem subsystem)
@@ -379,27 +385,17 @@ namespace AmpYear
 
 		public double subsystemCurrentDrain(Subsystem subsystem)
 		{
-			if (!subsystemEnabled(subsystem) || !managerIsActive || !hasPower)
+			if (!subsystemActive(subsystem) || !managerIsActive || !hasPower)
 				return 0.0;
 
 			switch (subsystem)
 			{
-
 				case Subsystem.TURNING:
 					return turningFactor * subsystemActiveDrain(subsystem);
 
-				case Subsystem.ASAS:
-					if (subsystemEnabled(Subsystem.SAS))
-						return subsystemActiveDrain(subsystem);
-					else
-						return 0.0;
-
 				case Subsystem.POWER_TURN:
-					return turningFactor * subsystemActiveDrain(subsystem);
-
-				case Subsystem.FLIGHT_COMPUTER:
-					if (flightComputer.AttitudeActive)
-						return subsystemActiveDrain(subsystem);
+					if (subsystemEnabled(Subsystem.TURNING))
+						return turningFactor * subsystemActiveDrain(subsystem);
 					else
 						return 0.0;
 
@@ -439,18 +435,18 @@ namespace AmpYear
 		{
 
 			if (ayPart != null)
-				ayPart.ASASActive = subsystemActive(Subsystem.ASAS);
+				ayPart.ASASActive = subsystemPowered(Subsystem.ASAS);
 
-			if (vessel.ActionGroups[KSPActionGroup.RCS] && !subsystemActive(Subsystem.RCS))
+			if (vessel.ActionGroups[KSPActionGroup.RCS] && !subsystemPowered(Subsystem.RCS))
 				vessel.ActionGroups.SetGroup(KSPActionGroup.RCS, false);
 
 			if (vessel.ActionGroups[KSPActionGroup.SAS]) {
 
-				if (!subsystemActive(Subsystem.SAS))
+				if (!subsystemPowered(Subsystem.SAS))
 					vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
 				else
 				{
-					if (subsystemActive(Subsystem.FLIGHT_COMPUTER))
+					if (subsystemPowered(Subsystem.FLIGHT_COMPUTER))
 					{
 						//Both SAS and flight computer are active
 						if (sasWasFirst)
@@ -476,7 +472,7 @@ namespace AmpYear
 				
 			}
 
-			if (subsystemActive(Subsystem.FLIGHT_COMPUTER) && !subsystemActive(Subsystem.SAS)) 
+			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER) && !subsystemPowered(Subsystem.SAS)) 
 				sasWasFirst = false;
 
 			flightComputerGUI.update();
@@ -495,7 +491,7 @@ namespace AmpYear
 			double total_manager_drain = subsystem_drain + manager_drain;
 
 			//Recharge reserve power if main power is above a certain threshold
-			if (totalElectricCharge > 0 && totalElectricCharge / totalElectricChargeCapacity > RECHARGE_RESERVE_THRESHOLD
+			if (managerIsActive && totalElectricCharge > 0 && totalElectricCharge / totalElectricChargeCapacity > RECHARGE_RESERVE_THRESHOLD
 				&& totalReservePower < totalReservePowerCapacity)
 				transferMainToReserve(RECHARGE_RESERVE_RATE * TimeWarp.deltaTime);
 
@@ -525,10 +521,10 @@ namespace AmpYear
 
 		private void flightControl(FlightCtrlState state)
 		{
-			if ((subsystemActive(Subsystem.TURNING) || subsystemActive(Subsystem.RCS)) && subsystemActive(Subsystem.FLIGHT_COMPUTER))
+			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER))
 				flightComputer.drive(state);
 
-			if (!subsystemActive(Subsystem.TURNING))
+			if (!subsystemPowered(Subsystem.TURNING))
 			{
 				//Reduce the turning rate if turning subsystem isn't active
 				state.pitch *= TURN_INACTIVE_ROT_FACTOR;
@@ -712,7 +708,7 @@ namespace AmpYear
 					if (hasReservePower)
 					{
 						double reserve_percent = (totalReservePower / totalReservePowerCapacity) * 100.0;
-						GUILayout.Label("Reserve Power: " + reserve_percent.ToString("0.0") + '%', statusStyle);
+						GUILayout.Label("Reserve Power: " + reserve_percent.ToString("0.00") + '%', statusStyle);
 					}
 					else
 						GUILayout.Label("Reserve Power Depleted", warningStyle);
