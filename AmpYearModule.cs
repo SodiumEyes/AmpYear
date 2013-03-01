@@ -17,7 +17,11 @@ namespace AmpYear
 			SAS,
 			ASAS,
 			RCS,
-			FLIGHT_COMPUTER
+			FLIGHT_COMPUTER,
+			HEATER,
+			COOLER,
+			MUSIC,
+			MASSAGE
 		}
 
 		//Constants
@@ -36,6 +40,11 @@ namespace AmpYear
 		public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
 		public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.25f;
 
+		public const float HEATER_HEAT_RATE = 1.0f;
+		public const double HEATER_DRAIN_FACTOR = 4.0;
+		public const float HEATER_TARGET_TEMP = 20.0f;
+		public const float COOLER_TARGET_TEMP = 15.0f;
+
 		public const double RESERVE_TRANSFER_INCREMENT_FACTOR = 0.25;
 		public const int MAX_TRANSFER_ATTEMPTS = 4;
 
@@ -44,8 +53,6 @@ namespace AmpYear
 
 		public const float WINDOW_WIDTH = 200;
 		public const float WINDOW_BASE_HEIGHT = 140;
-		public const float SECTION_HEIGHT_SUBSYSTEM = 240;
-		public const float SECTION_HEIGHT_RESERVE = 120;
 
 		public const double DRAIN_ESTIMATE_INTERVAL = 0.5;
 
@@ -99,6 +106,7 @@ namespace AmpYear
 
 		public bool sectionGUIEnabledSubsystem = true;
 		public bool sectionGUIEnabledReserve = false;
+		public bool sectionGUIEnabledLuxury = false;
 
 		public GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle;
 		public GUILayoutOption[] subsystemButtonOptions;
@@ -379,6 +387,12 @@ namespace AmpYear
 				case Subsystem.FLIGHT_COMPUTER:
 					return subsystemEnabled(Subsystem.TURNING) && flightComputer.AttitudeActive;
 
+				case Subsystem.HEATER:
+					return commandPod != null && commandPod.temperature < HEATER_TARGET_TEMP;
+
+				case Subsystem.COOLER:
+					return commandPod != null && commandPod.temperature > COOLER_TARGET_TEMP;
+
 				default:
 					return true;
 			}
@@ -410,6 +424,22 @@ namespace AmpYear
 
 				case Subsystem.POWER_TURN:
 					return sasAdditionalRotPower * POWER_TURN_DRAIN_FACTOR;
+
+				case Subsystem.HEATER:
+				case Subsystem.COOLER:
+					if (commandPod != null)
+						return HEATER_DRAIN_FACTOR * HEATER_HEAT_RATE;
+					else
+						return 0.0;
+
+				case Subsystem.MUSIC:
+					return 1.0 / 120.0;
+
+				case Subsystem.MASSAGE:
+					if (commandPod != null)
+						return 5.0 * commandPod.CrewCapacity;
+					else
+						return 0.0;
 
 				default:
 					return 0.0;
@@ -459,9 +489,37 @@ namespace AmpYear
 				case Subsystem.FLIGHT_COMPUTER:
 					return "FlightComp.";
 
+				case Subsystem.HEATER:
+					return "Heater";
+
+				case Subsystem.COOLER:
+					return "Air Cond.";
+
+				case Subsystem.MUSIC:
+					return "Smooth Jazz";
+					 
+				case Subsystem.MASSAGE:
+					return "Massage Chair";
+
 				default:
 					return String.Empty;
 			}	
+		}
+
+		public static bool subsystemIsLuxury(Subsystem subsystem)
+		{
+			switch (subsystem)
+			{
+
+				case Subsystem.HEATER:
+				case Subsystem.COOLER:
+				case Subsystem.MUSIC:
+				case Subsystem.MASSAGE:
+					return true;
+
+				default:
+					return false;
+			}
 		}
 
 		private void subsystemUpdate()
@@ -508,12 +566,19 @@ namespace AmpYear
 			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER) && !subsystemPowered(Subsystem.SAS)) 
 				sasWasFirst = false;
 
-			/*
-			if (commandPod != null && commandPod.temperature < 20.0)
+			if (subsystemPowered(Subsystem.HEATER))
 			{
-				commandPod.temperature += 1.0f * TimeWarp.deltaTime;
+				//Apply heater
+				if (commandPod != null && commandPod.temperature < HEATER_TARGET_TEMP)
+					commandPod.temperature += HEATER_HEAT_RATE * TimeWarp.deltaTime;
 			}
-			 */
+
+			if (subsystemPowered(Subsystem.COOLER))
+			{
+				//Apply cooler
+				if (commandPod != null && commandPod.temperature > COOLER_TARGET_TEMP)
+					commandPod.temperature -= HEATER_HEAT_RATE * TimeWarp.deltaTime;
+			}
 
 			flightComputerGUI.update();
 
@@ -690,14 +755,13 @@ namespace AmpYear
 			GUILayout.BeginVertical();
 
 			GUILayout.BeginHorizontal();
-			sectionGUIEnabledSubsystem = GUILayout.Toggle(sectionGUIEnabledSubsystem, "Subsystem", GUI.skin.button);
+			sectionGUIEnabledSubsystem = GUILayout.Toggle(sectionGUIEnabledSubsystem, "Subsys", GUI.skin.button);
 			sectionGUIEnabledReserve = GUILayout.Toggle(sectionGUIEnabledReserve, "Reserve", GUI.skin.button);
+			sectionGUIEnabledLuxury = GUILayout.Toggle(sectionGUIEnabledLuxury, "Luxury", GUI.skin.button);
 			GUILayout.EndHorizontal();
 
 			//Manager status+drain
-			if (!timewarpIsValid)
-				GUILayout.Label("Auto-Hibernation", statusStyle);
-			else
+			if (timewarpIsValid)
 			{
 				GUILayout.BeginHorizontal();
 				managerEnabled = GUILayout.Toggle(managerEnabled, "Manager", GUI.skin.button, subsystemButtonOptions);
@@ -724,8 +788,10 @@ namespace AmpYear
 					else if (managerIsActive)
 						GUILayout.Label("Running on Reserve Power!", warningStyle);
 				}
-				else
+				else if (timewarpIsValid)
 					GUILayout.Label("Manager Disabled", warningStyle);
+				else
+					GUILayout.Label("Auto-Hibernation", statusStyle);
 			}
 			else
 				GUILayout.Label("Insufficient Power", warningStyle);
@@ -736,10 +802,29 @@ namespace AmpYear
 				GUILayout.Label("Subsystems", sectionTitleStyle);
 				foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
 				{
-					GUILayout.BeginHorizontal();
-					subsystemButton(subsystem);
-					subsystemConsumptionLabel(subsystem);
-					GUILayout.EndHorizontal();
+					if (!subsystemIsLuxury(subsystem))
+					{
+						GUILayout.BeginHorizontal();
+						subsystemButton(subsystem);
+						subsystemConsumptionLabel(subsystem);
+						GUILayout.EndHorizontal();
+					}
+				}
+			}
+
+			//Luxury
+			if (sectionGUIEnabledLuxury)
+			{
+				GUILayout.Label("Luxury", sectionTitleStyle);
+				foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+				{
+					if (subsystemIsLuxury(subsystem))
+					{
+						GUILayout.BeginHorizontal();
+						subsystemButton(subsystem);
+						subsystemConsumptionLabel(subsystem);
+						GUILayout.EndHorizontal();
+					}
 				}
 			}
 
