@@ -55,7 +55,6 @@ namespace AmpYear
 		//Properties
 
 		public int windowID = new System.Random().Next();
-		public Rect windowPos = new Rect(0, 0, WINDOW_WIDTH, 200);
 
 		public AmpYearPart ayPart
 		{
@@ -101,10 +100,23 @@ namespace AmpYear
 		public bool sectionGUIEnabledSubsystem = true;
 		public bool sectionGUIEnabledReserve = false;
 
-		public GUIStyle sectionTitleStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle;
+		public GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle;
 		public GUILayoutOption[] subsystemButtonOptions;
 
 		//PartModule
+
+		public bool primaryCheck
+		{
+			get
+			{
+				foreach (Part p in vessel.parts)
+				{
+					if (p is AmpYearPart)
+						return p == part;
+				}
+				return false;
+			}
+		}
 
 		public bool partIsActive
 		{
@@ -114,13 +126,20 @@ namespace AmpYear
 			}
 		}
 
+		public override void OnAwake()
+		{
+			base.OnAwake();
+
+			AYSettings.loadGlobalSettings();
+		}
+
 		public override void OnStart(PartModule.StartState state)
 		{
 			base.OnStart(state);
 
 			if (partIsActive)
 			{
-				RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
+				RenderingManager.AddToPostDrawQueue(3, new Callback(this.drawGUI));
 
 				ayPart = (AmpYearPart)part;
 
@@ -128,8 +147,10 @@ namespace AmpYear
 				{
 					subsystemToggle[i] = false;
 				}
+
 				subsystemToggle[(int)Subsystem.TURNING] = true;
 				subsystemToggle[(int)Subsystem.ASAS] = true;
+				subsystemToggle[(int)Subsystem.FLIGHT_COMPUTER] = true;
 
 				try
 				{
@@ -140,6 +161,11 @@ namespace AmpYear
 				flightComputerGUI = new RemoteTech.FlightComputerGUI();
 				flightComputer = new RemoteTech.FlightComputer(part, flightComputerGUI);
 				flightComputerGUI.computer = flightComputer;
+
+				if (primaryCheck)
+				{
+					AYSettings.loadVesselSettings(this);
+				}
 			}
 		}
 
@@ -159,13 +185,16 @@ namespace AmpYear
 				totalReservePower = 0.0;
 				totalReservePowerCapacity = 0.0;
 
+				bool determined_primary = false;
+
 				bool command_module_correct = false;
 
 				foreach (Part current_part in vessel.parts)
 				{
-					if (current_part is AmpYearPart)
+					if (!determined_primary && current_part is AmpYearPart)
 					{
 						isPrimaryPart = current_part == part;
+						determined_primary = true;
 						if (!isPrimaryPart)
 							break;
 					}
@@ -251,11 +280,15 @@ namespace AmpYear
 
 		}
 
-		public override void OnFixedUpdate()
+		public override void OnSave(ConfigNode node)
 		{
-			base.OnFixedUpdate();
+			base.OnSave(node);
 
-			
+			if (primaryCheck)
+			{
+				AYSettings.saveGlobalSettings();
+				AYSettings.saveVesselSettings(this);
+			}
 		}
 
 		//Manager
@@ -475,6 +508,13 @@ namespace AmpYear
 			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER) && !subsystemPowered(Subsystem.SAS)) 
 				sasWasFirst = false;
 
+			/*
+			if (commandPod != null && commandPod.temperature < 20.0)
+			{
+				commandPod.temperature += 1.0f * TimeWarp.deltaTime;
+			}
+			 */
+
 			flightComputerGUI.update();
 
 			//Calculate total drain from subsystems
@@ -589,9 +629,10 @@ namespace AmpYear
 			{
 
 				GUI.skin = HighLogic.Skin;
-				windowPos = GUILayout.Window(
+
+				AYSettings.windowPos = GUILayout.Window(
 					windowID,
-					windowPos,
+					AYSettings.windowPos,
 					window,
 					"AmpYear Power Manager",
 					GUILayout.Width(WINDOW_WIDTH),
@@ -600,10 +641,9 @@ namespace AmpYear
 
 				if (subsystemEnabled(Subsystem.FLIGHT_COMPUTER))
 				{
-					RemoteTech.RTShared.AttitudePos
-						= GUILayout.Window(
+					AYSettings.flightCompWindowPos = GUILayout.Window(
 						flightComputerGUI.ATTITUDE_ID,
-						RemoteTech.RTShared.AttitudePos,
+						AYSettings.flightCompWindowPos,
 						flightComputerGUI.AttitudeGUI,
 						"Attitude",
 						GUILayout.Width(30),
@@ -624,7 +664,7 @@ namespace AmpYear
 			subsystemConsumptionStyle = new GUIStyle(GUI.skin.label);
 			subsystemConsumptionStyle.alignment = TextAnchor.LowerRight;
 			subsystemConsumptionStyle.stretchWidth = true;
-			subsystemConsumptionStyle.margin.top = 4;
+			//subsystemConsumptionStyle.margin.top = 4;
 
 			powerSinkStyle = new GUIStyle(GUI.skin.label);
 			powerSinkStyle.alignment = TextAnchor.LowerLeft;
@@ -640,6 +680,12 @@ namespace AmpYear
 			warningStyle.stretchWidth = true;
 			warningStyle.fontStyle = FontStyle.Bold;
 			warningStyle.normal.textColor = Color.red;
+
+			subsystemButtonStyle = new GUIStyle(GUI.skin.toggle);
+			subsystemButtonStyle.margin.top = 0;
+			subsystemButtonStyle.margin.bottom = 0;
+			subsystemButtonStyle.padding.top = 0;
+			subsystemButtonStyle.padding.bottom = 0;
 
 			GUILayout.BeginVertical();
 
@@ -732,7 +778,7 @@ namespace AmpYear
 		{
 			setSubsystemEnabled(
 				subsystem,
-				GUILayout.Toggle(subsystemEnabled(subsystem), subsystemName(subsystem), GUI.skin.button, GUILayout.Width(WINDOW_WIDTH / 2.0f))
+				GUILayout.Toggle(subsystemEnabled(subsystem), subsystemName(subsystem), subsystemButtonStyle, GUILayout.Width(WINDOW_WIDTH / 2.0f))
 				);
 		}
 

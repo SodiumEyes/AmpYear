@@ -105,7 +105,7 @@ namespace RemoteTech
 
         public void SetMode(bool active, AttitudeMode mode, float HDG, float PIT)
         {
-            this.attitideActive = RTShared.AttitudeComputerActive = active;
+            this.attitideActive = active;
             ManeuverNodeMode = false;
             if (!active)
             {

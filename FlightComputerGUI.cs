@@ -297,8 +297,8 @@ namespace RemoteTech
 			}
 		}
 		public FlightComputer computer;
-        public int ATTITUDE_ID = 72138;
-        public int THROTTLE_ID = 72238;
+		public int ATTITUDE_ID = new System.Random().Next();
+        public int THROTTLE_ID = new System.Random().Next();
         public SimpleThrottle throttle;
         public List<AttitudeStateButton> attitudeButtons = new List<AttitudeStateButton>();
 
