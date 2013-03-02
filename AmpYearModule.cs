@@ -35,13 +35,13 @@ namespace AmpYear
 		public const float TURN_INACTIVE_ROT_FACTOR = 0.1f;
 
 		public const double SAS_BASE_DRAIN = 1.0 / 60.0;
-		public const double SAS_ROT_POW_DRAIN_FACTOR = 1.0 / 80.0;
 		public const double SAS_TORQUE_DRAIN_FACTOR = 1.0 / 160.0;
 		public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
 		public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.25f;
 
-		public const float HEATER_HEAT_RATE = 1.0f;
-		public const double HEATER_DRAIN_FACTOR = 4.0;
+		public const float HEATER_HEAT_RATE = 5.0f;
+		public const double HEATER_BASE_DRAIN_FACTOR = 1.0;
+		public const double HEATER_CAPACITY_DRAIN_FACTOR = 0.5;
 		public const float HEATER_TARGET_TEMP = 20.0f;
 		public const float COOLER_TARGET_TEMP = 15.0f;
 
@@ -84,6 +84,8 @@ namespace AmpYear
 		private bool hasReservePower = true;
 		private bool isPrimaryPart = false;
 
+		public List<Part> crewablePartList = new List<Part>();
+
 		float totalDefaultRotPower = 0.0f;
 		float commandPodDefaultRotPower = 0.0f;
 		float sasTorque = 0.0f;
@@ -94,6 +96,9 @@ namespace AmpYear
 		double totalReservePower = 0.0;
 		double totalReservePowerCapacity = 0.0;
 
+		int totalHeatedParts = 0;
+		int totalCooledParts = 0;
+
 		double lastEstimatedDrainTime = 0.0;
 		double lastEstimatedDrainTimeUT = 0.0;
 		double estimateLastTotalCharge = 0.0;
@@ -101,6 +106,8 @@ namespace AmpYear
 		double estimatedDrain = 0.0;
 
 		bool sasWasFirst = false;
+		bool reenableRCS = false;
+		bool reenableSAS = false;
 
 		//GUI Properties
 
@@ -130,7 +137,7 @@ namespace AmpYear
 		{
 			get
 			{
-				return FlightGlobals.ready && vessel == FlightGlobals.ActiveVessel;
+				return FlightGlobals.ready && FlightGlobals.ActiveVessel != null && vessel == FlightGlobals.ActiveVessel;
 			}
 		}
 
@@ -145,40 +152,39 @@ namespace AmpYear
 		{
 			base.OnStart(state);
 
-			if (partIsActive)
+			Debug.Log("AY Start");
+
+			//Init properties
+			ayPart = (AmpYearPart)part;
+			commandPod = null;
+
+			for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
 			{
-				RenderingManager.AddToPostDrawQueue(3, new Callback(this.drawGUI));
-
-				ayPart = (AmpYearPart)part;
-
-				for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
-				{
-					subsystemToggle[i] = false;
-				}
-
-				subsystemToggle[(int)Subsystem.TURNING] = true;
-				subsystemToggle[(int)Subsystem.ASAS] = true;
-				subsystemToggle[(int)Subsystem.FLIGHT_COMPUTER] = true;
-
-				try
-				{
-					part.vessel.OnFlyByWire += new FlightInputCallback(this.flightControl);
-				}
-				catch { }
-
-				flightComputerGUI = new RemoteTech.FlightComputerGUI();
-				flightComputer = new RemoteTech.FlightComputer(part, flightComputerGUI);
-				flightComputerGUI.computer = flightComputer;
-
-				if (primaryCheck)
-				{
-					AYSettings.loadVesselSettings(this);
-				}
+				subsystemToggle[i] = false;
 			}
+
+			subsystemToggle[(int)Subsystem.TURNING] = true;
+			subsystemToggle[(int)Subsystem.ASAS] = true;
+			subsystemToggle[(int)Subsystem.FLIGHT_COMPUTER] = true;
+
+			flightComputerGUI = new RemoteTech.FlightComputerGUI();
+			flightComputer = new RemoteTech.FlightComputer(part, flightComputerGUI);
+			flightComputerGUI.computer = flightComputer;
+
+			RenderingManager.AddToPostDrawQueue(3, new Callback(this.drawGUI));
+
+			try
+			{
+				part.vessel.OnFlyByWire += new FlightInputCallback(this.flightControl);
+			}
+			catch { }
+
 		}
 
 		public override void OnUpdate()
 		{
+			//Debug.Log("update start");
+
 			base.OnUpdate();
 
 			if (partIsActive)
@@ -193,9 +199,16 @@ namespace AmpYear
 				totalReservePower = 0.0;
 				totalReservePowerCapacity = 0.0;
 
+				totalHeatedParts = 0;
+				totalCooledParts = 0;
+
+				crewablePartList.Clear();
+
 				bool determined_primary = false;
 
 				bool command_module_correct = false;
+
+				//Debug.Log("update1");
 
 				foreach (Part current_part in vessel.parts)
 				{
@@ -223,6 +236,8 @@ namespace AmpYear
 						}
 						else
 							totalDefaultRotPower += ((CommandPod)current_part).rotPower;
+
+						sasTorque += ((CommandPod)current_part).maxTorque;
 					}
 
 					if (current_part is SASModule)
@@ -233,7 +248,7 @@ namespace AmpYear
 					}
 
 					//Ignore parts with alternators in power-capacity calculate because they don't actually store power
-					if (!part.Modules.Contains("ModuleAlternator"))
+					if (!current_part.Modules.Contains("ModuleAlternator"))
 					{
 						foreach (PartResource resource in current_part.Resources)
 						{
@@ -249,7 +264,20 @@ namespace AmpYear
 							}
 						}
 					}
+
+					if (current_part.CrewCapacity > 0)
+					{
+						if (current_part.temperature >= HEATER_TARGET_TEMP)
+							totalHeatedParts++;
+
+						if (current_part.temperature <= COOLER_TARGET_TEMP)
+							totalCooledParts++;
+
+						crewablePartList.Add(current_part);
+					}
 				}
+
+				//Debug.Log("update2");
 
 				//Update command module rot-power to account for power turn
 				if (commandPod != null && command_module_correct)
@@ -266,6 +294,8 @@ namespace AmpYear
 					commandPod = null;
 				}
 
+				//Debug.Log("update3");
+
 				//Estimate the amount of power drain
 				if (UnityEngine.Time.time - lastEstimatedDrainTime > DRAIN_ESTIMATE_INTERVAL)
 				{
@@ -279,24 +309,29 @@ namespace AmpYear
 					lastEstimatedDrainTimeUT = Planetarium.GetUniversalTime();
 					estimateLastTotalCharge = totalElectricCharge;
 				}
+
+				//Debug.Log("update4");
+
+				if (isPrimaryPart)
+					subsystemUpdate();
+				else
+					ayPart.ASASActive = false;
+			}
+			else {
+				if (ayPart != null)
+					ayPart.ASASActive = false;
 			}
 
-			if (isPrimaryPart)
-				subsystemUpdate();
-			else if (ayPart != null)
-				ayPart.ASASActive = false;
+			//Debug.Log("update end");
 
 		}
 
 		public override void OnSave(ConfigNode node)
 		{
-			base.OnSave(node);
+			Debug.Log("AY Save");
 
-			if (primaryCheck)
-			{
-				AYSettings.saveGlobalSettings();
-				AYSettings.saveVesselSettings(this);
-			}
+			AYSettings.saveGlobalSettings();
+
 		}
 
 		//Manager
@@ -388,10 +423,10 @@ namespace AmpYear
 					return subsystemEnabled(Subsystem.TURNING) && flightComputer.AttitudeActive;
 
 				case Subsystem.HEATER:
-					return commandPod != null && commandPod.temperature < HEATER_TARGET_TEMP;
+					return totalHeatedParts < crewablePartList.Count;
 
 				case Subsystem.COOLER:
-					return commandPod != null && commandPod.temperature > COOLER_TARGET_TEMP;
+					return totalCooledParts < crewablePartList.Count;
 
 				default:
 					return true;
@@ -411,7 +446,7 @@ namespace AmpYear
 					return totalDefaultRotPower * TURN_ROT_POWER_DRAIN_FACTOR;
 
 				case Subsystem.SAS:
-					return sasTorque * SAS_TORQUE_DRAIN_FACTOR + totalDefaultRotPower * SAS_ROT_POW_DRAIN_FACTOR;
+					return sasTorque * SAS_TORQUE_DRAIN_FACTOR;
 
 				case Subsystem.RCS:
 					return RCS_DRAIN;
@@ -428,18 +463,16 @@ namespace AmpYear
 				case Subsystem.HEATER:
 				case Subsystem.COOLER:
 					if (commandPod != null)
-						return HEATER_DRAIN_FACTOR * HEATER_HEAT_RATE;
+						return HEATER_HEAT_RATE
+							* (crewablePartList.Count * HEATER_BASE_DRAIN_FACTOR + HEATER_CAPACITY_DRAIN_FACTOR * vessel.GetCrewCapacity());
 					else
 						return 0.0;
 
 				case Subsystem.MUSIC:
-					return 1.0 / 120.0;
+					return 1.0 / 120.0 * crewablePartList.Count;
 
 				case Subsystem.MASSAGE:
-					if (commandPod != null)
-						return 5.0 * commandPod.CrewCapacity;
-					else
-						return 0.0;
+					return 5.0 * vessel.GetCrewCount();
 
 				default:
 					return 0.0;
@@ -529,12 +562,19 @@ namespace AmpYear
 				ayPart.ASASActive = subsystemPowered(Subsystem.ASAS);
 
 			if (vessel.ActionGroups[KSPActionGroup.RCS] && !subsystemPowered(Subsystem.RCS))
+			{
+				//Disable RCS when the subsystem isn't powered
 				vessel.ActionGroups.SetGroup(KSPActionGroup.RCS, false);
-
+				reenableRCS = true;
+			}
 			if (vessel.ActionGroups[KSPActionGroup.SAS]) {
 
 				if (!subsystemPowered(Subsystem.SAS))
+				{
+					//Disable SAS when the subsystem isn't powered
 					vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+					reenableSAS = true;
+				}
 				else
 				{
 					if (subsystemPowered(Subsystem.FLIGHT_COMPUTER))
@@ -546,7 +586,8 @@ namespace AmpYear
 							vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
 							sasWasFirst = false;
 						}
-						else {
+						else
+						{
 							//Turn off flight computer if SAS was turned on second
 							sasWasFirst = true;
 							foreach (RemoteTech.AttitudeStateButton button in flightComputerGUI.attitudeButtons)
@@ -557,28 +598,34 @@ namespace AmpYear
 						}
 					}
 					else
-						sasWasFirst = true; 
+						sasWasFirst = true;
 				}
-				
-				
+			}
+
+			if (managerIsActive && hasPower)
+			{
+				//Re-enable SAS/RCS if they were shut off by the manager and can be run again
+				if (reenableSAS)
+				{
+					setSubsystemEnabled(Subsystem.SAS, true);
+					reenableSAS = false;
+				}
+
+				if (reenableRCS)
+				{
+					setSubsystemEnabled(Subsystem.RCS, true);
+					reenableRCS = false;
+				}
 			}
 
 			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER) && !subsystemPowered(Subsystem.SAS)) 
 				sasWasFirst = false;
 
 			if (subsystemPowered(Subsystem.HEATER))
-			{
-				//Apply heater
-				if (commandPod != null && commandPod.temperature < HEATER_TARGET_TEMP)
-					commandPod.temperature += HEATER_HEAT_RATE * TimeWarp.deltaTime;
-			}
+				changeCrewedPartsTemperature(HEATER_TARGET_TEMP, true);
 
 			if (subsystemPowered(Subsystem.COOLER))
-			{
-				//Apply cooler
-				if (commandPod != null && commandPod.temperature > COOLER_TARGET_TEMP)
-					commandPod.temperature -= HEATER_HEAT_RATE * TimeWarp.deltaTime;
-			}
+				changeCrewedPartsTemperature(COOLER_TARGET_TEMP, false);
 
 			flightComputerGUI.update();
 
@@ -606,7 +653,9 @@ namespace AmpYear
 			double minimum_sufficient_charge = managerActiveDrain * TimeWarp.deltaTime;
 
 			if (totalElectricCharge > minimum_sufficient_charge)
-				hasPower = timestep_drain <= 0.0 || part.RequestResource(MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99);
+			{
+				hasPower = timestep_drain <= 0.0 || requestResource(MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99);
+			}
 			else
 				hasPower = false;
 
@@ -615,11 +664,43 @@ namespace AmpYear
 				//If main power is insufficient, drain reserve power for manager
 				double manager_timestep_drain = manager_drain * TimeWarp.deltaTime;
 				hasReservePower = manager_drain <= 0.0
-					|| part.RequestResource(RESERVE_POWER_NAME, manager_timestep_drain) >= (manager_timestep_drain * 0.99);
+					|| requestResource(RESERVE_POWER_NAME, manager_timestep_drain) >= (manager_timestep_drain * 0.99);
 			}
 			else
 				hasReservePower = totalReservePower > minimum_sufficient_charge;
+		}
 
+		private int subsystemStateToInt()
+		{
+			int val = 0;
+			foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+			{
+				if (subsystemEnabled(subsystem))
+					val |= (1 << (int)subsystem);
+			}
+			return val;
+		}
+
+		private void setSubsystemStateFromInt(int state)
+		{
+			foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+				setSubsystemEnabled(subsystem, (state & (1 << (int)subsystem)) != 0);
+		}
+
+		void changeCrewedPartsTemperature(double target_temp, bool heat)
+		{
+			foreach (Part crewed_part in crewablePartList) {
+				if (heat)
+				{
+					if (crewed_part.temperature < target_temp)
+						crewed_part.temperature += HEATER_HEAT_RATE * TimeWarp.deltaTime;
+				}
+				else
+				{
+					if (crewed_part.temperature > target_temp)
+						crewed_part.temperature -= HEATER_HEAT_RATE * TimeWarp.deltaTime;
+				}
+			}
 		}
 
 		//Turning
@@ -640,7 +721,20 @@ namespace AmpYear
 			turningFactor += (Math.Abs(state.pitch) + Math.Abs(state.roll) + Math.Abs(state.yaw)) / 3.0;
 		}
 
-		//Reserve Power
+		//Resources
+
+		private double requestResource(String name, double amount)
+		{
+			double received = 0.0;
+			int transfer_attempts = 0;
+			while (amount > 0.0 && transfer_attempts < MAX_TRANSFER_ATTEMPTS)
+			{
+				received += part.RequestResource(name, amount);
+				transfer_attempts++;
+			}
+
+			return received;
+		}
 
 		private void transferReserveToMain(double amount)
 		{
@@ -690,6 +784,8 @@ namespace AmpYear
 
 		private void drawGUI()
 		{
+			//Debug.Log("draw start");
+
 			if (partIsActive && isPrimaryPart)
 			{
 
@@ -716,6 +812,8 @@ namespace AmpYear
 						);
 				}
 			}
+
+			//Debug.Log("draw end");
 		}
 
 		private void window(int id)
@@ -764,7 +862,7 @@ namespace AmpYear
 			if (timewarpIsValid)
 			{
 				GUILayout.BeginHorizontal();
-				managerEnabled = GUILayout.Toggle(managerEnabled, "Manager", GUI.skin.button, subsystemButtonOptions);
+				managerEnabled = GUILayout.Toggle(managerEnabled, "Manager", subsystemButtonStyle, subsystemButtonOptions);
 				if (managerIsActive)
 					consumptionLabel(managerCurrentDrain, false);
 				else
@@ -785,7 +883,7 @@ namespace AmpYear
 							GUILayout.Label("Power: " + power_percent.ToString("0.00") + '%', statusStyle);
 						}
 					}
-					else if (managerIsActive)
+					else
 						GUILayout.Label("Running on Reserve Power!", warningStyle);
 				}
 				else if (timewarpIsValid)
@@ -796,62 +894,67 @@ namespace AmpYear
 			else
 				GUILayout.Label("Insufficient Power", warningStyle);
 
-			//Subsystems
-			if (sectionGUIEnabledSubsystem)
+			if (managerIsActive)
 			{
-				GUILayout.Label("Subsystems", sectionTitleStyle);
-				foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+
+				//Subsystems
+				if (sectionGUIEnabledSubsystem)
 				{
-					if (!subsystemIsLuxury(subsystem))
+					GUILayout.Label("Subsystems", sectionTitleStyle);
+					foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
 					{
-						GUILayout.BeginHorizontal();
-						subsystemButton(subsystem);
-						subsystemConsumptionLabel(subsystem);
-						GUILayout.EndHorizontal();
+						if (!subsystemIsLuxury(subsystem))
+						{
+							GUILayout.BeginHorizontal();
+							subsystemButton(subsystem);
+							subsystemConsumptionLabel(subsystem);
+							GUILayout.EndHorizontal();
+						}
 					}
 				}
-			}
 
-			//Luxury
-			if (sectionGUIEnabledLuxury)
-			{
-				GUILayout.Label("Luxury", sectionTitleStyle);
-				foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+				//Luxury
+				if (sectionGUIEnabledLuxury)
 				{
-					if (subsystemIsLuxury(subsystem))
+					GUILayout.Label("Luxury", sectionTitleStyle);
+					foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
 					{
-						GUILayout.BeginHorizontal();
-						subsystemButton(subsystem);
-						subsystemConsumptionLabel(subsystem);
-						GUILayout.EndHorizontal();
+						if (subsystemIsLuxury(subsystem))
+						{
+							GUILayout.BeginHorizontal();
+							subsystemButton(subsystem);
+							subsystemConsumptionLabel(subsystem);
+							GUILayout.EndHorizontal();
+						}
 					}
 				}
-			}
 
-			//Reserve
-			if (sectionGUIEnabledReserve)
-			{
-				GUILayout.Label("Reserve Power", sectionTitleStyle);
-
-				//Reserve status label
-				if (totalReservePowerCapacity > 0.0)
+				//Reserve
+				if (sectionGUIEnabledReserve)
 				{
-					if (hasReservePower)
+					GUILayout.Label("Reserve Power", sectionTitleStyle);
+
+					//Reserve status label
+					if (totalReservePowerCapacity > 0.0)
 					{
-						double reserve_percent = (totalReservePower / totalReservePowerCapacity) * 100.0;
-						GUILayout.Label("Reserve Power: " + reserve_percent.ToString("0.00") + '%', statusStyle);
+						if (hasReservePower)
+						{
+							double reserve_percent = (totalReservePower / totalReservePowerCapacity) * 100.0;
+							GUILayout.Label("Reserve Power: " + reserve_percent.ToString("0.00") + '%', statusStyle);
+						}
+						else
+							GUILayout.Label("Reserve Power Depleted", warningStyle);
 					}
 					else
-						GUILayout.Label("Reserve Power Depleted", warningStyle);
-				}
-				else
-					GUILayout.Label("Reserve Power not Found!", warningStyle);
+						GUILayout.Label("Reserve Power not Found!", warningStyle);
 
-				//Reserve transfer
-				if (GUILayout.Button("Transfer Reserve to Main"))
-					transferReserveToMain(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENT_FACTOR);
-				if (GUILayout.Button("Transfer Main to Reserve"))
-					transferMainToReserve(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENT_FACTOR);
+					//Reserve transfer
+					if (GUILayout.Button("Transfer Reserve to Main"))
+						transferReserveToMain(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENT_FACTOR);
+					if (GUILayout.Button("Transfer Main to Reserve"))
+						transferMainToReserve(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENT_FACTOR);
+				}
+
 			}
 
 			GUILayout.EndVertical();

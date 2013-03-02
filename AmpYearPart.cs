@@ -31,7 +31,7 @@ namespace AmpYear
 
 		protected override void onPartFixedUpdate()
 		{
-			if (_ASASActive)
+			if (_ASASActive && FlightGlobals.ready && FlightGlobals.ActiveVessel == vessel)
 			{
 				bool restore_sas = vessel.ActionGroups[KSPActionGroup.SAS];
 
