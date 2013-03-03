@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+/* This code was adapted from the RemoteTech plugin (http://kerbalspaceport.com/remotetech-3/) by The_Duck and JDP */
+
 namespace RemoteTech
 {
 

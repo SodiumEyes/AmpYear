@@ -45,11 +45,12 @@ namespace AmpYear
 		public const float HEATER_TARGET_TEMP = 20.0f;
 		public const float COOLER_TARGET_TEMP = 15.0f;
 
-		public const double RESERVE_TRANSFER_INCREMENT_FACTOR = 0.25;
+		public readonly double[] RESERVE_TRANSFER_INCREMENTS = new double[2] { 0.1, 0.01 };
 		public const int MAX_TRANSFER_ATTEMPTS = 4;
 
 		public const double RECHARGE_RESERVE_THRESHOLD = 0.95;
 		public const double RECHARGE_RESERVE_RATE = 30.0 / 60.0;
+		public const double RECHARGE_OVERFLOW_AVOID_FACTOR = 0.9;
 
 		public const float WINDOW_WIDTH = 200;
 		public const float WINDOW_BASE_HEIGHT = 140;
@@ -73,6 +74,8 @@ namespace AmpYear
 			private set;
 			get;
 		}
+		public Vessel lastVessel;
+		public FlightInputCallback flightCallback;
 
 		private RemoteTech.FlightComputer flightComputer;
 		private RemoteTech.FlightComputerGUI flightComputerGUI;
@@ -171,13 +174,9 @@ namespace AmpYear
 			flightComputer = new RemoteTech.FlightComputer(part, flightComputerGUI);
 			flightComputerGUI.computer = flightComputer;
 
-			RenderingManager.AddToPostDrawQueue(3, new Callback(this.drawGUI));
+			flightCallback = new FlightInputCallback(this.flightControl);
 
-			try
-			{
-				part.vessel.OnFlyByWire += new FlightInputCallback(this.flightControl);
-			}
-			catch { }
+			RenderingManager.AddToPostDrawQueue(3, new Callback(this.drawGUI));
 
 		}
 
@@ -187,8 +186,31 @@ namespace AmpYear
 
 			base.OnUpdate();
 
-			if (partIsActive)
+			if (FlightGlobals.ready && FlightGlobals.ActiveVessel != null)
 			{
+				//Check if the part's vessel has changed
+				if (lastVessel != vessel)
+				{
+					if (lastVessel != null)
+					{
+						//Remove the flight callback from the previous vessel
+						try
+						{
+							lastVessel.OnFlyByWire -= flightCallback;
+						}
+						catch { }
+					}
+
+					//Add the flight callback to the current vessel
+					try
+					{
+						vessel.OnFlyByWire += flightCallback;
+					}
+					catch { }
+
+					lastVessel = vessel;
+				}
+			
 				//Compile information about the vessel and its parts
 				totalDefaultRotPower = 0.0f;
 				sasAdditionalRotPower = 0.0f;
@@ -707,18 +729,21 @@ namespace AmpYear
 
 		private void flightControl(FlightCtrlState state)
 		{
-			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER))
-				flightComputer.drive(state);
-
-			if (!subsystemPowered(Subsystem.TURNING))
+			if (isPrimaryPart)
 			{
-				//Reduce the turning rate if turning subsystem isn't active
-				state.pitch *= TURN_INACTIVE_ROT_FACTOR;
-				state.yaw *= TURN_INACTIVE_ROT_FACTOR;
-				state.roll *= TURN_INACTIVE_ROT_FACTOR;
-			}
+				if (subsystemPowered(Subsystem.FLIGHT_COMPUTER))
+					flightComputer.drive(state);
 
-			turningFactor += (Math.Abs(state.pitch) + Math.Abs(state.roll) + Math.Abs(state.yaw)) / 3.0;
+				if (!subsystemPowered(Subsystem.TURNING))
+				{
+					//Reduce the turning rate if turning subsystem isn't active
+					state.pitch *= TURN_INACTIVE_ROT_FACTOR;
+					state.yaw *= TURN_INACTIVE_ROT_FACTOR;
+					state.roll *= TURN_INACTIVE_ROT_FACTOR;
+				}
+
+				turningFactor += (Math.Abs(state.pitch) + Math.Abs(state.roll) + Math.Abs(state.yaw)) / 3.0;
+			}
 		}
 
 		//Resources
@@ -730,6 +755,7 @@ namespace AmpYear
 			while (amount > 0.0 && transfer_attempts < MAX_TRANSFER_ATTEMPTS)
 			{
 				received += part.RequestResource(name, amount);
+				amount -= received;
 				transfer_attempts++;
 			}
 
@@ -740,13 +766,15 @@ namespace AmpYear
 		{
 			Debug.Log("main: " + totalElectricCharge);
 			Debug.Log("reserve: " + totalReservePower);
-			if (amount > totalReservePower)
-				amount = totalReservePower;
+			if (amount > totalReservePower * RECHARGE_OVERFLOW_AVOID_FACTOR)
+				amount = totalReservePower * RECHARGE_OVERFLOW_AVOID_FACTOR;
 
-			if (amount > totalElectricChargeCapacity - totalElectricCharge)
+			if (amount > (totalElectricChargeCapacity - totalElectricCharge))
 				amount = (totalElectricChargeCapacity - totalElectricCharge);
 
-			double received = part.RequestResource(RESERVE_POWER_NAME, amount);
+			Debug.Log("amount: " + amount);
+
+			double received = requestResource(RESERVE_POWER_NAME, amount);
 			Debug.Log("received: " + received);
 
 			int transfer_attempts = 0;
@@ -761,13 +789,13 @@ namespace AmpYear
 
 		private void transferMainToReserve(double amount)
 		{
-			if (amount > totalElectricCharge)
-				amount = totalElectricCharge;
+			if (amount > totalElectricCharge * RECHARGE_OVERFLOW_AVOID_FACTOR)
+				amount = totalElectricCharge * RECHARGE_OVERFLOW_AVOID_FACTOR;
 
-			if (amount > totalReservePowerCapacity - totalReservePower)
+			if (amount > (totalReservePowerCapacity - totalReservePower))
 				amount = (totalReservePowerCapacity - totalReservePower);
 
-			double received = part.RequestResource(MAIN_POWER_NAME, amount);
+			double received = requestResource(MAIN_POWER_NAME, amount);
 			Debug.Log("received: " + received);
 
 			int transfer_attempts = 0;
@@ -949,10 +977,27 @@ namespace AmpYear
 						GUILayout.Label("Reserve Power not Found!", warningStyle);
 
 					//Reserve transfer
-					if (GUILayout.Button("Transfer Reserve to Main"))
-						transferReserveToMain(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENT_FACTOR);
-					if (GUILayout.Button("Transfer Main to Reserve"))
-						transferMainToReserve(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENT_FACTOR);
+					String[] increment_percent_string = new String[RESERVE_TRANSFER_INCREMENTS.Length];
+	
+					GUILayout.BeginHorizontal();
+					GUILayout.Label("Reserve to Main");
+					for (int i = 0; i < RESERVE_TRANSFER_INCREMENTS.Length; i++)
+					{
+						increment_percent_string[i] = (RESERVE_TRANSFER_INCREMENTS[i] * 100).ToString("F0") + '%';
+						if (GUILayout.Button(increment_percent_string[i]))
+							transferReserveToMain(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENTS[i]);
+					}
+
+					GUILayout.EndHorizontal();
+
+					GUILayout.BeginHorizontal();
+					GUILayout.Label("Main to Reserve");
+					for (int i = 0; i < RESERVE_TRANSFER_INCREMENTS.Length; i++)
+					{
+						if (GUILayout.Button(increment_percent_string[i]))
+							transferMainToReserve(totalReservePowerCapacity * RESERVE_TRANSFER_INCREMENTS[i]);
+					}
+					GUILayout.EndHorizontal();
 				}
 
 			}
