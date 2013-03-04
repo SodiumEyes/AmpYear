@@ -45,12 +45,12 @@ namespace AmpYear
 		public const float HEATER_TARGET_TEMP = 20.0f;
 		public const float COOLER_TARGET_TEMP = 15.0f;
 
-		public readonly double[] RESERVE_TRANSFER_INCREMENTS = new double[2] { 0.1, 0.01 };
-		public const int MAX_TRANSFER_ATTEMPTS = 4;
+		public readonly double[] RESERVE_TRANSFER_INCREMENTS = new double[3] { 0.25, 0.1, 0.01 };
+		public const int MAX_TRANSFER_ATTEMPTS = 8;
 
 		public const double RECHARGE_RESERVE_THRESHOLD = 0.95;
 		public const double RECHARGE_RESERVE_RATE = 30.0 / 60.0;
-		public const double RECHARGE_OVERFLOW_AVOID_FACTOR = 0.9;
+		public const double RECHARGE_OVERFLOW_AVOID_FACTOR = 1.0;
 
 		public const float WINDOW_WIDTH = 200;
 		public const float WINDOW_BASE_HEIGHT = 140;
@@ -671,10 +671,9 @@ namespace AmpYear
 
 			//Drain main power
 			double timestep_drain = total_manager_drain * TimeWarp.deltaTime;
-
 			double minimum_sufficient_charge = managerActiveDrain * TimeWarp.deltaTime;
 
-			if (totalElectricCharge > minimum_sufficient_charge)
+			if (totalElectricCharge >= minimum_sufficient_charge)
 			{
 				hasPower = timestep_drain <= 0.0 || requestResource(MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99);
 			}
@@ -750,16 +749,25 @@ namespace AmpYear
 
 		private double requestResource(String name, double amount)
 		{
-			double received = 0.0;
-			int transfer_attempts = 0;
-			while (amount > 0.0 && transfer_attempts < MAX_TRANSFER_ATTEMPTS)
+			if (amount <= 0.0)
+				return 0.0;
+
+			double total_received = 0.0;
+
+			double request_amount = amount;
+			for (int attempts = 0; attempts < MAX_TRANSFER_ATTEMPTS && amount > 0.0; attempts++)
 			{
-				received += part.RequestResource(name, amount);
+				double received = part.RequestResource(name, request_amount);
+				total_received += received;
 				amount -= received;
-				transfer_attempts++;
+
+				if (received <= 0.0)
+					request_amount = amount * 0.5;
+				else
+					request_amount = amount;
 			}
 
-			return received;
+			return total_received;
 		}
 
 		private void transferReserveToMain(double amount)
