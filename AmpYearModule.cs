@@ -99,6 +99,7 @@ namespace AmpYear
 
 		private bool subsysLoaded = false;
 		private bool guiSectionLoaded = false;
+		private bool guiEnabled = true;
 
 		public List<Part> crewablePartList = new List<Part>();
 
@@ -411,6 +412,12 @@ namespace AmpYear
 			{
 			}
 
+		}
+
+		[KSPEvent(guiActive = true, guiName = "Toggle GUI")]
+		public void toggleGUI()
+		{
+			guiEnabled = !guiEnabled;
 		}
 
 		//Manager
@@ -923,7 +930,7 @@ namespace AmpYear
 		{
 			//Debug.Log("draw start");
 
-			if (partIsActive && isPrimaryPart)
+			if (partIsActive && isPrimaryPart && guiEnabled)
 			{
 
 				GUI.skin = HighLogic.Skin;
