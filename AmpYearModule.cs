@@ -24,6 +24,13 @@ namespace AmpYear
 			MASSAGE
 		}
 
+		public enum GUISection
+		{
+			SUBSYSTEM,
+			RESERVE,
+			LUXURY
+		}
+
 		//Constants
 
 		public const double MANAGER_ACTIVE_DRAIN = 1.0 / 300.0;
@@ -60,6 +67,9 @@ namespace AmpYear
 		public const String MAIN_POWER_NAME = "ElectricCharge";
 		public const String RESERVE_POWER_NAME = "ReservePower";
 
+		public const String SUBSYS_STATE_LABEL = "Subsys";
+		public const String GUI_SECTION_LABEL = "Section";
+
 		//Properties
 
 		public int windowID = new System.Random().Next();
@@ -86,6 +96,9 @@ namespace AmpYear
 		private bool hasPower = true;
 		private bool hasReservePower = true;
 		private bool isPrimaryPart = false;
+
+		private bool subsysLoaded = false;
+		private bool guiSectionLoaded = false;
 
 		public List<Part> crewablePartList = new List<Part>();
 
@@ -114,9 +127,7 @@ namespace AmpYear
 
 		//GUI Properties
 
-		public bool sectionGUIEnabledSubsystem = true;
-		public bool sectionGUIEnabledReserve = false;
-		public bool sectionGUIEnabledLuxury = false;
+		public bool[] guiSectionEnableFlag = new bool[Enum.GetValues(typeof(GUISection)).Length];
 
 		public GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle;
 		public GUILayoutOption[] subsystemButtonOptions;
@@ -161,14 +172,23 @@ namespace AmpYear
 			ayPart = (AmpYearPart)part;
 			commandPod = null;
 
-			for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+			if (!subsysLoaded)
 			{
-				subsystemToggle[i] = false;
+				for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+					subsystemToggle[i] = false;
+
+				subsystemToggle[(int)Subsystem.TURNING] = true;
+				subsystemToggle[(int)Subsystem.ASAS] = true;
+				subsystemToggle[(int)Subsystem.FLIGHT_COMPUTER] = true;
 			}
 
-			subsystemToggle[(int)Subsystem.TURNING] = true;
-			subsystemToggle[(int)Subsystem.ASAS] = true;
-			subsystemToggle[(int)Subsystem.FLIGHT_COMPUTER] = true;
+			if (!guiSectionLoaded)
+			{
+				for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+					guiSectionEnableFlag[i] = false;
+
+				guiSectionEnableFlag[(int)GUISection.SUBSYSTEM] = true;
+			}
 
 			flightComputerGUI = new RemoteTech.FlightComputerGUI();
 			flightComputer = new RemoteTech.FlightComputer(part, flightComputerGUI);
@@ -353,6 +373,43 @@ namespace AmpYear
 			Debug.Log("AY Save");
 
 			AYSettings.saveGlobalSettings();
+
+			try
+			{
+				node.AddValue(SUBSYS_STATE_LABEL, subsystemStateToInt());
+				node.AddValue(GUI_SECTION_LABEL, guiSectionStateToInt());
+			}
+			catch
+			{
+			}
+
+		}
+
+		public override void OnLoad(ConfigNode node)
+		{
+			Debug.Log("AY Load");
+
+			subsysLoaded = false;
+			guiSectionLoaded = false;
+
+			try
+			{
+				int state = 0;
+				if (int.TryParse(node.GetValue(SUBSYS_STATE_LABEL), out state))
+				{
+					setSubsystemStateFromInt(state);
+					subsysLoaded = true;
+				}
+
+				if (int.TryParse(node.GetValue(GUI_SECTION_LABEL), out state))
+				{
+					setGuiSectionStateFromInt(state);
+					guiSectionLoaded = true;
+				}
+			}
+			catch
+			{
+			}
 
 		}
 
@@ -724,6 +781,50 @@ namespace AmpYear
 			}
 		}
 
+		//GUI Section
+
+		public static string guiSectionName(GUISection section)
+		{
+			switch (section)
+			{
+				case GUISection.SUBSYSTEM:
+					return "Subsys";
+
+				case GUISection.RESERVE:
+					return "Reserve";
+
+				case GUISection.LUXURY:
+					return "Luxury";
+
+				default:
+					return String.Empty;
+			}
+		}
+
+		public bool guiSectionEnabled(GUISection section)
+		{
+			return guiSectionEnableFlag[(int)section];
+		}
+
+		private int guiSectionStateToInt()
+		{
+			int val = 0;
+			for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+			{
+				if (guiSectionEnableFlag[i])
+					val |= (1 << i);
+			}
+			return val;
+		}
+
+		private void setGuiSectionStateFromInt(int state)
+		{
+			for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+			{
+				guiSectionEnableFlag[i] = (state & (1 << i)) != 0;
+			}
+		}
+
 		//Turning
 
 		private void flightControl(FlightCtrlState state)
@@ -889,9 +990,11 @@ namespace AmpYear
 			GUILayout.BeginVertical();
 
 			GUILayout.BeginHorizontal();
-			sectionGUIEnabledSubsystem = GUILayout.Toggle(sectionGUIEnabledSubsystem, "Subsys", GUI.skin.button);
-			sectionGUIEnabledReserve = GUILayout.Toggle(sectionGUIEnabledReserve, "Reserve", GUI.skin.button);
-			sectionGUIEnabledLuxury = GUILayout.Toggle(sectionGUIEnabledLuxury, "Luxury", GUI.skin.button);
+			foreach (GUISection section in Enum.GetValues(typeof(GUISection)))
+			{
+				guiSectionEnableFlag[(int)section]
+					= GUILayout.Toggle(guiSectionEnableFlag[(int)section], guiSectionName(section), GUI.skin.button);
+			}
 			GUILayout.EndHorizontal();
 
 			//Manager status+drain
@@ -934,7 +1037,7 @@ namespace AmpYear
 			{
 
 				//Subsystems
-				if (sectionGUIEnabledSubsystem)
+				if (guiSectionEnabled(GUISection.SUBSYSTEM))
 				{
 					GUILayout.Label("Subsystems", sectionTitleStyle);
 					foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
@@ -950,7 +1053,7 @@ namespace AmpYear
 				}
 
 				//Luxury
-				if (sectionGUIEnabledLuxury)
+				if (guiSectionEnabled(GUISection.LUXURY))
 				{
 					GUILayout.Label("Luxury", sectionTitleStyle);
 					foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
@@ -966,7 +1069,7 @@ namespace AmpYear
 				}
 
 				//Reserve
-				if (sectionGUIEnabledReserve)
+				if (guiSectionEnabled(GUISection.RESERVE))
 				{
 					GUILayout.Label("Reserve Power", sectionTitleStyle);
 
