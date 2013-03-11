@@ -203,7 +203,6 @@ namespace AmpYear
 
 		public override void OnUpdate()
 		{
-			//Debug.Log("update start");
 
 			base.OnUpdate();
 
@@ -250,8 +249,6 @@ namespace AmpYear
 				bool determined_primary = false;
 
 				bool command_module_correct = false;
-
-				//Debug.Log("update1");
 
 				foreach (Part current_part in vessel.parts)
 				{
@@ -319,9 +316,6 @@ namespace AmpYear
 						crewablePartList.Add(current_part);
 					}
 				}
-
-				//Debug.Log("update2");
-
 				//Update command module rot-power to account for power turn
 				if (commandPod != null && command_module_correct)
 				{
@@ -337,8 +331,6 @@ namespace AmpYear
 					commandPod = null;
 				}
 
-				//Debug.Log("update3");
-
 				//Estimate the amount of power drain
 				if (UnityEngine.Time.time - lastEstimatedDrainTime > DRAIN_ESTIMATE_INTERVAL)
 				{
@@ -353,8 +345,6 @@ namespace AmpYear
 					estimateLastTotalCharge = totalElectricCharge;
 				}
 
-				//Debug.Log("update4");
-
 				if (isPrimaryPart)
 					subsystemUpdate();
 				else
@@ -364,8 +354,6 @@ namespace AmpYear
 				if (ayPart != null)
 					ayPart.ASASActive = false;
 			}
-
-			//Debug.Log("update end");
 
 		}
 
@@ -653,6 +641,7 @@ namespace AmpYear
 				vessel.ActionGroups.SetGroup(KSPActionGroup.RCS, false);
 				reenableRCS = true;
 			}
+
 			if (vessel.ActionGroups[KSPActionGroup.SAS]) {
 
 				if (!subsystemPowered(Subsystem.SAS))
@@ -676,17 +665,16 @@ namespace AmpYear
 						{
 							//Turn off flight computer if SAS was turned on second
 							sasWasFirst = true;
-							foreach (RemoteTech.AttitudeStateButton button in flightComputerGUI.attitudeButtons)
-							{
-								button.on = false;
-								button.Update();
-							}
+							deactivateFlightComputer();
 						}
 					}
 					else
 						sasWasFirst = true;
 				}
 			}
+
+			if (!subsystemEnabled(Subsystem.FLIGHT_COMPUTER) || !hasPower || !managerIsActive)
+				deactivateFlightComputer(); //Turn off flight computer if it isn't enabled and receiving power
 
 			if (managerIsActive && hasPower)
 			{
@@ -788,6 +776,18 @@ namespace AmpYear
 			}
 		}
 
+		private void deactivateFlightComputer()
+		{
+			foreach (RemoteTech.AttitudeStateButton button in flightComputerGUI.attitudeButtons)
+			{
+				if (button.on)
+				{
+					button.on = false;
+					button.Update();
+				}
+			}
+		}
+
 		//GUI Section
 
 		public static string guiSectionName(GUISection section)
@@ -838,8 +838,7 @@ namespace AmpYear
 		{
 			if (isPrimaryPart)
 			{
-				if (subsystemPowered(Subsystem.FLIGHT_COMPUTER))
-					flightComputer.drive(state);
+				flightComputer.drive(state);
 
 				if (!subsystemPowered(Subsystem.TURNING))
 				{
