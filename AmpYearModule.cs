@@ -115,6 +115,7 @@ namespace AmpYear
 
 		bool hasRCS = false;
 		float currentRCSThrust = 0.0f;
+		float currentPoweredRCSDrain = 0.0f;
 
 		int totalHeatedParts = 0;
 		int totalCooledParts = 0;
@@ -251,6 +252,7 @@ namespace AmpYear
 
 				hasRCS = false;
 				currentRCSThrust = 0.0f;
+				currentPoweredRCSDrain = 0.0f;
 
 				crewablePartList.Clear();
 
@@ -309,9 +311,14 @@ namespace AmpYear
 							ModuleRCS rcs = (ModuleRCS)module;
 							foreach (float thrust in rcs.thrustForces)
 								currentRCSThrust += thrust;
+
+							if (module is ModuleAmpYearPoweredRCS)
+							{
+								currentPoweredRCSDrain += ((ModuleAmpYearPoweredRCS)module).electricityUse;
+								((ModuleAmpYearPoweredRCS)module).isManaged = true; //Inform the thruster that it is being managed
+							}
 						}
 					}
-
 
 					//Sum up the power capacity of all parts
 					if (!has_alternator) //Ignore parts with alternators in power-capacity calculate because they don't actually store power
@@ -574,7 +581,7 @@ namespace AmpYear
 					return sasTorque * SAS_TORQUE_DRAIN_FACTOR;
 
 				case Subsystem.RCS:
-					return RCS_DRAIN;
+					return RCS_DRAIN + currentPoweredRCSDrain;
 
 				case Subsystem.ASAS:
 					return ASAS_DRAIN;
@@ -944,7 +951,12 @@ namespace AmpYear
 
 		//Resources
 
-		private double requestResource(String name, double amount)
+		public double requestResource(String name, double amount)
+		{
+			return requestResource(name, amount, part);
+		}
+
+		public static double requestResource(String name, double amount, Part part)
 		{
 			if (amount <= 0.0)
 				return 0.0;
@@ -969,18 +981,18 @@ namespace AmpYear
 
 		private void transferReserveToMain(double amount)
 		{
-			Debug.Log("main: " + totalElectricCharge);
-			Debug.Log("reserve: " + totalReservePower);
+			//Debug.Log("main: " + totalElectricCharge);
+			//Debug.Log("reserve: " + totalReservePower);
 			if (amount > totalReservePower * RECHARGE_OVERFLOW_AVOID_FACTOR)
 				amount = totalReservePower * RECHARGE_OVERFLOW_AVOID_FACTOR;
 
 			if (amount > (totalElectricChargeCapacity - totalElectricCharge))
 				amount = (totalElectricChargeCapacity - totalElectricCharge);
 
-			Debug.Log("amount: " + amount);
+			//Debug.Log("amount: " + amount);
 
 			double received = requestResource(RESERVE_POWER_NAME, amount);
-			Debug.Log("received: " + received);
+			//Debug.Log("received: " + received);
 
 			int transfer_attempts = 0;
 			while (received > 0.0 && transfer_attempts < MAX_TRANSFER_ATTEMPTS)
@@ -989,7 +1001,7 @@ namespace AmpYear
 				transfer_attempts++;
 			}
 
-			Debug.Log("generated: " + (amount-received).ToString());
+			//Debug.Log("generated: " + (amount-received).ToString());
 		}
 
 		private void transferMainToReserve(double amount)
@@ -1001,7 +1013,7 @@ namespace AmpYear
 				amount = (totalReservePowerCapacity - totalReservePower);
 
 			double received = requestResource(MAIN_POWER_NAME, amount);
-			Debug.Log("received: " + received);
+			//Debug.Log("received: " + received);
 
 			int transfer_attempts = 0;
 			while (received > 0.0 && transfer_attempts < MAX_TRANSFER_ATTEMPTS)
@@ -1010,7 +1022,7 @@ namespace AmpYear
 				transfer_attempts++;
 			}
 
-			Debug.Log("generated: " + (amount - received).ToString());
+			//Debug.Log("generated: " + (amount - received).ToString());
 		}
 
 		//GUI
