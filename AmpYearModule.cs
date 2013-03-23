@@ -113,6 +113,9 @@ namespace AmpYear
 		double totalReservePower = 0.0;
 		double totalReservePowerCapacity = 0.0;
 
+		bool hasRCS = false;
+		float currentRCSThrust = 0.0f;
+
 		int totalHeatedParts = 0;
 		int totalCooledParts = 0;
 
@@ -125,6 +128,8 @@ namespace AmpYear
 		bool sasWasFirst = false;
 		bool reenableRCS = false;
 		bool reenableSAS = false;
+		bool reenableFlightComp = false;
+		RemoteTech.AttitudeMode reenableAttitudeMode = RemoteTech.AttitudeMode.KILLROT;
 
 		//GUI Properties
 
@@ -244,6 +249,9 @@ namespace AmpYear
 				totalHeatedParts = 0;
 				totalCooledParts = 0;
 
+				hasRCS = false;
+				currentRCSThrust = 0.0f;
+
 				crewablePartList.Clear();
 
 				bool determined_primary = false;
@@ -287,8 +295,26 @@ namespace AmpYear
 						sasAdditionalRotPower += sas_module.maxTorque * SAS_POWER_TURN_TORQUE_FACTOR;
 					}
 
-					//Ignore parts with alternators in power-capacity calculate because they don't actually store power
-					if (!current_part.Modules.Contains("ModuleAlternator"))
+					bool has_alternator = false;
+
+					foreach (PartModule module in current_part.Modules)
+					{
+						if (module is ModuleAlternator)
+							has_alternator = true;
+
+						if (module is ModuleRCS)
+						{
+							hasRCS = true;
+
+							ModuleRCS rcs = (ModuleRCS)module;
+							foreach (float thrust in rcs.thrustForces)
+								currentRCSThrust += thrust;
+						}
+					}
+
+
+					//Sum up the power capacity of all parts
+					if (!has_alternator) //Ignore parts with alternators in power-capacity calculate because they don't actually store power
 					{
 						foreach (PartResource resource in current_part.Resources)
 						{
@@ -315,7 +341,9 @@ namespace AmpYear
 
 						crewablePartList.Add(current_part);
 					}
+
 				}
+
 				//Update command module rot-power to account for power turn
 				if (commandPod != null && command_module_correct)
 				{
@@ -512,6 +540,29 @@ namespace AmpYear
 			return hasPower && managerIsActive && subsystemActive(subsystem);
 		}
 
+		public bool subsystemVisible(Subsystem subsystem)
+		{
+			switch (subsystem)
+			{
+				case Subsystem.POWER_TURN:
+					return sasAdditionalRotPower > 0.0f;
+
+				case Subsystem.RCS:
+					return hasRCS;
+
+				case Subsystem.HEATER:
+				case Subsystem.COOLER:
+				case Subsystem.MUSIC:
+					return crewablePartList.Count > 0;
+
+				case Subsystem.MASSAGE:
+					return vessel.GetCrewCount() > 0;
+
+				default:
+					return true;
+			}
+		}
+
 		public double subsystemActiveDrain(Subsystem subsystem)
 		{
 			switch (subsystem)
@@ -560,6 +611,12 @@ namespace AmpYear
 
 			switch (subsystem)
 			{
+				case Subsystem.RCS:
+					if (currentRCSThrust > 0.0f)
+						return subsystemActiveDrain(subsystem);
+					else
+						return 0.0;
+
 				case Subsystem.TURNING:
 					return turningFactor * subsystemActiveDrain(subsystem);
 
@@ -674,7 +731,16 @@ namespace AmpYear
 			}
 
 			if (!subsystemEnabled(Subsystem.FLIGHT_COMPUTER) || !hasPower || !managerIsActive)
-				deactivateFlightComputer(); //Turn off flight computer if it isn't enabled and receiving power
+			{
+				RemoteTech.AttitudeMode reenable_mode = RemoteTech.AttitudeMode.KILLROT;
+
+				//Turn off flight computer if it isn't enabled and receiving power
+				if (deactivateFlightComputer(ref reenable_mode) && subsystemEnabled(Subsystem.FLIGHT_COMPUTER))
+				{
+					reenableFlightComp = true;
+					reenableAttitudeMode = reenable_mode;
+				}
+			}
 
 			if (managerIsActive && hasPower)
 			{
@@ -689,6 +755,20 @@ namespace AmpYear
 				{
 					setSubsystemEnabled(Subsystem.RCS, true);
 					reenableRCS = false;
+				}
+
+				if (reenableFlightComp)
+				{
+					foreach (RemoteTech.AttitudeStateButton button in flightComputerGUI.attitudeButtons)
+					{
+						if (button.mode == reenableAttitudeMode)
+						{
+							button.on = true;
+							button.Update();
+							break;
+						}
+					}
+					reenableFlightComp = false;
 				}
 			}
 
@@ -776,7 +856,13 @@ namespace AmpYear
 			}
 		}
 
-		private void deactivateFlightComputer()
+		private bool deactivateFlightComputer()
+		{
+			RemoteTech.AttitudeMode mode = RemoteTech.AttitudeMode.KILLROT;
+			return deactivateFlightComputer(ref mode);
+		}
+
+		private bool deactivateFlightComputer(ref RemoteTech.AttitudeMode mode)
 		{
 			foreach (RemoteTech.AttitudeStateButton button in flightComputerGUI.attitudeButtons)
 			{
@@ -784,8 +870,12 @@ namespace AmpYear
 				{
 					button.on = false;
 					button.Update();
+					mode = button.mode;
+					return true;
 				}
 			}
+
+			return false;
 		}
 
 		//GUI Section
@@ -1048,7 +1138,7 @@ namespace AmpYear
 					GUILayout.Label("Subsystems", sectionTitleStyle);
 					foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
 					{
-						if (!subsystemIsLuxury(subsystem))
+						if (!subsystemIsLuxury(subsystem) && subsystemVisible(subsystem))
 						{
 							GUILayout.BeginHorizontal();
 							subsystemButton(subsystem);
@@ -1064,7 +1154,7 @@ namespace AmpYear
 					GUILayout.Label("Luxury", sectionTitleStyle);
 					foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
 					{
-						if (subsystemIsLuxury(subsystem))
+						if (subsystemIsLuxury(subsystem) && subsystemVisible(subsystem))
 						{
 							GUILayout.BeginHorizontal();
 							subsystemButton(subsystem);
