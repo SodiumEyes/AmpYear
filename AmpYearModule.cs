@@ -40,6 +40,7 @@ namespace AmpYear
 
 		public const double TURN_ROT_POWER_DRAIN_FACTOR = 1.0 / 40.0;
 		public const float TURN_INACTIVE_ROT_FACTOR = 0.1f;
+		public const float POWER_UP_DELAY = 0.5f;
 
 		public const double SAS_BASE_DRAIN = 1.0 / 60.0;
 		public const double SAS_TORQUE_DRAIN_FACTOR = 1.0 / 160.0;
@@ -96,6 +97,7 @@ namespace AmpYear
 		private bool hasPower = true;
 		private bool hasReservePower = true;
 		private bool isPrimaryPart = false;
+		private float powerUpTime = 0.0f;
 
 		private bool subsysLoaded = false;
 		private bool guiSectionLoaded = false;
@@ -814,10 +816,17 @@ namespace AmpYear
 
 			if (totalElectricCharge >= minimum_sufficient_charge)
 			{
-				hasPower = timestep_drain <= 0.0 || requestResource(MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99);
+				hasPower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
+				 && (timestep_drain <= 0.0 || requestResource(MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99));
 			}
 			else
 				hasPower = false;
+
+			if (!hasPower && UnityEngine.Time.realtimeSinceStartup > powerUpTime)
+			{
+				//Set a delay for powering back up to avoid rapid flickering of the system
+				powerUpTime = UnityEngine.Time.realtimeSinceStartup + POWER_UP_DELAY;
+			}
 
 			if (!hasPower && totalReservePower > minimum_sufficient_charge)
 			{

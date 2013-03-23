@@ -42,12 +42,9 @@ namespace AmpYear
 
 		public override void OnUpdate()
 		{
-
 			base.OnUpdate();
-
 			enabled = isManaged;
 			isManaged = false;
-
 		}
 
 	}
