@@ -34,9 +34,9 @@ namespace AmpYear
 		//Constants
 
 		public const double MANAGER_ACTIVE_DRAIN = 1.0 / 300.0;
-		public const double ASAS_DRAIN = 2.0 / 60.0;
+		public const double ASAS_DRAIN = 3.0 / 60.0;
 		public const double RCS_DRAIN = 1.0 / 60.0;
-		public const double FLIGHT_COMPUTER_DRAIN = 1.0 / 2.0;
+		public const double FLIGHT_COMPUTER_DRAIN = 1.0;
 
 		public const double TURN_ROT_POWER_DRAIN_FACTOR = 1.0 / 40.0;
 		public const float TURN_INACTIVE_ROT_FACTOR = 0.1f;
@@ -80,11 +80,6 @@ namespace AmpYear
 			private set;
 			get;
 		}
-		public CommandPod commandPod
-		{
-			private set;
-			get;
-		}
 		public Vessel lastVessel;
 		public FlightInputCallback flightCallback;
 
@@ -104,9 +99,9 @@ namespace AmpYear
 		private bool guiEnabled = true;
 
 		public List<Part> crewablePartList = new List<Part>();
+		public List<CommandPod> commandPods = new List<CommandPod>();
 
 		float totalDefaultRotPower = 0.0f;
-		float commandPodDefaultRotPower = 0.0f;
 		float sasTorque = 0.0f;
 		float sasAdditionalRotPower = 0.0f;
 		double turningFactor = 0.0;
@@ -122,12 +117,6 @@ namespace AmpYear
 		int totalHeatedParts = 0;
 		int totalCooledParts = 0;
 
-		double lastEstimatedDrainTime = 0.0;
-		double lastEstimatedDrainTimeUT = 0.0;
-		double estimateLastTotalCharge = 0.0;
-
-		double estimatedDrain = 0.0;
-
 		bool sasWasFirst = false;
 		bool reenableRCS = false;
 		bool reenableSAS = false;
@@ -140,6 +129,10 @@ namespace AmpYear
 
 		public GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle;
 		public GUILayoutOption[] subsystemButtonOptions;
+
+		//Static Properties
+
+		public static Dictionary<String, float> podRotPowerMap = new Dictionary<string, float>();
 
 		//PartModule
 
@@ -179,7 +172,6 @@ namespace AmpYear
 
 			//Init properties
 			ayPart = (AmpYearPart)part;
-			commandPod = null;
 
 			if (!subsysLoaded)
 			{
@@ -257,10 +249,9 @@ namespace AmpYear
 				currentPoweredRCSDrain = 0.0f;
 
 				crewablePartList.Clear();
+				commandPods.Clear();
 
 				bool determined_primary = false;
-
-				bool command_module_correct = false;
 
 				foreach (Part current_part in vessel.parts)
 				{
@@ -274,22 +265,26 @@ namespace AmpYear
 
 					if (current_part is CommandPod)
 					{
-						if (commandPod == null)
-						{
-							//Find the ship's command pod
-							commandPod = (CommandPod)current_part;
-							commandPodDefaultRotPower = commandPod.rotPower;
-						}
 
-						if (commandPod == current_part)
+						CommandPod pod = (CommandPod)current_part;
+						String name = pod.partInfo.name;
+
+						float default_rot_power = pod.rotPower;
+
+						if (!podRotPowerMap.ContainsKey(name))
 						{
-							totalDefaultRotPower += commandPodDefaultRotPower;
-							command_module_correct = true;
+							//Map the part's default rot power to its name
+							podRotPowerMap.Add(name, pod.rotPower);
+							Debug.Log("Rot Power: " + name + " - " + pod.rotPower);
 						}
 						else
-							totalDefaultRotPower += ((CommandPod)current_part).rotPower;
+							podRotPowerMap.TryGetValue(name, out default_rot_power);
 
-						sasTorque += ((CommandPod)current_part).maxTorque;
+						commandPods.Add(pod);
+
+						totalDefaultRotPower += default_rot_power;
+						sasTorque += pod.maxTorque;
+
 					}
 
 					if (current_part is SASModule)
@@ -351,35 +346,6 @@ namespace AmpYear
 						crewablePartList.Add(current_part);
 					}
 
-				}
-
-				//Update command module rot-power to account for power turn
-				if (commandPod != null && command_module_correct)
-				{
-					if (subsystemPowered(Subsystem.POWER_TURN))
-						commandPod.rotPower = commandPodDefaultRotPower + sasAdditionalRotPower;
-					else
-						commandPod.rotPower = commandPodDefaultRotPower;
-				}
-				else
-				{
-					if (commandPod != null)
-						commandPod.rotPower = commandPodDefaultRotPower;
-					commandPod = null;
-				}
-
-				//Estimate the amount of power drain
-				if (UnityEngine.Time.time - lastEstimatedDrainTime > DRAIN_ESTIMATE_INTERVAL)
-				{
-					if (lastEstimatedDrainTimeUT > 0.0)
-					{
-						double time_delta = Planetarium.GetUniversalTime() - lastEstimatedDrainTimeUT;
-						estimatedDrain = ((estimateLastTotalCharge - totalElectricCharge) / time_delta);
-					}
-
-					lastEstimatedDrainTime = UnityEngine.Time.time;
-					lastEstimatedDrainTimeUT = Planetarium.GetUniversalTime();
-					estimateLastTotalCharge = totalElectricCharge;
 				}
 
 				if (isPrimaryPart)
@@ -531,7 +497,7 @@ namespace AmpYear
 					return subsystemEnabled(Subsystem.SAS);
 
 				case Subsystem.FLIGHT_COMPUTER:
-					return subsystemEnabled(Subsystem.TURNING) && flightComputer.AttitudeActive;
+					return flightComputer.AttitudeActive;
 
 				case Subsystem.HEATER:
 					return totalHeatedParts < crewablePartList.Count;
@@ -596,11 +562,8 @@ namespace AmpYear
 
 				case Subsystem.HEATER:
 				case Subsystem.COOLER:
-					if (commandPod != null)
-						return HEATER_HEAT_RATE
-							* (crewablePartList.Count * HEATER_BASE_DRAIN_FACTOR + HEATER_CAPACITY_DRAIN_FACTOR * vessel.GetCrewCapacity());
-					else
-						return 0.0;
+					return HEATER_HEAT_RATE
+						* (crewablePartList.Count * HEATER_BASE_DRAIN_FACTOR + HEATER_CAPACITY_DRAIN_FACTOR * vessel.GetCrewCapacity());
 
 				case Subsystem.MUSIC:
 					return 1.0 / 120.0 * crewablePartList.Count;
@@ -781,6 +744,31 @@ namespace AmpYear
 				}
 			}
 
+			//Update command pod rot powers
+			bool turning_on = subsystemPowered(Subsystem.TURNING);
+			bool power_turn_on = subsystemPowered(Subsystem.POWER_TURN);
+			bool first = true;
+
+			foreach (CommandPod pod in commandPods)
+			{
+				float default_rot_power = pod.rotPower;
+				podRotPowerMap.TryGetValue(pod.partInfo.name, out default_rot_power);
+
+				if (turning_on)
+				{
+					if (power_turn_on && first)
+					{
+						//Apply power turn rotPower
+						pod.rotPower = default_rot_power + sasAdditionalRotPower;
+						first = false;
+					}
+					else
+						pod.rotPower = default_rot_power; //Use default rot power
+				}
+				else
+					pod.rotPower = default_rot_power * TURN_INACTIVE_ROT_FACTOR;
+			}
+
 			if (subsystemPowered(Subsystem.FLIGHT_COMPUTER) && !subsystemPowered(Subsystem.SAS)) 
 				sasWasFirst = false;
 
@@ -799,8 +787,6 @@ namespace AmpYear
 				subsystemDrain[(int)subsystem] = subsystemCurrentDrain(subsystem);
 				subsystem_drain += subsystemDrain[(int)subsystem];
 			}
-
-			turningFactor = 0.0f;
 
 			double manager_drain = managerCurrentDrain;
 			double total_manager_drain = subsystem_drain + manager_drain;
@@ -945,16 +931,7 @@ namespace AmpYear
 			if (isPrimaryPart)
 			{
 				flightComputer.drive(state);
-
-				if (!subsystemPowered(Subsystem.TURNING))
-				{
-					//Reduce the turning rate if turning subsystem isn't active
-					state.pitch *= TURN_INACTIVE_ROT_FACTOR;
-					state.yaw *= TURN_INACTIVE_ROT_FACTOR;
-					state.roll *= TURN_INACTIVE_ROT_FACTOR;
-				}
-
-				turningFactor += (Math.Abs(state.pitch) + Math.Abs(state.roll) + Math.Abs(state.yaw)) / 3.0;
+				turningFactor = (Math.Abs(state.pitch) + Math.Abs(state.roll) + Math.Abs(state.yaw)) / 3.0;
 			}
 		}
 
