@@ -8,55 +8,79 @@
     <ProjectGuid>{AACF3579-E4E6-48BB-B278-E7B664D06F65}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AmpYear</RootNamespace>
+    <RootNamespace>AY</RootNamespace>
     <AssemblyName>AmpYear</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>.\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="KAS, Version=1.0.5325.39758, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\KAS.dll</HintPath>
+    </Reference>
+    <Reference Include="NearFutureElectrical">
+      <HintPath>.\NearFutureElectrical.dll</HintPath>
+    </Reference>
+    <Reference Include="RemoteTech, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\RemoteTech.dll</HintPath>
+    </Reference>
+    <Reference Include="SCANsat">
+      <HintPath>.\SCANsat.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine">
-      <HintPath>.\UnityEngine.dll</HintPath>
+    <Reference Include="TacLifeSupport">
+      <HintPath>..\..\..\..\..\..\Kerbal Space Program - Career\GameData\ThunderAerospace\TacLifeSupport\TacLifeSupport.dll</HintPath>
+    </Reference>
+    <Reference Include="Telemachus">
+      <HintPath>.\Telemachus.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AmpYearModule.cs" />
-    <Compile Include="AmpYearPart.cs" />
+    <Compile Include="AmpYear.cs" />
+    <Compile Include="GameSettings.cs" />
+    <Compile Include="Utilities.cs" />
+    <Compile Include="VesselInfo.cs" />
+    <Compile Include="AYCrewPart.cs" />
     <Compile Include="AYGlobalSettings.cs" />
-    <Compile Include="AYSettings.cs" />
-    <Compile Include="AYVesselSettings.cs" />
-    <Compile Include="FlightComputer.cs" />
-    <Compile Include="FlightComputerGUI.cs" />
-    <Compile Include="ModuleAmpYearPoweredRCS.cs" />
+    <Compile Include="AYMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RTUtils.cs" />
-    <Compile Include="StructsAndEnums.cs" />
+    <Compile Include="ToolBarManager.cs" />
+    <Compile Include="ModuleAmpYearPoweredRCS.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
