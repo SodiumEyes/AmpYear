@@ -1,6 +1,7 @@
 # AmpYear
 A KSP plugin that allows better management of electricity and adds ION RCS & Pulsed Plasma Thruster RCS.
 Fork of original AmpYear by SodiumEyes until he returns or gives permission to take over the Mod. 
+Requires Module Manager by Sarbian. Link available in the KSP forum Post.
 
 Notes for Operation:
 The manager function must be switched on (via the menu) for a small Electrical cost to manage power consumption across the vehicle. You cannot activate autopilot/SAS, subysstems, luxury items unless the Manager is active.
