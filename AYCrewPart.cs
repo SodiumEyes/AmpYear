@@ -1,60 +1,61 @@
 ﻿/**
  * AYCrewPart.cs
- * 
- * AmpYear power management. 
- * (C) Copyright 2015, Jamie Leighton
- * 
+ *
+ * AmpYear power management.
+ * The original code and concept of AmpYear rights go to SodiumEyes on the Kerbal Space Program Forums, which was covered by GNU License GPL (no version stated).
+ * As such this code continues to be covered by GNU GPL license.
+ *
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
- * 
- * This code is licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 3.0)
- * creative commons license. See <http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode>
- * for full details.
- * 
- * Attribution — You are free to modify this code, so long as you mention that the resulting
- * work is based upon or adapted from this code.
- * 
- * Non-commercial - You may not use this work for commercial purposes.
- * 
- * Share Alike — If you alter, transform, or build upon this work, you may distribute the
- * resulting work only under the same or similar license to the CC BY-NC-SA 3.0 license.
- *  
+ *
+ *  This file is part of AmpYear.
+ *
+ *  AmpYear is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  AmpYear is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with AmpYear.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
-
 
 namespace AY
 {
-    class AYCrewPart : PartModule
+    internal class AYCrewPart : PartModule
     {
-
         // New context menu info
-        [KSPField(isPersistant = true, guiName = "Cabin Temperature ", guiUnits = "C", guiFormat = "F1", guiActive = true)]
-        public float CabinTemp = 0f;       
+        [KSPField(isPersistant = true, guiName = "Cabin Temperature", guiUnits = "C", guiFormat = "F1", guiActive = true)]
+        public float CabinTemp = 0f;
 
+        [KSPField(isPersistant = true, guiName = "Outside Temperature", guiUnits = "C", guiFormat = "F1", guiActive = true)]
+        public float ambient = 0f;
+
+        [KSPField(isPersistant = true, guiName = "CabinCraziness", guiUnits = "%", guiFormat = "N", guiActive = true)]
+        public float CabinCraziness = 0f;
 
         public override void OnStart(PartModule.StartState state)
         {
             base.OnStart(state);
             if (CabinTemp == 0f)
-            CabinTemp = base.part.temperature;
+                CabinTemp = base.part.temperature;
             
-            Utilities.LogFormatted_DebugOnly("AYCrewPart Onstart " + base.part.name + " " + base.part.flightID + " CabinTemp = " + CabinTemp);
+            this.Log_Debug( "AYCrewPart Onstart " + base.part.name + " " + base.part.flightID + " CabinTemp = " + CabinTemp);
         }
 
-        public override void  OnUpdate()
-        {           
-            Utilities.LogFormatted_DebugOnly("AYcrewpart cabintemp = " + CabinTemp);
-            float ambient = vessel.flightIntegrator.getExternalTemperature();
-            Utilities.LogFormatted_DebugOnly("AYcrewpart ambienttemp = " + ambient);
+        public override void OnUpdate()
+        {
+            //Update the Cabin Temperature slowly towards the outside ambient temperature.
+            ambient = vessel.flightIntegrator.getExternalTemperature();
             float CabinTmpRngLow = ambient - 0.5f;
             float CabinTmpRngHgh = ambient + 0.5f;
             if (CabinTemp < CabinTmpRngHgh && CabinTemp > CabinTmpRngLow)
-                Utilities.LogFormatted_DebugOnly("AYcrewpart cabintemp almost outside temp ");   
+                this.Log_Debug( "AYcrewpart cabintemp almost outside temp ");
             else
             {
                 if (CabinTemp < ambient)
@@ -65,18 +66,8 @@ namespace AY
                 {
                     CabinTemp -= TimeWarp.deltaTime * 0.05f;
                 }
-                Utilities.LogFormatted_DebugOnly("AYcrewpart adjusted temp = " + CabinTemp);
-            }            
+            }
             base.OnUpdate();
-        }
-        
-
-        [KSPEvent(guiActive = true, guiName = "Toggle AY GUI")]
-        public void toggleGUI()
-        {
-            AYMenu AYM;
-            AYM = FindObjectOfType<AYMenu>();
-            AYM.GuiVisible = !AYM.GuiVisible;
         }
     }
 }

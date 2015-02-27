@@ -1,31 +1,28 @@
 ﻿/**
  * Utilities.cs
- * 
- * AmpYear power management. 
+ *
+ * AmpYear power management.
  * (C) Copyright 2015, Jamie Leighton
- * 
- * This code is based on the work by :-
- * Thunder Aerospace Corporation's library for the Kerbal Space Program, by Taranis Elsu * 
- * (C) Copyright 2013, Taranis Elsu
- * 
+ * The original code and concept of AmpYear rights go to SodiumEyes on the Kerbal Space Program Forums, which was covered by GNU License GPL (no version stated).
+ * As such this code continues to be covered by GNU GPL license.
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
- * 
- * This code is licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 3.0)
- * creative commons license. See <http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode>
- * for full details.
- * 
- * Attribution — You are free to modify this code, so long as you mention that the resulting
- * work is based upon or adapted from this code.
- * 
- * Non-commercial - You may not use this work for commercial purposes.
- * 
- * Share Alike — If you alter, transform, or build upon this work, you may distribute the
- * resulting work only under the same or similar license to the CC BY-NC-SA 3.0 license.
- * 
- * Note that Thunder Aerospace Corporation is a ficticious entity created for entertainment
- * purposes. It is in no way meant to represent a real entity. Any similarity to a real entity
- * is purely coincidental.
+ *
+ *  This file is part of AmpYear.
+ *
+ *  AmpYear is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  AmpYear is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with AmpYear.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 using KSP.IO;
@@ -39,160 +36,162 @@ namespace AY
 {
     public static class Utilities
     {
-        public static double ToDegrees(double radians)
+        
+        //Formatting time functions
+        
+        public static String formatTime(double seconds)
         {
-            return radians * 180.0 / Math.PI;
-        }
+            int y = (int)(seconds / (6.0 * 60.0 * 60.0 * 426.08));
+            seconds = seconds % (6.0 * 60.0 * 60.0 * 426.08);
+            int d = (int)(seconds / (6.0 * 60.0 * 60.0));
+            seconds = seconds % (6.0 * 60.0 * 60.0);
+            int h = (int)(seconds / (60.0 * 60.0));
+            seconds = seconds % (60.0 * 60.0);
+            int m = (int)(seconds / (60.0));
+            seconds = seconds % (60.0);
 
-        public static double ToRadians(double degrees)
-        {
-            return degrees * Math.PI / 180.0;
-        }
+            List<String> parts = new List<String>();
 
-        public static Rect EnsureVisible(Rect pos, float min = 16.0f)
-        {
-            float xMin = min - pos.width;
-            float xMax = Screen.width - min;
-            float yMin = min - pos.height;
-            float yMax = Screen.height - min;
-
-            pos.x = Mathf.Clamp(pos.x, xMin, xMax);
-            pos.y = Mathf.Clamp(pos.y, yMin, yMax);
-
-            return pos;
-        }
-
-        public static Rect EnsureCompletelyVisible(Rect pos)
-        {
-            float xMin = 0;
-            float xMax = Screen.width - pos.width;
-            float yMin = 0;
-            float yMax = Screen.height - pos.height;
-
-            pos.x = Mathf.Clamp(pos.x, xMin, xMax);
-            pos.y = Mathf.Clamp(pos.y, yMin, yMax);
-
-            return pos;
-        }
-
-        public static Rect ClampToScreenEdge(Rect pos)
-        {
-            float topSeparation = Math.Abs(pos.y);
-            float bottomSeparation = Math.Abs(Screen.height - pos.y - pos.height);
-            float leftSeparation = Math.Abs(pos.x);
-            float rightSeparation = Math.Abs(Screen.width - pos.x - pos.width);
-
-            if (topSeparation <= bottomSeparation && topSeparation <= leftSeparation && topSeparation <= rightSeparation)
+            if (y > 0)
             {
-                pos.y = 0;
-            }
-            else if (leftSeparation <= topSeparation && leftSeparation <= bottomSeparation && leftSeparation <= rightSeparation)
-            {
-                pos.x = 0;
-            }
-            else if (bottomSeparation <= topSeparation && bottomSeparation <= leftSeparation && bottomSeparation <= rightSeparation)
-            {
-                pos.y = Screen.height - pos.height;
-            }
-            else if (rightSeparation <= topSeparation && rightSeparation <= bottomSeparation && rightSeparation <= leftSeparation)
-            {
-                pos.x = Screen.width - pos.width;
+                parts.Add(String.Format("{0}:year ", y));
             }
 
-            return pos;
-        }
-
-        public static Texture2D LoadImage<T>(string filename)
-        {
-            if (File.Exists<T>(filename))
+            if (d > 0)
             {
-                var bytes = File.ReadAllBytes<T>(filename);
-                Texture2D texture = new Texture2D(16, 16, TextureFormat.ARGB32, false);
-                texture.LoadImage(bytes);
-                return texture;
+                parts.Add(String.Format("{0}:days ", d));
+            }
+
+            if (h > 0)
+            {
+                parts.Add(String.Format("{0}:hours ", h));
+            }
+
+            if (m > 0)
+            {
+                parts.Add(String.Format("{0}:mins ", m));
+            }
+
+            if (seconds > 0)
+            {
+                parts.Add(String.Format("{0:00}:secs ", seconds));
+            }
+
+            if (parts.Count > 0)
+            {
+                return String.Join(" ", parts.ToArray());
             }
             else
             {
-                return null;
+                return "0s";
             }
         }
+        
+        // Get Config Node Values out of a config node Methods
 
-        public static bool GetValue(ConfigNode config, string name, bool currentValue)
+        public static bool GetNodeValue(ConfigNode confignode, string fieldname, bool defaultValue)
         {
             bool newValue;
-            if (config.HasValue(name) && bool.TryParse(config.GetValue(name), out newValue))
+            if (confignode.HasValue(fieldname) && bool.TryParse(confignode.GetValue(fieldname), out newValue))
             {
                 return newValue;
             }
             else
             {
-                return currentValue;
+                return defaultValue;
             }
         }
 
-        public static int GetValue(ConfigNode config, string name, int currentValue)
+        public static int GetNodeValue(ConfigNode confignode, string fieldname, int defaultValue)
         {
             int newValue;
-            if (config.HasValue(name) && int.TryParse(config.GetValue(name), out newValue))
+            if (confignode.HasValue(fieldname) && int.TryParse(confignode.GetValue(fieldname), out newValue))
             {
                 return newValue;
             }
             else
             {
-                return currentValue;
+                return defaultValue;
             }
         }
 
-        public static float GetValue(ConfigNode config, string name, float currentValue)
+        public static float GetNodeValue(ConfigNode confignode, string fieldname, float defaultValue)
         {
             float newValue;
-            if (config.HasValue(name) && float.TryParse(config.GetValue(name), out newValue))
+            if (confignode.HasValue(fieldname) && float.TryParse(confignode.GetValue(fieldname), out newValue))
             {
                 return newValue;
             }
             else
             {
-                return currentValue;
+                return defaultValue;
             }
         }
 
-        public static double GetValue(ConfigNode config, string name, double currentValue)
+        public static double GetNodeValue(ConfigNode confignode, string fieldname, double defaultValue)
         {
             double newValue;
-            if (config.HasValue(name) && double.TryParse(config.GetValue(name), out newValue))
+            if (confignode.HasValue(fieldname) && double.TryParse(confignode.GetValue(fieldname), out newValue))
             {
                 return newValue;
             }
             else
             {
-                return currentValue;
+                return defaultValue;
             }
         }
 
-        public static string GetValue(ConfigNode config, string name, string currentValue)
+        public static string GetNodeValue(ConfigNode confignode, string fieldname, string defaultValue)
         {
-            if (config.HasValue(name))
+            if (confignode.HasValue(fieldname))
             {
-                return config.GetValue(name);
+                return confignode.GetValue(fieldname);
             }
             else
             {
-                return currentValue;
+                return defaultValue;
             }
         }
 
-        public static T GetValue<T>(ConfigNode config, string name, T currentValue) where T : IComparable, IFormattable, IConvertible
+        public static T GetNodeValue<T>(ConfigNode confignode, string fieldname, T defaultValue) where T : IComparable, IFormattable, IConvertible
         {
-            if (config.HasValue(name))
+            if (confignode.HasValue(fieldname))
             {
-                string stringValue = config.GetValue(name);
+                string stringValue = confignode.GetValue(fieldname);
                 if (Enum.IsDefined(typeof(T), stringValue))
                 {
                     return (T)Enum.Parse(typeof(T), stringValue);
                 }
             }
+            return defaultValue;
+        }
 
-            return currentValue;
+        // GUI & Window Methods
+
+        public static bool WindowVisibile(Rect winpos)
+        {
+            float minmargin = 20.0f; // 20 bytes margin for the window
+            float xMin = minmargin - winpos.width;
+            float xMax = Screen.width - minmargin;
+            float yMin = minmargin - winpos.height;
+            float yMax = Screen.height - minmargin;
+            bool xRnge = (winpos.x > xMin) && (winpos.x < xMax);
+            bool yRnge = (winpos.y > yMin) && (winpos.y < yMax);
+            return xRnge && yRnge;
+        }
+
+        public static Rect MakeWindowVisible(Rect winpos)
+        {
+            float minmargin = 20.0f; // 20 bytes margin for the window
+            float xMin = minmargin - winpos.width;
+            float xMax = Screen.width - minmargin;
+            float yMin = minmargin - winpos.height;
+            float yMax = Screen.height - minmargin;
+
+            winpos.x = Mathf.Clamp(winpos.x, xMin, xMax);
+            winpos.y = Mathf.Clamp(winpos.y, yMin, yMax);
+
+            return winpos;
         }
 
         public static double ShowTextField(string label, GUIStyle labelStyle, double currentValue, int maxLength, GUIStyle editStyle, params GUILayoutOption[] options)
@@ -253,163 +252,10 @@ namespace AY
             return result;
         }
 
-        public static string FormatTime(double value, int numDecimals = 0)
-        {
-            const double SECONDS_PER_MINUTE = 60.0;
-            const double MINUTES_PER_HOUR = 60.0;
-            double HOURS_PER_DAY = (GameSettings.KERBIN_TIME) ? 6.0 : 24.0;
-
-            string sign = "";
-            if (value < 0.0)
-            {
-                sign = "-";
-                value = -value;
-            }
-
-            double seconds = value;
-
-            long minutes = (long)(seconds / SECONDS_PER_MINUTE);
-            seconds -= (long)(minutes * SECONDS_PER_MINUTE);
-
-            long hours = (long)(minutes / MINUTES_PER_HOUR);
-            minutes -= (long)(hours * MINUTES_PER_HOUR);
-
-            long days = (long)(hours / HOURS_PER_DAY);
-            hours -= (long)(days * HOURS_PER_DAY);
-
-            if (days > 0)
-            {
-                return sign + days.ToString("#0") + "d "
-                    + hours.ToString("00") + ":"
-                    + minutes.ToString("00") + ":"
-                    + seconds.ToString("00");
-            }
-            else if (hours > 0)
-            {
-                return sign + hours.ToString("#0") + ":"
-                    + minutes.ToString("00") + ":"
-                    + seconds.ToString("00");
-            }
-            else
-            {
-                string format = "00";
-                if (numDecimals > 0)
-                {
-                    format += "." + new String('0', numDecimals);
-                }
-
-                return sign + minutes.ToString("#0") + ":"
-                    + seconds.ToString(format);
-            }
-        }
-
-        public static string FormatValue(double value, int numDecimals = 2)
-        {
-            string sign = "";
-            if (value < 0.0)
-            {
-                sign = "-";
-                value = -value;
-            }
-
-            string format = "0";
-            if (numDecimals > 0)
-            {
-                format += "." + new String('0', numDecimals);
-            }
-
-            if (value > 1000000000.0)
-            {
-                return sign + (value / 1000000000.0).ToString(format) + " G";
-            }
-            else if (value > 1000000.0)
-            {
-                return sign + (value / 1000000.0).ToString(format) + " M";
-            }
-            else if (value > 1000.0)
-            {
-                return sign + (value / 1000.0).ToString(format) + " k";
-            }
-            else if (value < 0.000000001)
-            {
-                return sign + (value * 1000000000.0).ToString(format) + " n";
-            }
-            else if (value < 0.000001)
-            {
-                return sign + (value * 1000000.0).ToString(format) + " µ";
-            }
-            else if (value < 0.001)
-            {
-                return sign + (value * 1000.0).ToString(format) + " m";
-            }
-            else
-            {
-                return sign + value.ToString(format) + " ";
-            }
-        }
-
-        public static string GetDllVersion<T>(T t)
-        {
-            System.Reflection.Assembly assembly = t.GetType().Assembly;
-            System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-            return fvi.FileVersion;
-        }
-
-        public static GUIStyle GetVersionStyle()
-        {
-            GUIStyle versionStyle = new GUIStyle(GUI.skin.label);
-            versionStyle.alignment = TextAnchor.MiddleLeft;
-            versionStyle.fontSize = 10;
-            versionStyle.fontStyle = FontStyle.Normal;
-            versionStyle.normal.textColor = Color.white;
-            versionStyle.margin.top = 0;
-            versionStyle.margin.bottom = 0;
-            versionStyle.padding.top = 0;
-            versionStyle.padding.bottom = 0;
-            versionStyle.wordWrap = false;
-            return versionStyle;
-        }
-
-        #region Assembly/Class Information
-        /// <summary>
-        /// Name of the Assembly that is running this MonoBehaviour
-        /// </summary>
+        // Logging Functions
+        // Name of the Assembly that is running this MonoBehaviour
         internal static String _AssemblyName
         { get { return System.Reflection.Assembly.GetExecutingAssembly().GetName().Name; } }
-               
-
-        #endregion
-
-        
-
-        #region Logging
-        /// <summary>
-        /// Some Structured logging to the debug file - ONLY RUNS WHEN DLL COMPILED IN DEBUG MODE
-        /// </summary>
-        /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
-        /// <param name="strParams">Objects to feed into a String.format</param>
-        //[System.Diagnostics.Conditional("DEBUG")]
-        internal static void LogFormatted_DebugOnly(String Message, params object[] strParams)
-        {
-            AYGlobalSettings globalsettings = AmpYear.Instance.globalSettings;
-            //if (AYMenu.debugging)
-            if (globalsettings.debugging)
-                LogFormatted("DEBUG: " + Message, strParams);
-        }
-
-        /// <summary>
-        /// Some Structured logging to the debug file
-        /// </summary>
-        /// <param name="Message">Text to be printed - can be formatted as per String.format</param>
-        /// <param name="strParams">Objects to feed into a String.format</param>
-        internal static void LogFormatted(String Message, params object[] strParams)
-        {
-            Message = String.Format(Message, strParams);                  // This fills the params into the message
-            String strMessageLine = String.Format("{0},{2},{1}",
-                DateTime.Now, Message,
-                _AssemblyName);                                           // This adds our standardised wrapper to each line
-            UnityEngine.Debug.Log(strMessageLine);                        // And this puts it in the log
-        }
 
         public static void Log(this UnityEngine.Object obj, string message)
         {
@@ -426,6 +272,25 @@ namespace AY
             Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
-        #endregion
+        public static void Log_Debug(this UnityEngine.Object obj, string message)
+        {
+            AYSettings AYsettings = AmpYear.Instance.AYsettings;
+            if (AYsettings.debugging)
+            Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+        }
+
+        public static void Log_Debug(this System.Object obj, string message)
+        {
+            AYSettings AYsettings = AmpYear.Instance.AYsettings;
+            if (AYsettings.debugging)
+            Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+        }
+
+        public static void Log_Debug(string context, string message)
+        {
+            AYSettings AYsettings = AmpYear.Instance.AYsettings;
+            if (AYsettings.debugging)
+                Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
+        }
     }
 }
