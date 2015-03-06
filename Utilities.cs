@@ -37,6 +37,20 @@ namespace AY
     public static class Utilities
     {
         
+        //Geometry and space
+
+        public static double DistanceFromHomeWorld(Vessel vessel)
+        {
+            Vector3d vslPos = vessel.GetWorldPos3D();
+            CelestialBody HmePlanet = Planetarium.fetch.Home;
+            Log_Debug("AmpYear", "Home = " + HmePlanet.name + " Pos = " + HmePlanet.position.ToString());
+            Log_Debug("AmpYear", "Vessel Pos = " + vslPos.ToString());
+            Vector3d hmeplntPos = HmePlanet.position;
+            double DstFrmHome = Math.Sqrt(Math.Pow((vslPos.x - hmeplntPos.x), 2) + Math.Pow((vslPos.y - hmeplntPos.y), 2) + Math.Pow((vslPos.z - hmeplntPos.z), 2));
+            Log_Debug("AmpYear", "Distance from Home Planet = " + DstFrmHome);
+            return DstFrmHome;
+        }
+        
         //Formatting time functions
         
         public static String formatTime(double seconds)
@@ -291,6 +305,6 @@ namespace AY
             AYSettings AYsettings = AmpYear.Instance.AYsettings;
             if (AYsettings.debugging)
                 Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
-        }
+        }        
     }
 }

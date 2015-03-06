@@ -53,25 +53,29 @@ namespace AY
         private void Start()
         {
             var Currentgame = HighLogic.CurrentGame;
-
+            Utilities.Log("AmpYear  AddScenarioModules", " ScenarioModules Start");
             ProtoScenarioModule protoscenmod = Currentgame.scenarios.Find(s => s.moduleName == typeof(AmpYear).Name);
+            
             if (protoscenmod == null)
             {
-                Utilities.Log_Debug("AmpYear ScenarioModules", " Adding the scenario module.");
+                Utilities.Log("AmpYear AddScenarioModules", " Adding the scenario module.");
                 protoscenmod = Currentgame.AddProtoScenarioModule(typeof(AmpYear), GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR);
             }
             else
-            {
+            {                
                 if (!protoscenmod.targetScenes.Any(s => s == GameScenes.SPACECENTER))
                 {
+                    Utilities.Log("AmpYear  AddScenarioModules", " Adding the SpaceCenter scenario module.");
                     protoscenmod.targetScenes.Add(GameScenes.SPACECENTER);
                 }
                 if (!protoscenmod.targetScenes.Any(s => s == GameScenes.FLIGHT))
                 {
+                    Utilities.Log("AmpYear  AddScenarioModules", " Adding the flight scenario module.");
                     protoscenmod.targetScenes.Add(GameScenes.FLIGHT);
                 }
                 if (!protoscenmod.targetScenes.Any(s => s == GameScenes.EDITOR))
                 {
+                    Utilities.Log("AmpYear  AddScenarioModules", " Adding the Editor scenario module.");
                     protoscenmod.targetScenes.Add(GameScenes.EDITOR);
                 }
             }

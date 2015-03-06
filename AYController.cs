@@ -7,7 +7,7 @@
  * As such this code continues to be covered by GNU GPL license.
  * Parts of this code were copied from Fusebox by the user ratzap on the Kerbal Space Program Forums, which is covered by GNU License GPLv2.
  * Concepts which are common to the Game Kerbal Space Program for which there are common code interfaces as such some of those concepts used
- * by this program were based on:-checkTACL
+ * by this program were based on:
  * Thunder Aerospace Corporation's Life Support for Kerbal Space Program.
  * Written by Taranis Elsu.
  * (C) Copyright 2013, Taranis Elsu
@@ -97,7 +97,7 @@ namespace AY
                 return new PwrPartList(prtName, prtPower, prtPowerF, prtActive);
             }
         }
-
+                
         //AmpYear Properties
         public static List<Part> crewablePartList = new List<Part>();                
         public Dictionary<uint, PwrPartList> vesselProdPartsList { get; private set; }
@@ -148,7 +148,7 @@ namespace AY
         private const float EWINDOW_WIDTH = 200;
         private const float WINDOW_BASE_HEIGHT = 140;
         private Vector2 scrollViewVector = Vector2.zero;
-        private GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle;
+        private GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle, PartListStyle, PartListPartStyle;
         public GUILayoutOption[] subsystemButtonOptions;
         private static int windowID = new System.Random().Next();
         private static GameState mode = GameState.EVA;  // Display mode, currently  0 for In-Flight, 1 for Editor, 2 for EVA (Hide)
@@ -161,11 +161,11 @@ namespace AY
         public static float sumDeltaTime = 0f;
         private static bool doOneUpdate = false;
         public bool EmgcyShutActive = false;
-        //private static bool debugging = false;        
-
+        //private static bool debugging = false;     
+        
         public Rect FwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.FWINDOW_WIDTH, 200);
         public Rect EwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.EWINDOW_WIDTH, 200);
-
+        
         //Constants
         public const double MANAGER_ACTIVE_DRAIN = 1.0 / 60.0;
         public const double RCS_DRAIN = 1.0 / 60.0;        
@@ -512,7 +512,7 @@ namespace AY
                     //loop through all parts in the parts list of the vessel
                     foreach (Part current_part in parts)
                     {
-                        this.Log_Debug("AYController part = " + current_part.name);
+                        //this.Log_Debug("AYController part = " + current_part.name);
                         bool currentEngActive = false;
                         double alt_rate = 0;
                         string PrtName = current_part.name;
@@ -525,17 +525,18 @@ namespace AY
                             CommandPod pod = (CommandPod)current_part;
                             String name = pod.partInfo.name;
 
-                            float default_rot_power = pod.rotPower;
-
-                            if (!podRotPowerMap.ContainsKey(name))
+                            if (mode == GameState.FLIGHT)
                             {
-                                //Map the part's default rot power to its name
-                                podRotPowerMap.Add(name, pod.rotPower);
-                            }
-                            else
-                                podRotPowerMap.TryGetValue(name, out default_rot_power);
-
-                            commandPods.Add(pod);                            
+                                float default_rot_power = pod.rotPower;
+                                if (!podRotPowerMap.ContainsKey(name))
+                                {
+                                    //Map the part's default rot power to its name
+                                    podRotPowerMap.Add(name, pod.rotPower);
+                                }
+                                else
+                                    podRotPowerMap.TryGetValue(name, out default_rot_power);
+                                commandPods.Add(pod);   
+                            }                                                     
 
                             if (TACLPresent)
                                 try
@@ -560,7 +561,7 @@ namespace AY
                         //loop through all the modules in the current part
                         foreach (PartModule module in current_part.Modules)
                         {
-                            this.Log_Debug("AYController module = " + module.name);
+                            //this.Log_Debug("AYController module = " + module.name);
                             if (module is LaunchClamp)
                                 continue; // skip clamps
 
@@ -835,7 +836,8 @@ namespace AY
                             if (module.moduleName == "ModuleReactionWheel")
                             {
                                 ModuleReactionWheel tmpRW = (ModuleReactionWheel)module;
-                                sasAdditionalRotPower += tmpRW.RollTorque * SAS_POWER_TURN_TORQUE_FACTOR;                                
+                                if (mode == GameState.FLIGHT)
+                                    sasAdditionalRotPower += tmpRW.RollTorque * SAS_POWER_TURN_TORQUE_FACTOR;                                
                                 if (mode == GameState.EDITOR || tmpRW.enabled)
                                     PrtActive = true;
 
@@ -1181,7 +1183,7 @@ namespace AY
                                     totalHeatedParts++;
                                 if (((AYCrewPart)module).CabinTemp <= AYsettings.COOLER_TARGET_TEMP)
                                     totalCooledParts++;
-                                if (mode == GameState.FLIGHT)
+                                if (mode == GameState.FLIGHT && AYsettings.Craziness_Function)
                                     CalcPartCraziness(FlightGlobals.ActiveVessel, current_part, module, sumDeltaTime);
                             }
                         } // end modules loop
@@ -1230,10 +1232,10 @@ namespace AY
                     reenableRCS = true;
                 }
 
-                if (cv.ActionGroups[KSPActionGroup.SAS] && !subsystemPowered(Subsystem.SAS))
+                if ((cv.ActionGroups[KSPActionGroup.SAS] && !subsystemPowered(Subsystem.SAS)) || AutoPilotDisabled)
                 {
                     this.Log("SAS - disabled.");
-                    ScreenMessages.PostScreenMessage(cv.vesselName + " - SAS must be enabled through AmpYear first", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                    //ScreenMessages.PostScreenMessage(cv.vesselName + " - SAS must be enabled through AmpYear first", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                     //Disable SAS when the subsystem isn't powered
                     cv.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
                     reenableSAS = true;
@@ -1242,7 +1244,7 @@ namespace AY
                 if (managerIsActive && hasPower)
                 {
                     //Re-enable SAS/RCS if they were shut off by the manager and can be run again
-                    if (reenableSAS)
+                    if (reenableSAS && !AutoPilotDisabled)
                     {
                         setSubsystemEnabled(Subsystem.SAS, true);
                         reenableSAS = false;
@@ -1346,7 +1348,7 @@ namespace AY
                 double manager_drain = managerCurrentDrain;
                 double total_manager_drain = subsystem_drain + manager_drain;
                 totalPowerDrain += total_manager_drain;
-                string PrtName = "AmpYear & Subsystems Max";
+                string PrtName = "AmpYear&Subs - Max";
                 string PrtPower = "";                
                 PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)total_manager_drain, true);
                 addPart(1111, PartAdd, false);
@@ -1936,46 +1938,46 @@ namespace AY
         {
             PwrPartList PartFnd;
 
-            this.Log_Debug("AYController Partadd " + Pkey + " " + PartAdd.PrtName);
-            this.Log_Debug("AYController Partadd S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
+            //this.Log_Debug("AYController Partadd " + Pkey + " " + PartAdd.PrtName);
+            //this.Log_Debug("AYController Partadd S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
 
             if (ProdPrt) // Producer part list
             {
                 if (vesselProdPartsList.TryGetValue(Pkey, out PartFnd))
                 {
-                    this.Log_Debug("AYController Partfnd " + Pkey + " " + PartFnd.PrtName);
-                    this.Log_Debug("AYController Partfnd S" + PartFnd.PrtPower + " F" + PartFnd.PrtPowerF.ToString("00.00000"));
+                    //this.Log_Debug("AYController Partfnd " + Pkey + " " + PartFnd.PrtName);
+                    //this.Log_Debug("AYController Partfnd S" + PartFnd.PrtPower + " F" + PartFnd.PrtPowerF.ToString("00.00000"));
 
                     PartAdd.PrtPowerF += PartFnd.PrtPowerF;
-                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("000.00000");
+                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselProdPartsList[Pkey] = PartAdd;
-                    this.Log_Debug("AYController Partadded " + Pkey + " " + PartAdd.PrtName);
-                    this.Log_Debug("AYController Partadded S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
+                    //this.Log_Debug("AYController Partadded " + Pkey + " " + PartAdd.PrtName);
+                    //this.Log_Debug("AYController Partadded S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
                 }
                 else
                 {
-                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("000.00000");
+                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselProdPartsList.Add(Pkey, PartAdd);
-                    this.Log_Debug("AYController new Partadded");
+                    //this.Log_Debug("AYController new Partadded");
                 }
             }
             else // consumer part list
             {
                 if (vesselConsPartsList.TryGetValue(Pkey, out PartFnd))
                 {
-                    this.Log_Debug("AYController Partfnd " + Pkey + " " + PartFnd.PrtName);
-                    this.Log_Debug("AYController Partfnd S" + PartFnd.PrtPower + " F" + PartFnd.PrtPowerF.ToString("00.00000"));
+                    //this.Log_Debug("AYController Partfnd " + Pkey + " " + PartFnd.PrtName);
+                    //this.Log_Debug("AYController Partfnd S" + PartFnd.PrtPower + " F" + PartFnd.PrtPowerF.ToString("00.00000"));
                     PartAdd.PrtPowerF += PartFnd.PrtPowerF;
-                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("000.00000");
+                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselConsPartsList[Pkey] = PartAdd;
-                    this.Log_Debug("AYController Partadded " + Pkey + " " + PartAdd.PrtName);
-                    this.Log_Debug("AYController Partadded S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
+                    //this.Log_Debug("AYController Partadded " + Pkey + " " + PartAdd.PrtName);
+                    //this.Log_Debug("AYController Partadded S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
                 }
                 else
                 {
-                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("000.00000");
+                    PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselConsPartsList.Add(Pkey, PartAdd);
-                    this.Log_Debug("AYController new Partadded");
+                    //this.Log_Debug("AYController new Partadded");
                 }
             }
         }
@@ -1985,6 +1987,8 @@ namespace AY
         private void CheckVslUpdate()
         {
             // Called every fixed update from fixedupdate - Check for vessels that have been deleted and remove from Dictionary
+            // also updates current active vessel details/settings
+            // adds new vessel if current active vessel is not known and updates it's details/settings
             double currentTime = Planetarium.GetUniversalTime();
             List <Vessel> allVessels = FlightGlobals.Vessels;
             var knownVessels = AYgameSettings.knownVessels;
@@ -2066,6 +2070,9 @@ namespace AY
             vesselInfo.subsystemToggle = subsystemToggle;
             vesselInfo.guiSectionEnableFlag = guiSectionEnableFlag;
             vesselInfo.EmgcyShutActive = EmgcyShutActive;
+            vesselInfo.AutoPilotDisabled = AutoPilotDisabled;
+            vesselInfo.AutoPilotDisCounter = AutoPilotDisCounter;
+            vesselInfo.AutoPilotDisTime = AutoPilotDisTime;
             int crewCapacity = UpdateVesselCounts(vesselInfo, vessel);
         }
 
@@ -2100,6 +2107,7 @@ namespace AY
                 this.Log_Debug("AYController newvessel is not active vessel");
                 return;
             }
+            // otherwise we load the vessel settings
             currentvesselid = newvessel.id;
             loadVesselSettings(newvessel, info);
         }
@@ -2115,6 +2123,7 @@ namespace AY
             if (currentvesselid == newvessel.id)
                 return;
 
+            if (AutoPilotDisabled) ScreenMessages.RemoveMessage(AutoTimer);
             // Update Old Vessel settings into Dictionary
             if (knownVessels.ContainsKey(currentvesselid))
             {
@@ -2122,6 +2131,7 @@ namespace AY
                 UpdateVesselInfo(info, FlightGlobals.ActiveVessel);
                 this.Log_Debug("Updated old vessel dict " + knownVessels[currentvesselid].ToString());
             }
+            // load the settings for the newvessel
             loadVesselSettings(newvessel, info);
             currentvesselid = newvessel.id;
         }
@@ -2142,6 +2152,9 @@ namespace AY
                 managerEnabled = info.managerEnabled;
                 ShowCrew = info.ShowCrew;
                 EmgcyShutActive = info.EmgcyShutActive;
+                AutoPilotDisabled = info.AutoPilotDisabled;
+                AutoPilotDisCounter = info.AutoPilotDisCounter;
+                AutoPilotDisTime = info.AutoPilotDisTime;
             }
             else //New Vessel not found in Dictionary so set default
             {
@@ -2153,6 +2166,9 @@ namespace AY
                 managerEnabled = false;
                 ShowCrew = false;
                 EmgcyShutActive = false;
+                AutoPilotDisabled = false;
+                AutoPilotDisTime = 0f;
+                AutoPilotDisCounter = 0f;
             }
         }
 
@@ -2198,7 +2214,7 @@ namespace AY
             switch (subsystem)
             {
                 case Subsystem.POWER_TURN:
-                    return "PowerTurn";
+                    return "TurnBooster";
 
                 case Subsystem.SAS:
                     return "SAS";
@@ -2466,14 +2482,18 @@ namespace AY
                 if (mode == GameState.FLIGHT)
                 {
                     GUI.skin = HighLogic.Skin;
+                    if (!Utilities.WindowVisibile(FwindowPos))
+                        Utilities.MakeWindowVisible(FwindowPos);
                     FwindowPos = GUILayout.Window(windowID, FwindowPos, windowF, "AmpYear Power Manager",
-                        GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));                   
+                        GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));                    
                 }
             }
 
             if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 GUI.skin = HighLogic.Skin;
+                if (!Utilities.WindowVisibile(EwindowPos))
+                    Utilities.MakeWindowVisible(EwindowPos);
                 EwindowPos = GUILayout.Window(windowID, EwindowPos, windowE, "AmpYear Power Manager",
                     GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                 if (ShowParts) ScrollParts();
@@ -2533,12 +2553,7 @@ namespace AY
                 else
                     consumptionLabel(managerActiveDrain, true);
                 GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                ShowCrew = GUILayout.Toggle(ShowCrew, "ShowCrew", subsystemButtonStyle, subsystemButtonOptions);
-                GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, "EmgcyShutActive", subsystemButtonStyle, subsystemButtonOptions);
-                GUILayout.EndHorizontal();
+                
             }
 
             //Manager status label
@@ -2576,6 +2591,22 @@ namespace AY
             else
                 GUILayout.Label("Insufficient Power", warningStyle);
 
+            if (AYsettings.Craziness_Function)
+            {
+                if (FirstMajCrazyWarning)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Craziness Major Alert!", warningStyle);
+                    GUILayout.EndHorizontal();
+                }
+                else if (FirstMinCrazyWarning)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Craziness Minor Alert!", sectionTitleStyle);
+                    GUILayout.EndHorizontal();
+                }
+            }
+
             if (managerIsActive)
             {
                 //Subsystems
@@ -2592,6 +2623,12 @@ namespace AY
                             GUILayout.EndHorizontal();
                         }
                     }
+                    GUILayout.BeginHorizontal();
+                    ShowCrew = GUILayout.Toggle(ShowCrew, "ShowCrew", subsystemButtonStyle, subsystemButtonOptions);
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, "EmgcyShutActive", subsystemButtonStyle, subsystemButtonOptions);
+                    GUILayout.EndHorizontal();
                 }
 
                 //Luxury
@@ -2664,11 +2701,11 @@ namespace AY
                 {
                     foreach (ProtoCrewMember CrewMbr in VslRstr)
                     {
-                        GUILayout.Label(CrewMbr.name + " " + CrewMbr.experienceTrait.Title, statusStyle);
+                        GUILayout.Label(CrewMbr.name + " - " + CrewMbr.experienceTrait.Title, statusStyle);
                     }
                 }
                 else if (timewarpIsValid)
-                    GUILayout.Label("No Crew OnBoard", warningStyle);
+                    GUILayout.Label("No Crew OnBoard", warningStyle);              
             }
 
             GUILayout.EndVertical();
@@ -2689,9 +2726,8 @@ namespace AY
             //subsystemConsumptionStyle.margin.top = 4;
 
             powerSinkStyle = new GUIStyle(GUI.skin.label);
-            powerSinkStyle.alignment = TextAnchor.MiddleCenter;
+            powerSinkStyle.alignment = TextAnchor.LowerLeft;
             powerSinkStyle.stretchWidth = true;
-            powerSinkStyle.normal.textColor = Color.white;
 
             statusStyle = new GUIStyle(GUI.skin.label);
             statusStyle.alignment = TextAnchor.MiddleCenter;
@@ -2722,20 +2758,20 @@ namespace AY
             GUILayout.EndHorizontal();
             ShowParts = GUILayout.Toggle(ShowParts, "ShowParts", subsystemButtonStyle, subsystemButtonOptions);
             //Power Capacity
-            GUILayout.Label("Power Capacity: " + totalElectricChargeCapacity.ToString("0.000"), statusStyle);
+            GUILayout.Label("Power Capacity: " + totalElectricChargeCapacity.ToString("0.00"), statusStyle);
             if (totalPowerDrain > totalPowerProduced)
-                GUILayout.Label("Power Drain : " + totalPowerDrain.ToString("0.000"), warningStyle);
+                GUILayout.Label("Power Drain : " + totalPowerDrain.ToString("0.00"), warningStyle);
             else
-                GUILayout.Label("Power Drain : " + totalPowerDrain.ToString("0.000"), statusStyle);
+                GUILayout.Label("Power Drain : " + totalPowerDrain.ToString("0.00"), statusStyle);
             if (totalPowerProduced > 0)
-                GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.000"), statusStyle);
+                GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.00"), statusStyle);
             else
-                GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.000"), warningStyle);
+                GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.00"), warningStyle);
 
             //Reserve
             GUILayout.Label("Reserve Power", sectionTitleStyle);
             //Reserve status label
-            GUILayout.Label("Reserve Power Capacity: " + totalReservePowerCapacity.ToString("0.000"), statusStyle);
+            GUILayout.Label("Reserve Power Capacity: " + totalReservePowerCapacity.ToString("0.00"), statusStyle);
             GUILayout.EndVertical();
             GUI.DragWindow();
         }
@@ -2743,22 +2779,35 @@ namespace AY
         private void ScrollParts()
         {
             GUI.skin = HighLogic.Skin;
+
+            PartListStyle = new GUIStyle(GUI.skin.label);
+            PartListStyle.alignment = TextAnchor.LowerLeft;
+            PartListStyle.stretchWidth = false;
+            PartListStyle.normal.textColor = Color.yellow;
+
+            PartListPartStyle = new GUIStyle(GUI.skin.label);
+            PartListPartStyle.alignment = TextAnchor.LowerLeft;
+            PartListPartStyle.stretchWidth = false;
+            PartListPartStyle.normal.textColor = Color.white;
+
             Rect EPLwindowPos = new Rect(EwindowPos.x + EWINDOW_WIDTH + 10, EwindowPos.y, AYController.EWINDOW_WIDTH, Screen.height / 2 - 100);
             // Begin the ScrollView
-            scrollViewVector = GUI.BeginScrollView(EPLwindowPos, scrollViewVector, new Rect(0, 0, EWINDOW_WIDTH - 20, 1700));
+            scrollViewVector = GUI.BeginScrollView(EPLwindowPos, scrollViewVector, new Rect(0, 0, EWINDOW_WIDTH + 100, 1700));
             // Put something inside the ScrollView
-            GUILayout.Label("Power Production Parts", sectionTitleStyle);
+            GUILayout.Label("Power Production Parts",PartListStyle);
+            if (vesselProdPartsList.Count == 0)
+                GUILayout.Label("No Power Producing Parts", PartListPartStyle);
             foreach (var entry in vesselProdPartsList)
             {
-                GUILayout.Label(entry.Value.PrtName + " " + entry.Value.PrtPower, powerSinkStyle);
+                GUILayout.Label(entry.Value.PrtName + " " + entry.Value.PrtPower, PartListPartStyle);
             }
-            GUILayout.Label("Power Consumer Parts", sectionTitleStyle);
+            GUILayout.Label("Power Consumer Parts", PartListStyle);
+            if (vesselConsPartsList.Count == 0)
+                GUILayout.Label("No Power Consuming Parts", PartListPartStyle);
             foreach (var entry in vesselConsPartsList)
             {
-                GUILayout.Label(entry.Value.PrtName + " " + entry.Value.PrtPower, powerSinkStyle);
-            }
-
-            
+                GUILayout.Label(entry.Value.PrtName + " " + entry.Value.PrtPower, PartListPartStyle);
+            }            
             // End the ScrollView
             GUI.EndScrollView();
         }
