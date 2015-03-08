@@ -79,11 +79,20 @@ namespace AY
                 double DstFrmHome = Utilities.DistanceFromHomeWorld(vessel);
                 double DistDiff = DistanceMultiplier(DstFrmHome);
                 this.Log_Debug("BaseCrazy = " + basecrazy.ToString("0.0000000") + " DistDiff = " + DistDiff.ToString("0.000000000000"));
-                this.Log_Debug("Potential Mult = " + (((double)20 * DistDiff) + basecrazy).ToString("0.0000000000"));
+                basecrazy += DistDiff; // Add the distance factor
+                this.Log_Debug("DistMultApplied = " + basecrazy.ToString("0.0000000000"));
+                if (!CrewTempComfortable) //Cabin Temperature is not comfortable so add the uncomfortable factor
+                {                    
+                    basecrazy += AYsettings.CRAZY_CLIMATE_UNCOMF_FACTOR;
+                    this.Log_Debug("CabinTemp is not comfortable, Basecrazy increased to " + basecrazy.ToString("0.0000000"));
+                }
                 // If Luxury items are on, craziness is reduced
-                if (subsystemPowered(Subsystem.HEATER) || subsystemPowered(Subsystem.COOLER)) reducecrazy = AYsettings.CRAZY_CLIMATE_REDUCE_FACTOR;
-                if (subsystemPowered(Subsystem.MUSIC)) reducecrazy += AYsettings.CRAZY_RADIO_REDUCE_FACTOR;
-                if (subsystemPowered(Subsystem.MASSAGE)) reducecrazy += AYsettings.CRAZY_MASSAGE_REDUCE_FACTOR;
+                if (subsystemPowered(Subsystem.CLIMATE)) 
+                    reducecrazy += AYsettings.CRAZY_CLIMATE_REDUCE_FACTOR;
+                if (subsystemPowered(Subsystem.MUSIC)) 
+                    reducecrazy += AYsettings.CRAZY_RADIO_REDUCE_FACTOR;
+                if (subsystemPowered(Subsystem.MASSAGE)) 
+                    reducecrazy += AYsettings.CRAZY_MASSAGE_REDUCE_FACTOR;
                 //Calculate the final craziness amount
                 double timestep_drain = basecrazy - reducecrazy;
                 this.Log_Debug("CALCCRAZY craziness before sumdelta calc = " + timestep_drain);
@@ -122,8 +131,8 @@ namespace AY
                 if (TimeDiff > 120f)
                 {
                     TimeSinceLastCrazyCheck = Time.realtimeSinceStartup;
-                    int dice = RandomDice(3);
-                    int dice2 = RandomDice(3);
+                    int dice = RandomDice(2);
+                    int dice2 = RandomDice(2);
                     if (dice == dice2)
                     {
                         DumpSomething(vessel, current_part, true);
@@ -147,8 +156,8 @@ namespace AY
                     if (TimeDiff > 180f)
                     {
                         TimeSinceLastCrazyCheck = Time.realtimeSinceStartup;
-                        int dice = RandomDice(2);
-                        int dice2 = RandomDice(2);
+                        int dice = RandomDice(3);
+                        int dice2 = RandomDice(3);
                         this.Log_Debug("dice1 =  " + dice + " dice2 = " + dice2);
                         if (dice == dice2)
                         {

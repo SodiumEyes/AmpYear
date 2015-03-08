@@ -118,8 +118,8 @@ namespace AY
         public static float currentRCSThrust = 0.0f;
         public static float currentPoweredRCSDrain = 0.0f;
         public static Guid currentvesselid;
-        public static int totalHeatedParts = 0;
-        public static int totalCooledParts = 0;
+        public static int totalClimateParts = 0;        
+        public static bool CrewTempComfortable = false;
         public static int maxCrew = 0;
         private bool ALPresent = false;
         private bool NFEPresent = false;
@@ -173,8 +173,8 @@ namespace AY
         public const double SAS_BASE_DRAIN = 1.0 / 60.0;
         public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
         public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.25f;
-        public const float HEATER_HEAT_RATE = 2.0f;
-        public const double HEATER_CAPACITY_DRAIN_FACTOR = 0.5;
+        public const float CLIMATE_HEAT_RATE = 1f;
+        public const double CLIMATE_CAPACITY_DRAIN_FACTOR = 0.5;
         public const int MAX_TRANSFER_ATTEMPTS = 4;
         public const double RECHARGE_RESERVE_RATE = 30.0 / 60.0;
         public const double RECHARGE_OVERFLOW_AVOID_FACTOR = 1.0;
@@ -378,8 +378,7 @@ namespace AY
         {
             switch (subsystem)
             {
-                case Subsystem.HEATER:
-                case Subsystem.COOLER:
+                case Subsystem.CLIMATE:                
                 case Subsystem.MUSIC:
                 case Subsystem.MASSAGE:
                     return true;
@@ -400,8 +399,7 @@ namespace AY
                 case Subsystem.RCS:
                     return hasRCS;
 
-                case Subsystem.HEATER:
-                case Subsystem.COOLER:
+                case Subsystem.CLIMATE:
                 case Subsystem.MUSIC:
                     return crewablePartList.Count > 0;
 
@@ -490,8 +488,7 @@ namespace AY
                     totalElectricChargeCapacity = 0.0;
                     totalReservePower = 0.0;
                     totalReservePowerCapacity = 0.0;
-                    totalHeatedParts = 0;
-                    totalCooledParts = 0;
+                    totalClimateParts = 0;
                     totalPowerDrain = 0;
                     totalPowerProduced = 0;
                     hasRCS = false;
@@ -554,6 +551,12 @@ namespace AY
                         {
                             SASModule sas_module = (SASModule)current_part;                           
                             sasAdditionalRotPower += sas_module.maxTorque * SAS_POWER_TURN_TORQUE_FACTOR;
+                        }
+
+                        if (current_part.CrewCapacity > 0)
+                        {
+                            crewablePartList.Add(current_part);
+                            maxCrew += current_part.CrewCapacity;
                         }
 
                         bool has_alternator = false;
@@ -1178,11 +1181,16 @@ namespace AY
                                 }
 
                             if (module is AYCrewPart)
-                            {
-                                if (((AYCrewPart)module).CabinTemp >= AYsettings.HEATER_TARGET_TEMP)
-                                    totalHeatedParts++;
-                                if (((AYCrewPart)module).CabinTemp <= AYsettings.COOLER_TARGET_TEMP)
-                                    totalCooledParts++;
+                            {                                
+                                float ComfortHigh = AYsettings.CLIMATE_TARGET_TEMP + 5;
+                                float ComfortLow = AYsettings.CLIMATE_TARGET_TEMP - 5;
+                                CrewTempComfortable = false;
+                                if ((((AYCrewPart)module).CabinTemp >= ComfortLow) && (((AYCrewPart)module).CabinTemp <= ComfortHigh))
+                                {
+                                    CrewTempComfortable = true;
+                                    totalClimateParts++;
+                                }                      
+                                
                                 if (mode == GameState.FLIGHT && AYsettings.Craziness_Function)
                                     CalcPartCraziness(FlightGlobals.ActiveVessel, current_part, module, sumDeltaTime);
                             }
@@ -1204,13 +1212,7 @@ namespace AY
                                     totalReservePowerCapacity += resource.maxAmount;
                                 }
                             }
-                        }
-
-                        if (current_part.CrewCapacity > 0)
-                        {
-                            crewablePartList.Add(current_part);
-                            maxCrew += current_part.CrewCapacity;
-                        }
+                        }                        
                     } // end part loop
 
                     subsystemUpdate();
@@ -1276,12 +1278,9 @@ namespace AY
                         pod.rotPower = default_rot_power; //Use default rot power
                 }
 
-                if (subsystemPowered(Subsystem.HEATER))
-                    changeCrewedPartsTemperature(AYsettings.HEATER_TARGET_TEMP, true);
-
-                if (subsystemPowered(Subsystem.COOLER))
-                    changeCrewedPartsTemperature(AYsettings.COOLER_TARGET_TEMP, false);
-
+                if (subsystemPowered(Subsystem.CLIMATE))
+                    changeCrewedPartsTemperature(AYsettings.CLIMATE_TARGET_TEMP);
+                
                 //Calculate total drain from subsystems
                 double subsystem_drain = 0.0;
                 foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
@@ -2222,12 +2221,9 @@ namespace AY
                 case Subsystem.RCS:
                     return "RCS";
 
-                case Subsystem.HEATER:
-                    return "Heater";
-
-                case Subsystem.COOLER:
-                    return "Air Cond.";
-
+                case Subsystem.CLIMATE:
+                    return "Climate Control";
+                
                 case Subsystem.MUSIC:
                     return "Smooth Jazz";
 
@@ -2284,11 +2280,8 @@ namespace AY
 
             switch (subsystem)
             {
-                case Subsystem.HEATER:
-                    return totalHeatedParts < crewablePartList.Count;
-
-                case Subsystem.COOLER:
-                    return totalCooledParts < crewablePartList.Count;
+                //case Subsystem.CLIMATE:
+                //    return totalClimateParts < crewablePartList.Count;
 
                 default:
                     return true;
@@ -2330,13 +2323,12 @@ namespace AY
                 case Subsystem.POWER_TURN:
                     return sasAdditionalRotPower * POWER_TURN_DRAIN_FACTOR;
 
-                case Subsystem.HEATER:
-                case Subsystem.COOLER:
+                case Subsystem.CLIMATE:                
                     if (mode == GameState.FLIGHT)
-                        return HEATER_HEAT_RATE
-                               * (crewablePartList.Count * AYsettings.HEATER_BASE_DRAIN_FACTOR + HEATER_CAPACITY_DRAIN_FACTOR * FlightGlobals.ActiveVessel.GetCrewCapacity());
-                    else return HEATER_HEAT_RATE
-                               * (crewablePartList.Count * AYsettings.HEATER_BASE_DRAIN_FACTOR + HEATER_CAPACITY_DRAIN_FACTOR);
+                        return CLIMATE_HEAT_RATE
+                               * (crewablePartList.Count * AYsettings.CLIMATE_BASE_DRAIN_FACTOR + CLIMATE_CAPACITY_DRAIN_FACTOR * FlightGlobals.ActiveVessel.GetCrewCapacity());
+                    else return CLIMATE_HEAT_RATE
+                               * (crewablePartList.Count * AYsettings.CLIMATE_BASE_DRAIN_FACTOR + CLIMATE_CAPACITY_DRAIN_FACTOR);
 
                 case Subsystem.MUSIC:
                     return 1.0 * crewablePartList.Count;
@@ -2356,36 +2348,27 @@ namespace AY
             return hasPower && managerIsActive && subsystemActive(subsystem);
         }
 
-        private void changeCrewedPartsTemperature(double target_temp, bool heat)
-        {
+        private void changeCrewedPartsTemperature(double target_temp)
+        {            
             foreach (Part crewed_part in crewablePartList)
-            {
-                if (heat)
-                {
+            {                
                     foreach (PartModule module in crewed_part.Modules)
                     {
                         if (module.moduleName == "AYCrewPart")
                         {
                             if (((AYCrewPart)module).CabinTemp < target_temp)
                             {
-                                ((AYCrewPart)module).CabinTemp += AYController.HEATER_HEAT_RATE * sumDeltaTime;
+                                ((AYCrewPart)module).CabinTemp += AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
                             }
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (PartModule module in crewed_part.Modules)
-                    {
-                        if (module.moduleName == "AYCrewPart")
-                        {
-                            if (((AYCrewPart)module).CabinTemp > target_temp)
+                            else
                             {
-                                ((AYCrewPart)module).CabinTemp -= AYController.HEATER_HEAT_RATE * sumDeltaTime;
+                                if (((AYCrewPart)module).CabinTemp > target_temp)
+                                {
+                                    ((AYCrewPart)module).CabinTemp -= AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
+                                }
                             }
                         }
-                    }
-                }
+                    }              
             }
         }
 

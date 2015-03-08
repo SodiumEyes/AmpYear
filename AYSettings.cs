@@ -35,13 +35,13 @@ namespace AY
         public float EwindowPosY { get; set; }
         public float SCwindowPosX { get; set; }
         public float SCwindowPosY { get; set; }
-        public double HEATER_BASE_DRAIN_FACTOR { get; set; }
-        public float HEATER_TARGET_TEMP { get; set; }
-        public float COOLER_TARGET_TEMP { get; set; }
+        public double CLIMATE_BASE_DRAIN_FACTOR { get; set; }
+        public float CLIMATE_TARGET_TEMP { get; set; }        
         public double MASSAGE_BASE_DRAIN_FACTOR { get; set; }
         public double RECHARGE_RESERVE_THRESHOLD { get; set; }
         public bool Craziness_Function { get; set; }
         public double CRAZY_BASE_DRAIN_FACTOR { get; set; }
+        public double CRAZY_CLIMATE_UNCOMF_FACTOR { get; set; }
         public double CRAZY_CLIMATE_REDUCE_FACTOR { get; set; }
         public double CRAZY_RADIO_REDUCE_FACTOR { get; set; }
         public double CRAZY_MASSAGE_REDUCE_FACTOR { get; set; }
@@ -58,13 +58,13 @@ namespace AY
             EwindowPosY = 50;
             SCwindowPosX = 40;
             SCwindowPosY = 50;
-            HEATER_BASE_DRAIN_FACTOR = 1.0;
-            HEATER_TARGET_TEMP = 20.0f;
-            COOLER_TARGET_TEMP = 15.0f;
+            CLIMATE_BASE_DRAIN_FACTOR = 1.0;
+            CLIMATE_TARGET_TEMP = 20.0f;            
             MASSAGE_BASE_DRAIN_FACTOR = 3.0;
             RECHARGE_RESERVE_THRESHOLD = 0.95;
             Craziness_Function = true;
             CRAZY_BASE_DRAIN_FACTOR = 0.05;
+            CRAZY_CLIMATE_UNCOMF_FACTOR = 0.02;
             CRAZY_CLIMATE_REDUCE_FACTOR = 0.1;
             CRAZY_RADIO_REDUCE_FACTOR = 0.1;
             CRAZY_MASSAGE_REDUCE_FACTOR = 0.2;
@@ -87,13 +87,13 @@ namespace AY
                 EwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "EwindowPosY", EwindowPosY);
                 SCwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "SCwindowPosX", SCwindowPosX);
                 SCwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "SCwindowPosY", SCwindowPosY);
-                HEATER_BASE_DRAIN_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "HEATER_BASE_DRAIN_FACTOR", HEATER_BASE_DRAIN_FACTOR);
-                HEATER_TARGET_TEMP = Utilities.GetNodeValue(AYsettingsNode, "HEATER_TARGET_TEMP", HEATER_TARGET_TEMP);
-                COOLER_TARGET_TEMP = Utilities.GetNodeValue(AYsettingsNode, "COOLER_TARGET_TEMP", COOLER_TARGET_TEMP);
+                CLIMATE_BASE_DRAIN_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CLIMATE_BASE_DRAIN_FACTOR", CLIMATE_BASE_DRAIN_FACTOR);
+                CLIMATE_TARGET_TEMP = Utilities.GetNodeValue(AYsettingsNode, "CLIMATE_TARGET_TEMP", CLIMATE_TARGET_TEMP);
                 MASSAGE_BASE_DRAIN_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "MASSAGE_BASE_DRAIN_FACTOR", MASSAGE_BASE_DRAIN_FACTOR);
                 RECHARGE_RESERVE_THRESHOLD = Utilities.GetNodeValue(AYsettingsNode, "RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
                 Craziness_Function = Utilities.GetNodeValue(AYsettingsNode, "Craziness_Function", Craziness_Function);
                 CRAZY_BASE_DRAIN_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_BASE_DRAIN_FACTOR", CRAZY_BASE_DRAIN_FACTOR);
+                CRAZY_CLIMATE_UNCOMF_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_CLIMATE_UNCOMF_FACTOR", CRAZY_CLIMATE_UNCOMF_FACTOR);
                 CRAZY_CLIMATE_REDUCE_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_CLIMATE_REDUCE_FACTOR", CRAZY_CLIMATE_REDUCE_FACTOR);
                 CRAZY_RADIO_REDUCE_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_RADIO_REDUCE_FACTOR", CRAZY_RADIO_REDUCE_FACTOR);
                 CRAZY_MASSAGE_REDUCE_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_MASSAGE_REDUCE_FACTOR", CRAZY_MASSAGE_REDUCE_FACTOR);
@@ -124,12 +124,12 @@ namespace AY
             settingsNode.AddValue("EwindowPosY", EwindowPosY);
             settingsNode.AddValue("SCwindowPosX", SCwindowPosX);
             settingsNode.AddValue("SCwindowPosY", SCwindowPosY);
-            settingsNode.AddValue("HEATER_BASE_DRAIN_FACTOR", HEATER_BASE_DRAIN_FACTOR);
-            settingsNode.AddValue("HEATER_TARGET_TEMP", HEATER_TARGET_TEMP);
-            settingsNode.AddValue("COOLER_TARGET_TEMP", COOLER_TARGET_TEMP);
+            settingsNode.AddValue("CLIMATE_BASE_DRAIN_FACTOR", CLIMATE_BASE_DRAIN_FACTOR);
+            settingsNode.AddValue("CLIMATE_TARGET_TEMP", CLIMATE_TARGET_TEMP);            
             settingsNode.AddValue("MASSAGE_BASE_DRAIN_FACTOR", MASSAGE_BASE_DRAIN_FACTOR);
             settingsNode.AddValue("Craziness_Function", Craziness_Function);
             settingsNode.AddValue("CRAZY_BASE_DRAIN_FACTOR", CRAZY_BASE_DRAIN_FACTOR);
+            settingsNode.AddValue("CRAZY_CLIMATE_UNCOMF_FACTOR", CRAZY_CLIMATE_UNCOMF_FACTOR);
             settingsNode.AddValue("CRAZY_CLIMATE_REDUCE_FACTOR", CRAZY_CLIMATE_REDUCE_FACTOR);
             settingsNode.AddValue("CRAZY_RADIO_REDUCE_FACTOR", CRAZY_RADIO_REDUCE_FACTOR);
             settingsNode.AddValue("CRAZY_MASSAGE_REDUCE_FACTOR", CRAZY_MASSAGE_REDUCE_FACTOR);

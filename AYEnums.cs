@@ -31,8 +31,7 @@ namespace AY
         POWER_TURN,
         SAS,
         RCS,
-        HEATER,
-        COOLER,
+        CLIMATE,
         MUSIC,
         MASSAGE
     }

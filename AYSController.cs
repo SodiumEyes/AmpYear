@@ -53,21 +53,21 @@ namespace AY
         private static int windowID = new System.Random().Next();
         private GUIStyle statusStyle, sectionTitleStyle;
 
-        private static bool debugging = false;
-        private String InputSHBDF = "";
-        private double InputVHBDF = 0f;
-        private string InputSHTT = "";
-        private float InputVHTT = 0f;
-        private string InputSCTT = "";
-        private float InputVCTT = 0f;
+        private static bool debugging = false;        
         private String InputSMBDF = "";
         private double InputVMBDF = 0f;
         private String InputSRRT = "";
         private double InputVRRT = 0f;
         private bool InputSCF = true;
         private bool InputVCF = true;
+        private string InputSCCBDF = "";
+        private double InputVCCBDF = 0f;
         private string InputSCBDF = "";
         private double InputVCBDF = 0f;
+        private string InputSCTT = "";
+        private float InputVCTT = 0f;
+        private string InputSCCUF = "";
+        private double InputVCCUF = 0f;
         private string InputSCCRF = "";
         private double InputVCCRF = 0f;
         private string InputSCRRF = "";
@@ -82,13 +82,13 @@ namespace AY
         private bool InputSdebug = debugging;
         private bool InputVdebug = debugging;
         private bool LoadSettingsSC = true;
-        public double HEATER_BASE_DRAIN_FACTOR = 1.0;
-        public float HEATER_TARGET_TEMP = 20.0f;
-        public float COOLER_TARGET_TEMP = 15.0f;
+        public double CLIMATE_BASE_DRAIN_FACTOR = 1.0;
+        public float CLIMATE_TARGET_TEMP = 20.0f;        
         public double MASSAGE_BASE_DRAIN_FACTOR = 3.0;
         public double RECHARGE_RESERVE_THRESHOLD = 0.95;
         public bool Craziness_Function = true;
         public double CRAZY_BASE_DRAIN_FACTOR = 0.05;
+        public double CRAZY_CLIMATE_UNCOMF_FACTOR = 0.02;
         public double CRAZY_CLIMATE_REDUCE_FACTOR = 0.1;
         public double CRAZY_RADIO_REDUCE_FACTOR = 0.1;
         public double CRAZY_MASSAGE_REDUCE_FACTOR = 0.2;
@@ -206,18 +206,18 @@ namespace AY
             {
                 if (LoadSettingsSC)
                 {
-                    InputSHBDF = HEATER_BASE_DRAIN_FACTOR.ToString();
-                    InputVHBDF = HEATER_BASE_DRAIN_FACTOR;
-                    InputSHTT = HEATER_TARGET_TEMP.ToString();
-                    InputVHTT = HEATER_TARGET_TEMP;
-                    InputSCTT = COOLER_TARGET_TEMP.ToString();
-                    InputVCTT = COOLER_TARGET_TEMP;
+                    InputSCCBDF = CLIMATE_BASE_DRAIN_FACTOR.ToString();
+                    InputVCCBDF = CLIMATE_BASE_DRAIN_FACTOR;
+                    InputSCTT = CLIMATE_TARGET_TEMP.ToString();
+                    InputVCTT = CLIMATE_TARGET_TEMP;                    
                     InputSMBDF = MASSAGE_BASE_DRAIN_FACTOR.ToString();
                     InputVMBDF = MASSAGE_BASE_DRAIN_FACTOR;
                     InputSRRT = (100 * RECHARGE_RESERVE_THRESHOLD).ToString();
                     InputVRRT = RECHARGE_RESERVE_THRESHOLD;
                     InputSCBDF = CRAZY_BASE_DRAIN_FACTOR.ToString();
                     InputVCBDF = CRAZY_BASE_DRAIN_FACTOR;
+                    InputSCCUF = CRAZY_CLIMATE_UNCOMF_FACTOR.ToString();
+                    InputVCCUF = CRAZY_CLIMATE_UNCOMF_FACTOR;
                     InputSCCRF = CRAZY_CLIMATE_REDUCE_FACTOR.ToString();
                     InputVCCRF = CRAZY_CLIMATE_REDUCE_FACTOR;
                     InputSCRRF = CRAZY_RADIO_REDUCE_FACTOR.ToString();
@@ -258,19 +258,14 @@ namespace AY
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Heater/Cooler Elec. Drain", statusStyle, GUILayout.Width(300));
-            InputSHBDF = Regex.Replace(GUILayout.TextField(InputSHBDF, 2, GUILayout.MinWidth(10.0F)), "[^.0-9]", ""); //you can play with the width of the text box
+            GUILayout.Box("Climate Control Elec. Drain", statusStyle, GUILayout.Width(300));
+            InputSCCBDF = Regex.Replace(GUILayout.TextField(InputSCCBDF, 2, GUILayout.MinWidth(10.0F)), "[^.0-9]", ""); //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Heater Target Temp.", statusStyle, GUILayout.Width(300));
-            InputSHTT = Regex.Replace(GUILayout.TextField(InputSHTT, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", ""); //you can play with the width of the text box
-
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Box("Cooler Target Temp.", statusStyle, GUILayout.Width(300));
-            InputSCTT = Regex.Replace(GUILayout.TextField(InputSCTT, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-
+            GUILayout.Box("Climate Cont. Target Temp.", statusStyle, GUILayout.Width(300));
+            InputSCTT = Regex.Replace(GUILayout.TextField(InputSCTT, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", ""); //you can play with the width of the text box
+                        
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Box("Massage Elec. Drain", statusStyle, GUILayout.Width(300));
@@ -285,6 +280,11 @@ namespace AY
             GUILayout.BeginHorizontal();
             GUILayout.Box("Craziness Base Growth Amount", statusStyle, GUILayout.Width(300));
             InputSCBDF = Regex.Replace(GUILayout.TextField(InputSCBDF, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Box("Temp Uncomfortable Craziness", statusStyle, GUILayout.Width(300));
+            InputSCCUF = Regex.Replace(GUILayout.TextField(InputSCCUF, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
@@ -328,18 +328,14 @@ namespace AY
             InputVdebug = InputSdebug;
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
-            if (!double.TryParse(InputSHBDF, out InputVHBDF))
+            if (!Double.TryParse(InputSCCBDF, out InputVCCBDF))
             {
-                InputVHBDF = HEATER_BASE_DRAIN_FACTOR;
-            }
-            if (!float.TryParse(InputSHTT, out InputVHTT))
-            {
-                InputVHTT = HEATER_TARGET_TEMP;
+                InputVCCBDF = CLIMATE_BASE_DRAIN_FACTOR;
             }
             if (!float.TryParse(InputSCTT, out InputVCTT))
             {
-                InputVCTT = COOLER_TARGET_TEMP;
-            }
+                InputVCTT = CLIMATE_TARGET_TEMP;
+            }            
             if (!Double.TryParse(InputSMBDF, out InputVMBDF))
             {
                 InputVMBDF = MASSAGE_BASE_DRAIN_FACTOR;
@@ -351,6 +347,10 @@ namespace AY
             if (!Double.TryParse(InputSCBDF, out InputVCBDF))
             {
                 InputVCBDF = CRAZY_BASE_DRAIN_FACTOR;
+            }
+            if (!Double.TryParse(InputSCCUF, out InputVCCUF))
+            {
+                InputVCCUF = CRAZY_CLIMATE_UNCOMF_FACTOR;
             }
             if (!Double.TryParse(InputSCCRF, out InputVCCRF))
             {
@@ -374,12 +374,12 @@ namespace AY
             }
             if (GUILayout.Button("Save Settings"))
             {
-                HEATER_BASE_DRAIN_FACTOR = InputVHBDF;
-                HEATER_TARGET_TEMP = InputVHTT;
-                COOLER_TARGET_TEMP = InputVCTT;
+                CLIMATE_BASE_DRAIN_FACTOR = InputVCCBDF;
+                CLIMATE_TARGET_TEMP = InputVCTT;
                 MASSAGE_BASE_DRAIN_FACTOR = InputVMBDF;
                 RECHARGE_RESERVE_THRESHOLD = InputVRRT / 100;
                 CRAZY_BASE_DRAIN_FACTOR = InputVCBDF;
+                CRAZY_CLIMATE_UNCOMF_FACTOR = InputVCCUF;
                 CRAZY_CLIMATE_REDUCE_FACTOR = InputVCCRF;
                 CRAZY_RADIO_REDUCE_FACTOR = InputVCRRF;
                 CRAZY_MASSAGE_REDUCE_FACTOR = InputVCMRF;
@@ -408,12 +408,13 @@ namespace AY
             this.Log_Debug( "AYSCController Load");
             SCwindowPos.x = AYsettings.SCwindowPosX;
             SCwindowPos.y = AYsettings.SCwindowPosY;
-            HEATER_BASE_DRAIN_FACTOR = AYsettings.HEATER_BASE_DRAIN_FACTOR;
-            HEATER_TARGET_TEMP = AYsettings.HEATER_TARGET_TEMP;
+            CLIMATE_BASE_DRAIN_FACTOR = AYsettings.CLIMATE_BASE_DRAIN_FACTOR;
+            CLIMATE_TARGET_TEMP = AYsettings.CLIMATE_TARGET_TEMP;
             MASSAGE_BASE_DRAIN_FACTOR = AYsettings.MASSAGE_BASE_DRAIN_FACTOR;
             RECHARGE_RESERVE_THRESHOLD = AYsettings.RECHARGE_RESERVE_THRESHOLD;
             Craziness_Function = AYsettings.Craziness_Function;
             CRAZY_BASE_DRAIN_FACTOR = AYsettings.CRAZY_BASE_DRAIN_FACTOR;
+            CRAZY_CLIMATE_UNCOMF_FACTOR = AYsettings.CRAZY_CLIMATE_UNCOMF_FACTOR;
             CRAZY_CLIMATE_REDUCE_FACTOR = AYsettings.CRAZY_CLIMATE_REDUCE_FACTOR;
             CRAZY_RADIO_REDUCE_FACTOR = AYsettings.CRAZY_RADIO_REDUCE_FACTOR;
             CRAZY_MASSAGE_REDUCE_FACTOR = AYsettings.CRAZY_MASSAGE_REDUCE_FACTOR;
@@ -429,12 +430,13 @@ namespace AY
             this.Log_Debug( "AYSCController Save");
             AYsettings.SCwindowPosX = SCwindowPos.x;
             AYsettings.SCwindowPosY = SCwindowPos.y;
-            AYsettings.HEATER_BASE_DRAIN_FACTOR = HEATER_BASE_DRAIN_FACTOR;
-            AYsettings.HEATER_TARGET_TEMP = HEATER_TARGET_TEMP;
+            AYsettings.CLIMATE_BASE_DRAIN_FACTOR = CLIMATE_BASE_DRAIN_FACTOR;
+            AYsettings.CLIMATE_TARGET_TEMP = CLIMATE_TARGET_TEMP;
             AYsettings.MASSAGE_BASE_DRAIN_FACTOR = MASSAGE_BASE_DRAIN_FACTOR;
             AYsettings.RECHARGE_RESERVE_THRESHOLD = RECHARGE_RESERVE_THRESHOLD;
             AYsettings.Craziness_Function = Craziness_Function;
             AYsettings.CRAZY_BASE_DRAIN_FACTOR = CRAZY_BASE_DRAIN_FACTOR;
+            AYsettings.CRAZY_CLIMATE_UNCOMF_FACTOR = CRAZY_CLIMATE_UNCOMF_FACTOR;
             AYsettings.CRAZY_CLIMATE_REDUCE_FACTOR = CRAZY_CLIMATE_REDUCE_FACTOR;
             AYsettings.CRAZY_RADIO_REDUCE_FACTOR = CRAZY_RADIO_REDUCE_FACTOR;
             AYsettings.CRAZY_MASSAGE_REDUCE_FACTOR = CRAZY_MASSAGE_REDUCE_FACTOR;
