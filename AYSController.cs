@@ -53,7 +53,7 @@ namespace AY
         private static int windowID = new System.Random().Next();
         private GUIStyle statusStyle, sectionTitleStyle;
 
-        private static bool debugging = false;        
+        private static bool debugging = false;
         private String InputSMBDF = "";
         private double InputVMBDF = 0f;
         private String InputSRRT = "";
@@ -78,14 +78,17 @@ namespace AY
         private double InputVCMinL = 0f;
         private string InputSCMajL = "";
         private double InputVCMajL = 0f;
+        private string InputSPLW = "";
+        private double InputVPLW = 0f;
         private bool InputAppL = false;
         private bool InputSdebug = debugging;
         private bool InputVdebug = debugging;
         private bool LoadSettingsSC = true;
         public double CLIMATE_BASE_DRAIN_FACTOR = 1.0;
-        public float CLIMATE_TARGET_TEMP = 20.0f;        
+        public float CLIMATE_TARGET_TEMP = 20.0f;
         public double MASSAGE_BASE_DRAIN_FACTOR = 3.0;
         public double RECHARGE_RESERVE_THRESHOLD = 0.95;
+        public double POWER_LOW_WARNING_AMT = 5;
         public bool Craziness_Function = true;
         public double CRAZY_BASE_DRAIN_FACTOR = 0.05;
         public double CRAZY_CLIMATE_UNCOMF_FACTOR = 0.02;
@@ -138,7 +141,7 @@ namespace AY
             else
             {
                 // Set up the stock toolbar
-                this.Log_Debug( "Adding onGUIAppLauncher callbacks");
+                this.Log_Debug("Adding onGUIAppLauncher callbacks");
                 if (ApplicationLauncher.Ready)
                 {
                     OnGUIAppLauncherReady();
@@ -146,15 +149,15 @@ namespace AY
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
             }
-            this.Log_Debug( "AYSCController Awake complete");
+            this.Log_Debug("AYSCController Awake complete");
         }
 
         private void OnGUIAppLauncherReady()
         {
-            this.Log_Debug( "OnGUIAppLauncherReady");
+            this.Log_Debug("OnGUIAppLauncherReady");
             if (ApplicationLauncher.Ready)
             {
-                this.Log_Debug( "Adding AppLauncherButton");
+                this.Log_Debug("Adding AppLauncherButton");
                 this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggleOn, onAppLaunchToggleOff, DummyVoid,
                                           DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.SPACECENTER,
                                           (Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOff", false));
@@ -186,7 +189,7 @@ namespace AY
             else
             {
                 // Set up the stock toolbar
-                this.Log_Debug( "Removing onGUIAppLauncher callbacks");
+                this.Log_Debug("Removing onGUIAppLauncher callbacks");
                 GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
                 if (this.stockToolbarButton != null)
                 {
@@ -209,7 +212,7 @@ namespace AY
                     InputSCCBDF = CLIMATE_BASE_DRAIN_FACTOR.ToString();
                     InputVCCBDF = CLIMATE_BASE_DRAIN_FACTOR;
                     InputSCTT = CLIMATE_TARGET_TEMP.ToString();
-                    InputVCTT = CLIMATE_TARGET_TEMP;                    
+                    InputVCTT = CLIMATE_TARGET_TEMP;
                     InputSMBDF = MASSAGE_BASE_DRAIN_FACTOR.ToString();
                     InputVMBDF = MASSAGE_BASE_DRAIN_FACTOR;
                     InputSRRT = (100 * RECHARGE_RESERVE_THRESHOLD).ToString();
@@ -228,6 +231,8 @@ namespace AY
                     InputVCMinL = CRAZY_MINOR_LIMIT;
                     InputSCMajL = CRAZY_MAJOR_LIMIT.ToString();
                     InputVCMajL = CRAZY_MAJOR_LIMIT;
+                    InputSPLW = POWER_LOW_WARNING_AMT.ToString();
+                    InputVPLW = POWER_LOW_WARNING_AMT;
                     InputAppL = Useapplauncher;
                     InputSdebug = debugging;
                     InputVdebug = debugging;
@@ -239,7 +244,7 @@ namespace AY
                 if (!Utilities.WindowVisibile(SCwindowPos))
                     Utilities.MakeWindowVisible(SCwindowPos);
                 SCwindowPos = GUILayout.Window(windowID, SCwindowPos, windowSC, "AmpYear Power Manager Settings",
-                    GUILayout.Width(SCWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));                
+                    GUILayout.Width(SCWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
             }
         }
 
@@ -263,12 +268,12 @@ namespace AY
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Climate Cont. Target Temp.", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Climate Control Target Temp.", statusStyle, GUILayout.Width(300));
             InputSCTT = Regex.Replace(GUILayout.TextField(InputSCTT, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", ""); //you can play with the width of the text box
-                        
+
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Massage Elec. Drain", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Massage Electrical Drain", statusStyle, GUILayout.Width(300));
             InputSMBDF = Regex.Replace(GUILayout.TextField(InputSMBDF, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
@@ -278,7 +283,12 @@ namespace AY
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Craziness Base Growth Amount", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Power Low Warning Percentage", statusStyle, GUILayout.Width(300));
+            InputSPLW = Regex.Replace(GUILayout.TextField(InputSPLW, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
+
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Box("Kraziness Base Growth Amount", statusStyle, GUILayout.Width(300));
             InputSCBDF = Regex.Replace(GUILayout.TextField(InputSCBDF, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
@@ -288,32 +298,32 @@ namespace AY
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Heat/Cool Craziness Reduction", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Climate Kraziness Reduction", statusStyle, GUILayout.Width(300));
             InputSCCRF = Regex.Replace(GUILayout.TextField(InputSCCRF, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Music Craziness Reduction", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Music Kraziness Reduction", statusStyle, GUILayout.Width(300));
             InputSCRRF = Regex.Replace(GUILayout.TextField(InputSCRRF, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Massage Craziness Reduction", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Massage Kraziness Reduction", statusStyle, GUILayout.Width(300));
             InputSCMRF = Regex.Replace(GUILayout.TextField(InputSCMRF, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Craziness Minor Problem Limit", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Kraziness Minor Problem Limit", statusStyle, GUILayout.Width(300));
             InputSCMinL = Regex.Replace(GUILayout.TextField(InputSCMinL, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Box("Craziness Major Problem Limit", statusStyle, GUILayout.Width(300));
             InputSCMajL = Regex.Replace(GUILayout.TextField(InputSCMajL, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
-            
+
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Craziness Function", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("KabinKraziness Function", statusStyle, GUILayout.Width(300));
             InputVCF = GUILayout.Toggle(InputVCF, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
 
             GUILayout.EndHorizontal();
@@ -335,7 +345,7 @@ namespace AY
             if (!float.TryParse(InputSCTT, out InputVCTT))
             {
                 InputVCTT = CLIMATE_TARGET_TEMP;
-            }            
+            }
             if (!Double.TryParse(InputSMBDF, out InputVMBDF))
             {
                 InputVMBDF = MASSAGE_BASE_DRAIN_FACTOR;
@@ -343,6 +353,10 @@ namespace AY
             if (!Double.TryParse(InputSRRT, out InputVRRT))
             {
                 InputVRRT = RECHARGE_RESERVE_THRESHOLD;
+            }
+            if (!Double.TryParse(InputSPLW, out InputVPLW))
+            {
+                InputVPLW = POWER_LOW_WARNING_AMT;
             }
             if (!Double.TryParse(InputSCBDF, out InputVCBDF))
             {
@@ -378,6 +392,7 @@ namespace AY
                 CLIMATE_TARGET_TEMP = InputVCTT;
                 MASSAGE_BASE_DRAIN_FACTOR = InputVMBDF;
                 RECHARGE_RESERVE_THRESHOLD = InputVRRT / 100;
+                POWER_LOW_WARNING_AMT = InputVPLW;
                 CRAZY_BASE_DRAIN_FACTOR = InputVCBDF;
                 CRAZY_CLIMATE_UNCOMF_FACTOR = InputVCCUF;
                 CRAZY_CLIMATE_REDUCE_FACTOR = InputVCCRF;
@@ -405,13 +420,14 @@ namespace AY
         //Class Load and Save of global settings
         public void Load(ConfigNode globalNode)
         {
-            this.Log_Debug( "AYSCController Load");
+            this.Log_Debug("AYSCController Load");
             SCwindowPos.x = AYsettings.SCwindowPosX;
             SCwindowPos.y = AYsettings.SCwindowPosY;
             CLIMATE_BASE_DRAIN_FACTOR = AYsettings.CLIMATE_BASE_DRAIN_FACTOR;
             CLIMATE_TARGET_TEMP = AYsettings.CLIMATE_TARGET_TEMP;
             MASSAGE_BASE_DRAIN_FACTOR = AYsettings.MASSAGE_BASE_DRAIN_FACTOR;
             RECHARGE_RESERVE_THRESHOLD = AYsettings.RECHARGE_RESERVE_THRESHOLD;
+            POWER_LOW_WARNING_AMT = AYsettings.POWER_LOW_WARNING_AMT;
             Craziness_Function = AYsettings.Craziness_Function;
             CRAZY_BASE_DRAIN_FACTOR = AYsettings.CRAZY_BASE_DRAIN_FACTOR;
             CRAZY_CLIMATE_UNCOMF_FACTOR = AYsettings.CRAZY_CLIMATE_UNCOMF_FACTOR;
@@ -422,18 +438,19 @@ namespace AY
             CRAZY_MAJOR_LIMIT = AYsettings.CRAZY_MAJOR_LIMIT;
             Useapplauncher = AYsettings.UseAppLauncher;
             debugging = AYsettings.debugging;
-            this.Log_Debug( "AYController Load end");
+            this.Log_Debug("AYController Load end");
         }
 
         public void Save(ConfigNode globalNode)
         {
-            this.Log_Debug( "AYSCController Save");
+            this.Log_Debug("AYSCController Save");
             AYsettings.SCwindowPosX = SCwindowPos.x;
             AYsettings.SCwindowPosY = SCwindowPos.y;
             AYsettings.CLIMATE_BASE_DRAIN_FACTOR = CLIMATE_BASE_DRAIN_FACTOR;
             AYsettings.CLIMATE_TARGET_TEMP = CLIMATE_TARGET_TEMP;
             AYsettings.MASSAGE_BASE_DRAIN_FACTOR = MASSAGE_BASE_DRAIN_FACTOR;
             AYsettings.RECHARGE_RESERVE_THRESHOLD = RECHARGE_RESERVE_THRESHOLD;
+            AYsettings.POWER_LOW_WARNING_AMT = POWER_LOW_WARNING_AMT;
             AYsettings.Craziness_Function = Craziness_Function;
             AYsettings.CRAZY_BASE_DRAIN_FACTOR = CRAZY_BASE_DRAIN_FACTOR;
             AYsettings.CRAZY_CLIMATE_UNCOMF_FACTOR = CRAZY_CLIMATE_UNCOMF_FACTOR;
@@ -444,7 +461,7 @@ namespace AY
             AYsettings.CRAZY_MAJOR_LIMIT = CRAZY_MAJOR_LIMIT;
             AYsettings.UseAppLauncher = Useapplauncher;
             AYsettings.debugging = debugging;
-            this.Log_Debug( "AYController Save end");
+            this.Log_Debug("AYController Save end");
         }
     }
 }

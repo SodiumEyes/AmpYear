@@ -45,9 +45,8 @@ namespace AY
 
     public enum GameState
     {
-        FLIGHT=0,
-        EDITOR=1,
-        EVA=2
+        FLIGHT = 0,
+        EDITOR = 1,
+        EVA = 2
     }
-
 }

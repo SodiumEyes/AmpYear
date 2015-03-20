@@ -63,21 +63,21 @@ namespace AY
             string vesselName = Utilities.GetNodeValue(node, "vesselName", "Unknown");
             double lastUpdate = Utilities.GetNodeValue(node, "lastUpdate", 0.0);
 
-            VesselInfo info = new VesselInfo(vesselName, lastUpdate);            
-            info.vesselType = Utilities.GetNodeValue(node, "vesselType", VesselType.Unknown);            
+            VesselInfo info = new VesselInfo(vesselName, lastUpdate);
+            info.vesselType = Utilities.GetNodeValue(node, "vesselType", VesselType.Unknown);
             info.numCrew = Utilities.GetNodeValue(node, "numCrew", 0);
-            info.numOccupiedParts = Utilities.GetNodeValue(node, "numOccupiedParts", 0);            
+            info.numOccupiedParts = Utilities.GetNodeValue(node, "numOccupiedParts", 0);
             for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
             {
-                string Nme = ((Subsystem)i).ToString();                
-                info.subsystemToggle[i] = Utilities.GetNodeValue(node, Nme + "Toggle", false);                
+                string Nme = ((Subsystem)i).ToString();
+                info.subsystemToggle[i] = Utilities.GetNodeValue(node, Nme + "Toggle", false);
                 info.subsystemDrain[i] = Utilities.GetNodeValue(node, Nme + "Drain", 0);
-            }            
+            }
             for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
-            {                
-                string Nme = ((GUISection)i).ToString();                
+            {
+                string Nme = ((GUISection)i).ToString();
                 info.guiSectionEnableFlag[i] = Utilities.GetNodeValue(node, Nme + "Flag", false);
-            }            
+            }
             info.managerEnabled = Utilities.GetNodeValue(node, "managerEnabled", false);
             info.ShowCrew = Utilities.GetNodeValue(node, "ShowCrew", false);
             info.ShowParts = Utilities.GetNodeValue(node, "ShowParts", false);

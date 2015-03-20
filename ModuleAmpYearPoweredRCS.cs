@@ -62,7 +62,7 @@ namespace AY
         }
 
         public override void OnLoad(ConfigNode node)
-        {            
+        {
             if (!node.HasNode("PROPELLANT") && node.HasValue("resourceName") && (propellants == null || propellants.Count == 0))
             {
                 ConfigNode c = new ConfigNode("PROPELLANT");

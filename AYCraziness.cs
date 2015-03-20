@@ -35,6 +35,7 @@ namespace AY
     {
         //Craziness vars
         private System.Random rnd = new System.Random();
+
         private float TimeSinceLastCrazyCheck = Time.realtimeSinceStartup;
         private bool AutoPilotDisabled = false;
         private double AutoPilotDisTime = 0f;
@@ -82,16 +83,16 @@ namespace AY
                 basecrazy += DistDiff; // Add the distance factor
                 this.Log_Debug("DistMultApplied = " + basecrazy.ToString("0.0000000000"));
                 if (!CrewTempComfortable) //Cabin Temperature is not comfortable so add the uncomfortable factor
-                {                    
+                {
                     basecrazy += AYsettings.CRAZY_CLIMATE_UNCOMF_FACTOR;
                     this.Log_Debug("CabinTemp is not comfortable, Basecrazy increased to " + basecrazy.ToString("0.0000000"));
                 }
                 // If Luxury items are on, craziness is reduced
-                if (subsystemPowered(Subsystem.CLIMATE)) 
+                if (subsystemPowered(Subsystem.CLIMATE))
                     reducecrazy += AYsettings.CRAZY_CLIMATE_REDUCE_FACTOR;
-                if (subsystemPowered(Subsystem.MUSIC)) 
+                if (subsystemPowered(Subsystem.MUSIC))
                     reducecrazy += AYsettings.CRAZY_RADIO_REDUCE_FACTOR;
-                if (subsystemPowered(Subsystem.MASSAGE)) 
+                if (subsystemPowered(Subsystem.MASSAGE))
                     reducecrazy += AYsettings.CRAZY_MASSAGE_REDUCE_FACTOR;
                 //Calculate the final craziness amount
                 double timestep_drain = basecrazy - reducecrazy;
@@ -225,7 +226,7 @@ namespace AY
                 //AutoPilotDisCounter = 0f;
                 ExtDisTime = ExtDisTime * 60;
                 AutoPilotDisTime += ExtDisTime;
-                ScreenMessages.PostScreenMessage(" The crazy crew have disabled the Autopilot for another " + Utilities.formatTime(ExtDisTime), 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(" The Krazy crew have disabled the Autopilot for another " + Utilities.formatTime(ExtDisTime), 10.0f, ScreenMessageStyle.UPPER_CENTER);
             }
             else // not already disabled
             {
@@ -235,7 +236,7 @@ namespace AY
                 else
                     AutoPilotDisTime = RandomDice(2);
                 AutoPilotDisTime = AutoPilotDisTime * 60;
-                ScreenMessages.PostScreenMessage(" The crazy crew have disabled the Autopilot for " + Utilities.formatTime(AutoPilotDisTime), 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(" The Krazy crew have disabled the Autopilot for " + Utilities.formatTime(AutoPilotDisTime), 10.0f, ScreenMessageStyle.UPPER_CENTER);
                 AutoPilotDisCounter = 0f;
             }
             this.Log_Debug("Autopilot disabled for autopilotdistime = " + AutoPilotDisTime);
@@ -260,7 +261,7 @@ namespace AY
                 int selectcandidate = RandomDice(candidates.Count);
                 double dumpamt = candidates[selectcandidate].amount / 3;
                 candidates[selectcandidate].amount -= dumpamt;
-                ScreenMessages.PostScreenMessage("The crazy crew just threw out " + dumpamt.ToString("0.00") + " of " + candidates[selectcandidate].resourceName, 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("The Krazy crew just threw out " + dumpamt.ToString("0.00") + " of " + candidates[selectcandidate].resourceName, 10.0f, ScreenMessageStyle.UPPER_CENTER);
                 return;
             }
 
@@ -269,7 +270,7 @@ namespace AY
                 int selectcandidate = RandomDice(candidates.Count);
                 double dumpamt = candidates[selectcandidate].amount;
                 candidates[selectcandidate].amount = 0;
-                ScreenMessages.PostScreenMessage("The crazy crew just threw out " + dumpamt + " of " + candidates[selectcandidate].resourceName, 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("The Krazy crew just threw out " + dumpamt + " of " + candidates[selectcandidate].resourceName, 10.0f, ScreenMessageStyle.UPPER_CENTER);
                 return;
             }
         }
@@ -336,7 +337,7 @@ namespace AY
             ScienceData[] selectdata = candidates[selectcandidate].GetData();
             this.Log_Debug("selectdata = " + selectdata.ToString());
             candidates[selectcandidate].DumpData(selectdata[0]);
-            ScreenMessages.PostScreenMessage("The crazy crew just threw out the collected science: " + selectdata[0].title, 10.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage("The Krazy crew just threw out the collected science: " + selectdata[0].title, 10.0f, ScreenMessageStyle.UPPER_CENTER);
         }
 
         private void DumpAllScience(List<IScienceDataContainer> candidates)
@@ -353,7 +354,7 @@ namespace AY
                     }
                 }
             }
-            ScreenMessages.PostScreenMessage("The crazy crew just threw out all collected science", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage("The Krazy crew just threw out all collected science", 10.0f, ScreenMessageStyle.UPPER_CENTER);
         }
 
         private void GoOverboard(Vessel vessel, Part current_part, bool Major)

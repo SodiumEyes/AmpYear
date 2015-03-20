@@ -97,11 +97,14 @@ namespace AY
                 return new PwrPartList(prtName, prtPower, prtPowerF, prtActive);
             }
         }
-                
+
         //AmpYear Properties
-        public static List<Part> crewablePartList = new List<Part>();                
+        public static List<Part> crewablePartList = new List<Part>();
+
         public Dictionary<uint, PwrPartList> vesselProdPartsList { get; private set; }
+
         public Dictionary<uint, PwrPartList> vesselConsPartsList { get; private set; }
+
         public static List<CommandPod> commandPods = new List<CommandPod>();
         public static List<ProtoCrewMember> VslRstr = new List<ProtoCrewMember>();
         public static float sasAdditionalRotPower = 0.0f;
@@ -118,7 +121,7 @@ namespace AY
         public static float currentRCSThrust = 0.0f;
         public static float currentPoweredRCSDrain = 0.0f;
         public static Guid currentvesselid;
-        public static int totalClimateParts = 0;        
+        public static int totalClimateParts = 0;
         public static bool CrewTempComfortable = false;
         public static int maxCrew = 0;
         private bool ALPresent = false;
@@ -141,6 +144,7 @@ namespace AY
 
         //GUI Properties
         private IButton button1;
+
         private ApplicationLauncherButton stockToolbarButton = null; // Stock Toolbar Button
         private readonly double[] RESERVE_TRANSFER_INCREMENTS = new double[3] { 0.25, 0.1, 0.01 };
         private bool[] guiSectionEnableFlag = new bool[Enum.GetValues(typeof(GUISection)).Length];
@@ -150,7 +154,9 @@ namespace AY
         private Vector2 scrollViewVector = Vector2.zero;
         private GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle, PartListStyle, PartListPartStyle;
         public GUILayoutOption[] subsystemButtonOptions;
-        private static int windowID = new System.Random().Next();
+        private static int FwindowID = new System.Random().Next();
+        private static int EwindowID = new System.Random().Next();
+        private static int WwindowID = new System.Random().Next();
         private static GameState mode = GameState.EVA;  // Display mode, currently  0 for In-Flight, 1 for Editor, 2 for EVA (Hide)
         private static bool[] subsystemToggle = new bool[Enum.GetValues(typeof(Subsystem)).Length];
         private static double[] subsystemDrain = new double[Enum.GetValues(typeof(Subsystem)).Length];
@@ -161,14 +167,16 @@ namespace AY
         public static float sumDeltaTime = 0f;
         private static bool doOneUpdate = false;
         public bool EmgcyShutActive = false;
-        //private static bool debugging = false;     
-        
-        public Rect FwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.FWINDOW_WIDTH, 200);
-        public Rect EwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.EWINDOW_WIDTH, 200);
-        
+        private static bool ShowWarn = true;
+        private static bool WarnWinOn = false;
+        private Rect FwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.FWINDOW_WIDTH, 200); // Flight Window position and size
+        private Rect EwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.EWINDOW_WIDTH, 200); // Editor Window position and size
+        private Rect WarnWinPos = new Rect(Screen.width / 2 - 250, Screen.height / 4, 500, 150);  // Warp warning window position and size
+
         //Constants
         public const double MANAGER_ACTIVE_DRAIN = 1.0 / 60.0;
-        public const double RCS_DRAIN = 1.0 / 60.0;        
+
+        public const double RCS_DRAIN = 1.0 / 60.0;
         public const float POWER_UP_DELAY = 1f;
         public const double SAS_BASE_DRAIN = 1.0 / 60.0;
         public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
@@ -185,6 +193,7 @@ namespace AY
 
         //AmpYear Savable settings
         private AYSettings AYsettings;
+
         private AYGameSettings AYgameSettings;
 
         //GuiVisibility
@@ -196,14 +205,14 @@ namespace AY
             set
             {
                 _Visible = value;      //Set the private variable
-                if (_Visible)
+                /*if (_Visible)
                 {
-                    RenderingManager.AddToPostDrawQueue(5, this.onDraw);
+                    //RenderingManager.AddToPostDrawQueue(5, this.onDraw);
                 }
                 else
                 {
-                    RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
-                }
+                    //RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
+                }*/
             }
         }
 
@@ -213,7 +222,6 @@ namespace AY
             AYgameSettings = AmpYear.Instance.AYgameSettings;
             vesselProdPartsList = new Dictionary<uint, PwrPartList>();
             vesselConsPartsList = new Dictionary<uint, PwrPartList>();
-
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1 = ToolbarManager.Instance.add("AmpYear", "button1");
@@ -233,7 +241,6 @@ namespace AY
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
             }
-
             this.Log_Debug("AYController Awake complete");
         }
 
@@ -270,14 +277,17 @@ namespace AY
         {
             this.Log_Debug("AYController Start");
             // add callbacks for vessel load and change
-            GameEvents.onVesselChange.Add(VesselChange);
-            GameEvents.onVesselLoaded.Add(VesselLoad);
+            GameEvents.onVesselChange.Add(onVesselChange);
+            GameEvents.onVesselLoaded.Add(onVesselLoad);
+            GameEvents.onCrewBoardVessel.Add(onCrewBoardVessel);
+
+            RenderingManager.AddToPostDrawQueue(5, this.onDraw);
 
             //check if inflight and active vessel set currentvesselid and load config settings for this vessel
             if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
             {
                 currentvesselid = FlightGlobals.ActiveVessel.id;
-                VesselLoad(FlightGlobals.ActiveVessel);
+                onVesselLoad(FlightGlobals.ActiveVessel);
             }
 
             // Find out which mods are present
@@ -343,10 +353,11 @@ namespace AY
                     this.stockToolbarButton = null;
                 }
             }
-
             if (GuiVisible) GuiVisible = !GuiVisible;
-            GameEvents.onVesselChange.Remove(VesselChange);
-            GameEvents.onVesselLoaded.Remove(VesselLoad);
+            GameEvents.onVesselChange.Remove(onVesselChange);
+            GameEvents.onVesselLoaded.Remove(onVesselLoad);
+            GameEvents.onCrewBoardVessel.Remove(onCrewBoardVessel);
+            RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
         }
 
         //GUI Section
@@ -378,7 +389,7 @@ namespace AY
         {
             switch (subsystem)
             {
-                case Subsystem.CLIMATE:                
+                case Subsystem.CLIMATE:
                 case Subsystem.MUSIC:
                 case Subsystem.MASSAGE:
                     return true;
@@ -410,7 +421,7 @@ namespace AY
                     return true;
             }
         }
-       
+
         private void SetModeFlag()
         {
             //Set the mode flag, 0 = inflight, 1 = editor, 2 on EVA or F2
@@ -483,7 +494,7 @@ namespace AY
 
                     //Compile information about the vessel and its parts
                     // zero accumulators
-                    sasAdditionalRotPower = 0.0f;                    
+                    sasAdditionalRotPower = 0.0f;
                     totalElectricCharge = 0.0;
                     totalElectricChargeCapacity = 0.0;
                     totalReservePower = 0.0;
@@ -497,7 +508,7 @@ namespace AY
                     crewablePartList.Clear();
                     commandPods.Clear();
                     maxCrew = 0;
-                    PartResourceDefinition definition = PartResourceLibrary.Instance.GetDefinition(MAIN_POWER_NAME);                    
+                    PartResourceDefinition definition = PartResourceLibrary.Instance.GetDefinition(MAIN_POWER_NAME);
                     vesselProdPartsList.Clear();
                     vesselConsPartsList.Clear();
                     VslRstr.Clear(); //clear the vessel roster
@@ -532,8 +543,8 @@ namespace AY
                                 }
                                 else
                                     podRotPowerMap.TryGetValue(name, out default_rot_power);
-                                commandPods.Add(pod);   
-                            }                                                     
+                                commandPods.Add(pod);
+                            }
 
                             if (TACLPresent)
                                 try
@@ -549,7 +560,7 @@ namespace AY
 
                         if (current_part is SASModule)
                         {
-                            SASModule sas_module = (SASModule)current_part;                           
+                            SASModule sas_module = (SASModule)current_part;
                             sasAdditionalRotPower += sas_module.maxTorque * SAS_POWER_TURN_TORQUE_FACTOR;
                         }
 
@@ -580,9 +591,9 @@ namespace AY
                                     currentRCSThrust += thrust;
 
                                 if (module is ModuleAmpYearPoweredRCS)
-                                {                                    
+                                {
                                     float ElecUse = ((ModuleAmpYearPoweredRCS)module).electricityUse;
-                                    totalPowerDrain += ElecUse;           
+                                    totalPowerDrain += ElecUse;
                                     PrtActive = ElecUse > 0;
                                     PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, ElecUse, PrtActive);
                                     if (mode == GameState.FLIGHT)
@@ -605,9 +616,9 @@ namespace AY
                                 }
 
                                 if (module is ModuleAmpYearPPTRCS)
-                                {                                    
+                                {
                                     float ElecUse2 = ((ModuleAmpYearPPTRCS)module).electricityUse;
-                                    totalPowerDrain += ElecUse2;                                    
+                                    totalPowerDrain += ElecUse2;
                                     PrtActive = ElecUse2 > 0;
                                     PwrPartList PartAdd2 = new PwrPartList(PrtName, PrtPower, ElecUse2, PrtActive);
                                     addPart(current_part.flightID, PartAdd2, false);
@@ -630,11 +641,11 @@ namespace AY
 
                             if (module.moduleName == "ModuleDeployableSolarPanel")
                             {
-                                ModuleDeployableSolarPanel tmpSol = (ModuleDeployableSolarPanel)module;                                
+                                ModuleDeployableSolarPanel tmpSol = (ModuleDeployableSolarPanel)module;
                                 if (mode == GameState.FLIGHT)
                                 {
                                     tmpPower = tmpSol.flowRate;
-                                    totalPowerProduced += tmpPower;                                    
+                                    totalPowerProduced += tmpPower;
                                     if (!hasPower && EmgcyShutActive)
                                     {
                                         if (FlightGlobals.ActiveVessel.atmDensity < 0.2 || FlightGlobals.ActiveVessel.situation != Vessel.Situations.SUB_ORBITAL
@@ -650,12 +661,11 @@ namespace AY
                                         else
                                             ScreenMessages.PostScreenMessage("Electricity Levels Critical! In Atmosphere Cannot Extending Solar Panels!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                                     }
-                                    
                                 }
                                 else
                                 {
                                     tmpPower = tmpSol.chargeRate;
-                                    totalPowerProduced += (double)tmpPower;                                    
+                                    totalPowerProduced += (double)tmpPower;
                                 }
 
                                 PrtActive = tmpPower > 0f;
@@ -670,7 +680,7 @@ namespace AY
 
                             if (module.moduleName == "ModuleGenerator")
                             {
-                                ModuleGenerator tmpGen = (ModuleGenerator)module;                                
+                                ModuleGenerator tmpGen = (ModuleGenerator)module;
                                 foreach (ModuleGenerator.GeneratorResource outp in tmpGen.outputList)
                                 {
                                     if (outp.name == MAIN_POWER_NAME)
@@ -694,7 +704,7 @@ namespace AY
                                                 tmpPower = outp.rate;
                                                 PrtActive = false;
                                             }
-                                        }                                       
+                                        }
                                         PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                                         if (mode == GameState.FLIGHT)
                                             addPart(current_part.flightID, PartAdd, true);
@@ -725,7 +735,7 @@ namespace AY
                                                 tmpPower = inp.rate;
                                                 PrtActive = false;
                                             }
-                                        }                                        
+                                        }
                                         PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                                         if (mode == GameState.FLIGHT)
                                             addPart(current_part.flightID, PartAdd, true);
@@ -765,7 +775,7 @@ namespace AY
                                     {
                                         totalPowerDrain += tmpWheel.resourceConsumptionRate;
                                         PrtActive = true;
-                                    }                                    
+                                    }
                                     PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                                     if (mode == GameState.FLIGHT)
                                         addPart(current_part.flightID, PartAdd, false);
@@ -782,7 +792,7 @@ namespace AY
                                 {
                                     if (r.id == definition.id)
                                     {
-                                        totalPowerDrain += r.rate;                                        
+                                        totalPowerDrain += r.rate;
                                         PrtActive = r.rate > 0;
                                         tmpPower = (float)r.rate;
                                         PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
@@ -797,7 +807,7 @@ namespace AY
 
                             if (module.moduleName == "ModuleLight")
                             {
-                                ModuleLight tmpLight = (ModuleLight)module;                                
+                                ModuleLight tmpLight = (ModuleLight)module;
                                 if (mode == GameState.EDITOR || (mode == GameState.FLIGHT && tmpLight.isOn))
                                 {
                                     PrtActive = true;
@@ -808,7 +818,7 @@ namespace AY
                                         ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Lights!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                                         this.Log("Turning off lights");
                                     }
-                                }                              
+                                }
                                 PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpLight.resourceAmount, PrtActive);
                                 if (mode == GameState.FLIGHT)
                                     addPart(current_part.flightID, PartAdd, false);
@@ -820,13 +830,13 @@ namespace AY
 
                             if (module.moduleName == "ModuleDataTransmitter")
                             {
-                                ModuleDataTransmitter tmpAnt = (ModuleDataTransmitter)module;                                
+                                ModuleDataTransmitter tmpAnt = (ModuleDataTransmitter)module;
                                 if (mode == GameState.EDITOR || (mode == GameState.FLIGHT && tmpAnt.IsBusy()))
                                 {
                                     totalPowerDrain += tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
                                     tmpPower = (float)tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
                                     PrtActive = true;
-                                }                              
+                                }
                                 PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                                 if (mode == GameState.FLIGHT)
                                     addPart(current_part.flightID, PartAdd, false);
@@ -840,7 +850,7 @@ namespace AY
                             {
                                 ModuleReactionWheel tmpRW = (ModuleReactionWheel)module;
                                 if (mode == GameState.FLIGHT)
-                                    sasAdditionalRotPower += tmpRW.RollTorque * SAS_POWER_TURN_TORQUE_FACTOR;                                
+                                    sasAdditionalRotPower += tmpRW.RollTorque * SAS_POWER_TURN_TORQUE_FACTOR;
                                 if (mode == GameState.EDITOR || tmpRW.enabled)
                                     PrtActive = true;
 
@@ -856,12 +866,10 @@ namespace AY
                                         else
                                         {
                                             totalPowerDrain += r.currentAmount;
-                                            tmpPower += (float)r.currentAmount;                             
-                                           
+                                            tmpPower += (float)r.currentAmount;
                                         }
-                                        
                                     }
-                                }                                
+                                }
                                 PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                                 if (mode == GameState.FLIGHT)
                                     addPart(current_part.flightID, PartAdd, false);
@@ -877,7 +885,7 @@ namespace AY
                                 const float grav = 9.81f;
                                 bool usesCharge = false;
                                 float sumRD = 0;
-                                Single ecratio = 0;                                
+                                Single ecratio = 0;
                                 foreach (Propellant prop in tmpEng.propellants)
                                 {
                                     if (prop.name == MAIN_POWER_NAME)
@@ -945,7 +953,7 @@ namespace AY
                                 if (usesCharge)
                                 {
                                     float massFlowRate = 0;
-                                    
+
                                     if ((mode == GameState.FLIGHT && tmpEngFX.isOperational && tmpEngFX.currentThrottle > 0) || mode == GameState.EDITOR)
                                     {
                                         if (mode == GameState.EDITOR)
@@ -953,7 +961,7 @@ namespace AY
                                             massFlowRate = (tmpEngFX.currentThrottle * tmpEngFX.maxThrust) / (tmpEngFX.atmosphereCurve.Evaluate(0) * grav);
                                         else
                                             massFlowRate = (tmpEngFX.currentThrottle * tmpEngFX.maxThrust) / (tmpEngFX.atmosphereCurve.Evaluate(0) * grav);
-                                        totalPowerDrain += (ecratio * massFlowRate) / sumRD;                                        
+                                        totalPowerDrain += (ecratio * massFlowRate) / sumRD;
                                         PrtActive = true;
                                     }
 
@@ -984,7 +992,7 @@ namespace AY
                                 foreach (ModuleResource r in tmpAlt.outputResources)
                                 {
                                     if (r.name == MAIN_POWER_NAME)
-                                    {                                  
+                                    {
                                         if (mode == GameState.EDITOR || (mode == GameState.FLIGHT && currentEngActive))
                                         {
                                             totalPowerProduced += r.rate;
@@ -1003,7 +1011,7 @@ namespace AY
                             }
 
                             if (module.moduleName == "ModuleScienceLab")
-                            {                                
+                            {
                                 double tmpPwr = 0;
                                 if (mode == GameState.FLIGHT)
                                 {
@@ -1181,7 +1189,7 @@ namespace AY
                                 }
 
                             if (module is AYCrewPart)
-                            {                                
+                            {
                                 float ComfortHigh = AYsettings.CLIMATE_TARGET_TEMP + 5;
                                 float ComfortLow = AYsettings.CLIMATE_TARGET_TEMP - 5;
                                 CrewTempComfortable = false;
@@ -1189,9 +1197,9 @@ namespace AY
                                 {
                                     CrewTempComfortable = true;
                                     totalClimateParts++;
-                                }                      
-                                
-                                if (mode == GameState.FLIGHT && AYsettings.Craziness_Function)
+                                }
+
+                                if (mode == GameState.FLIGHT && AYsettings.Craziness_Function && timewarpIsValid)
                                     CalcPartCraziness(FlightGlobals.ActiveVessel, current_part, module, sumDeltaTime);
                             }
                         } // end modules loop
@@ -1212,7 +1220,7 @@ namespace AY
                                     totalReservePowerCapacity += resource.maxAmount;
                                 }
                             }
-                        }                        
+                        }
                     } // end part loop
 
                     subsystemUpdate();
@@ -1280,7 +1288,7 @@ namespace AY
 
                 if (subsystemPowered(Subsystem.CLIMATE))
                     changeCrewedPartsTemperature(AYsettings.CLIMATE_TARGET_TEMP);
-                
+
                 //Calculate total drain from subsystems
                 double subsystem_drain = 0.0;
                 foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
@@ -1316,7 +1324,6 @@ namespace AY
                         //***** perform emergency shutdown procedure here
                     }
                 }
-                   
 
                 if (!hasPower && UnityEngine.Time.realtimeSinceStartup > powerUpTime)
                 {
@@ -1347,8 +1354,8 @@ namespace AY
                 double manager_drain = managerCurrentDrain;
                 double total_manager_drain = subsystem_drain + manager_drain;
                 totalPowerDrain += total_manager_drain;
-                string PrtName = "AmpYear&Subs - Max";
-                string PrtPower = "";                
+                string PrtName = "AmpYear&Subsystems-Max";
+                string PrtPower = "";
                 PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)total_manager_drain, true);
                 addPart(1111, PartAdd, false);
                 hasPower = true;
@@ -1372,7 +1379,7 @@ namespace AY
                             PrtActive = true;
                         }
                             totalPowerDrain += tmpLight.EnergyReq;
-                            tmpPower = tmpLight.EnergyReq;                           
+                            tmpPower = tmpLight.EnergyReq;
 
                         PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                         if (mode == GameState.FLIGHT)
@@ -1617,7 +1624,7 @@ namespace AY
                     else
                         addPart(current_part.craftID, PartAdd, false);
                 }
-                else 
+                else
                 {
                     string PrtName = current_part.name;
                     string PrtPower = "";
@@ -1641,13 +1648,12 @@ namespace AY
                                     tmpPower = (float)ResAmt;
                                     break;
                                 }
-                            }                    
+                            }
                             PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                             if (mode == GameState.FLIGHT)
                                 addPart(current_part.flightID, PartAdd, false);
                             else
                                 addPart(current_part.craftID, PartAdd, false);
-
 
                             arr = tacGC.outputResources.Split(',');
                             for (int i = 0; i < arr.Length; i += 2)
@@ -1661,18 +1667,16 @@ namespace AY
                                     tmpPower = (float)ResAmt;
                                     break;
                                 }
-                            }                    
+                            }
                             PwrPartList PartAdd2 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
                             if (mode == GameState.FLIGHT)
                                 addPart(current_part.flightID, PartAdd2, true);
                             else
                                 addPart(current_part.craftID, PartAdd2, true);
 
-
                             break;
                     }
                 }
-                
             }
         }
 
@@ -1823,7 +1827,7 @@ namespace AY
                             PrtActive = true;
                             totalPowerDrain += tmpIN.resourceCost;
                             tmpPower = tmpIN.resourceCost;
-                        }                        
+                        }
                     }
                     if (mode == GameState.EDITOR)
                     {
@@ -1931,6 +1935,7 @@ namespace AY
             }
         }
 */
+
         //Current Vessel Parts list maintenance - used primarily in editor for parts list, also used for emergency shutdown procedure
 
         private void addPart(uint Pkey, PwrPartList PartAdd, bool ProdPrt)
@@ -1989,31 +1994,28 @@ namespace AY
             // also updates current active vessel details/settings
             // adds new vessel if current active vessel is not known and updates it's details/settings
             double currentTime = Planetarium.GetUniversalTime();
-            List <Vessel> allVessels = FlightGlobals.Vessels;
-            var knownVessels = AYgameSettings.knownVessels;
+            List<Vessel> allVessels = FlightGlobals.Vessels;
             var vesselsToDelete = new List<Guid>();
-
             this.Log_Debug("AYController CheckVslUpdate");
-            this.Log_Debug("AYController allvessels count = " + allVessels.Count);            
-            this.Log_Debug("AYController knownvessels count = " + knownVessels.Count);
-            foreach (var entry in knownVessels)
+            this.Log_Debug("AYController allvessels count = " + allVessels.Count);
+            this.Log_Debug("AYController knownvessels count = " + AYgameSettings.knownVessels.Count);
+            //* Delete vessels that do not exist any more or have no crew
+            foreach (var entry in AYgameSettings.knownVessels)
             {
-                this.Log_Debug("AYController knownvessels guid = " + entry.Key);
+                this.Log_Debug("AYController knownvessels id = " + entry.Key + " Name = " + entry.Value.vesselName);
                 Guid vesselId = entry.Key;
-                VesselInfo vesselInfo = entry.Value;
+                VesselInfo vesselInfo = new VesselInfo(entry.Value.vesselName, currentTime);
+                vesselInfo = entry.Value;
                 Vessel vessel = allVessels.Find(v => v.id == vesselId);
-
                 if (vessel == null)
                 {
                     this.Log_Debug("Deleting vessel " + vesselInfo.vesselName + " - vessel does not exist anymore");
                     vesselsToDelete.Add(vesselId);
                     continue;
                 }
-
                 if (vessel.loaded)
                 {
                     int crewCapacity = UpdateVesselCounts(vesselInfo, vessel);
-
                     if (vesselInfo.numCrew == 0)
                     {
                         this.Log_Debug("Deleting vessel " + vesselInfo.vesselName + " - no crew parts anymore");
@@ -2021,58 +2023,60 @@ namespace AY
                         continue;
                     }
                 }
+            }
+            vesselsToDelete.ForEach(id => AYgameSettings.knownVessels.Remove(id));
 
-                if (vessel.loaded)
+            //* Add all new vessels
+            foreach (Vessel vessel in allVessels.Where(v => v.loaded))
+            {
+                Guid VesselID = vessel.id;
+                this.Log_Debug("Add new vessels check? " + VesselID + " " + vessel.vesselType);
+                if (!AYgameSettings.knownVessels.ContainsKey(VesselID) && ValidVslType(vessel))
                 {
-                    ConsumeResources(currentTime, vessel, vesselInfo);
-                }
-
-                if (vesselId == currentvesselid)
-                {
-                    this.Log_Debug("updating current vessel");
-                    UpdateVesselInfo(vesselInfo, vessel);
-                    vesselInfo.vesselType = FlightGlobals.ActiveVessel.vesselType;
+                    if (vessel.FindPartModulesImplementing<ModuleCommand>().First() != null)
+                    {
+                        this.Log_Debug("New vessel: " + vessel.vesselName + " (" + vessel.id + ")");
+                        VesselInfo vesselInfo = new VesselInfo(vessel.vesselName, currentTime);
+                        vesselInfo.vesselType = vessel.vesselType;
+                        UpdateVesselInfo(vesselInfo);
+                        int crewCapacity = UpdateVesselCounts(vesselInfo, vessel);
+                        AYgameSettings.knownVessels.Add(VesselID, vesselInfo);
+                    }
                 }
             }
 
-            vesselsToDelete.ForEach(id => knownVessels.Remove(id));
-
-            foreach (Vessel vessel in allVessels.Where(v => v.loaded))
-            {                
-                if (!knownVessels.ContainsKey(vessel.id) && (vessel.FindPartModulesImplementing<ModuleCommand>().First() != null ))
-                {
-                    this.Log_Debug("New vessel: " + vessel.vesselName + " (" + vessel.id + ")");
-                    VesselInfo vesselInfo = new VesselInfo(vessel.vesselName, currentTime);
-                    knownVessels[vessel.id] = vesselInfo;
-                    vesselInfo.vesselType = vessel.vesselType;
-                    UpdateVesselInfo(vesselInfo, vessel);
-                }
+            //*Update the current vessel
+            VesselInfo currvesselInfo = new VesselInfo(FlightGlobals.ActiveVessel.vesselName, currentTime);
+            if (AYgameSettings.knownVessels.TryGetValue(currentvesselid, out currvesselInfo))
+            {
+                this.Log_Debug("updating current vessel");
+                UpdateVesselInfo(currvesselInfo);
+                int crewCapacity = UpdateVesselCounts(currvesselInfo, FlightGlobals.ActiveVessel);
+                currvesselInfo.vesselType = FlightGlobals.ActiveVessel.vesselType;
+                AYgameSettings.knownVessels[currentvesselid] = currvesselInfo;
             }
 
             this.Log_Debug("AYController CheckVslUpdate complete");
         }
 
-        private void ConsumeResources(double currentTime, Vessel vessel, VesselInfo vesselInfo)
-        {
-            return;
-        }
-
-
-        private void UpdateVesselInfo(VesselInfo vesselInfo, Vessel vessel)
+        private void UpdateVesselInfo(VesselInfo vesselInfo)
         {
             // save current toggles to current vesselinfo
-            this.Log_Debug("AYController UpdateVesselInfo " + vessel.id);
+            this.Log_Debug("AYController UpdateVesselInfo " + vesselInfo.vesselName);
             vesselInfo.managerEnabled = managerEnabled;
             vesselInfo.ShowCrew = ShowCrew;
             vesselInfo.ShowParts = ShowParts;
-            vesselInfo.subsystemDrain = subsystemDrain;
-            vesselInfo.subsystemToggle = subsystemToggle;
-            vesselInfo.guiSectionEnableFlag = guiSectionEnableFlag;
+            for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+            {
+                vesselInfo.subsystemToggle[i] = subsystemToggle[i];
+                vesselInfo.subsystemDrain[i] = subsystemDrain[i];
+            }
+            for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+                vesselInfo.guiSectionEnableFlag[i] = guiSectionEnableFlag[i];
             vesselInfo.EmgcyShutActive = EmgcyShutActive;
             vesselInfo.AutoPilotDisabled = AutoPilotDisabled;
             vesselInfo.AutoPilotDisCounter = AutoPilotDisCounter;
             vesselInfo.AutoPilotDisTime = AutoPilotDisTime;
-            int crewCapacity = UpdateVesselCounts(vesselInfo, vessel);
         }
 
         private int UpdateVesselCounts(VesselInfo vesselInfo, Vessel vessel)
@@ -2094,13 +2098,9 @@ namespace AY
             return crewCapacity;
         }
 
-        private void VesselLoad(Vessel newvessel)
+        private void onVesselLoad(Vessel newvessel)
         {
-            double currentTime = Planetarium.GetUniversalTime();
-            var knownVessels = AYgameSettings.knownVessels;
-            VesselInfo info = new VesselInfo(newvessel.name, currentTime);
-            this.Log_Debug("AYController VesselLoad " + newvessel.id);
-            //if newvessel is not the active vessel then do nothing.
+            this.Log_Debug("AYController onVesselLoad " + newvessel.name + " (" + newvessel.id + ")");
             if (newvessel.id != FlightGlobals.ActiveVessel.id)
             {
                 this.Log_Debug("AYController newvessel is not active vessel");
@@ -2108,42 +2108,49 @@ namespace AY
             }
             // otherwise we load the vessel settings
             currentvesselid = newvessel.id;
-            loadVesselSettings(newvessel, info);
+            loadVesselSettings(newvessel);
         }
 
-        private void VesselChange(Vessel newvessel)
+        private void onVesselChange(Vessel newvessel)
         {
-            this.Log_Debug("AYController VesselChange New " + newvessel.id + " Old " + currentvesselid);
+            this.Log_Debug("AYController onVesselChange New " + newvessel.name + " (" + newvessel.id + ") Old " + " (" + currentvesselid + ")");
             this.Log_Debug("AYController active vessel " + FlightGlobals.ActiveVessel.id);
-            double currentTime = Planetarium.GetUniversalTime();
-            var knownVessels = AYgameSettings.knownVessels;
-            VesselInfo info = new VesselInfo(newvessel.name, currentTime);
-
-            if (currentvesselid == newvessel.id)
+            if (currentvesselid == newvessel.id) // which would be the case if it's an EVA kerbal re-joining ship
                 return;
-
+            double currentTime = Planetarium.GetUniversalTime();
             if (AutoPilotDisabled) ScreenMessages.RemoveMessage(AutoTimer);
             // Update Old Vessel settings into Dictionary
-            if (knownVessels.ContainsKey(currentvesselid))
+            VesselInfo oldvslinfo = new VesselInfo(newvessel.name, currentTime);
+            if (AYgameSettings.knownVessels.TryGetValue(currentvesselid, out oldvslinfo))
             {
-                info = knownVessels[currentvesselid];
-                UpdateVesselInfo(info, FlightGlobals.ActiveVessel);
-                this.Log_Debug("Updated old vessel dict " + knownVessels[currentvesselid].ToString());
+                UpdateVesselInfo(oldvslinfo);
+                AYgameSettings.knownVessels[currentvesselid] = oldvslinfo;
+                this.Log_Debug("Updated old vessel " + AYgameSettings.knownVessels[currentvesselid].vesselName + "(" + currentvesselid + ")");
+                DbgListVesselInfo(oldvslinfo);
             }
             // load the settings for the newvessel
-            loadVesselSettings(newvessel, info);
             currentvesselid = newvessel.id;
+            loadVesselSettings(newvessel);
         }
 
-        private void loadVesselSettings(Vessel newvessel, VesselInfo info)
+        private void onCrewBoardVessel(GameEvents.FromToAction<Part, Part> action)
         {
-            var knownVessels = AYgameSettings.knownVessels;
+            this.Log_Debug("AYController onCrewBoardVessel " + action.to.vessel.name + " (" + action.to.vessel.id + ") Old " + action.from.vessel.name + " (" + action.from.vessel.id + ")");
+            this.Log_Debug("AYController active vessel " + FlightGlobals.ActiveVessel.id);
+            this.Log_Debug("newvessel UniqueID = " + action.to.vessel.id);
+            this.Log_Debug("oldvessel UniqueID = " + action.from.vessel.id);
+            currentvesselid = action.to.vessel.id;
+            loadVesselSettings(action.to.vessel);
+        }
+
+        private void loadVesselSettings(Vessel newvessel)
+        {
+            double currentTime = Planetarium.GetUniversalTime();
+            VesselInfo info = new VesselInfo(newvessel.name, currentTime);
             // Load New Vessel settings from Dictionary
-            if (knownVessels.ContainsKey(newvessel.id))
+            if (AYgameSettings.knownVessels.TryGetValue(newvessel.id, out info))
             {
-                this.Log_Debug("AYController Vessel Loading Settings");
-                info = knownVessels[newvessel.id];
-                this.Log_Debug(info.ToString());
+                this.Log_Debug("AYController Vessel Loading Settings " + newvessel.name + " (" + newvessel.id + ")");
                 for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
                     subsystemToggle[i] = info.subsystemToggle[i];
                 for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
@@ -2154,6 +2161,7 @@ namespace AY
                 AutoPilotDisabled = info.AutoPilotDisabled;
                 AutoPilotDisCounter = info.AutoPilotDisCounter;
                 AutoPilotDisTime = info.AutoPilotDisTime;
+                DbgListVesselInfo(info);
             }
             else //New Vessel not found in Dictionary so set default
             {
@@ -2168,6 +2176,40 @@ namespace AY
                 AutoPilotDisabled = false;
                 AutoPilotDisTime = 0f;
                 AutoPilotDisCounter = 0f;
+            }
+        }
+
+        private void DbgListVesselInfo(VesselInfo info)
+        {
+            this.Log_Debug("VesselInfo " + info.vesselName);
+            this.Log_Debug("ManagerEnabled = " + info.managerEnabled + " ShowCrew = " + info.ShowCrew + " ShowParts = " + info.ShowParts);
+            this.Log_Debug("subsystemToggle Power Turn     = " + info.subsystemToggle[0]);
+            this.Log_Debug("subsystemToggle SAS            = " + info.subsystemToggle[1]);
+            this.Log_Debug("subsystemToggle RCS            = " + info.subsystemToggle[2]);
+            this.Log_Debug("subsystemToggle ClimateCtl     = " + info.subsystemToggle[3]);
+            this.Log_Debug("subsystemToggle Music          = " + info.subsystemToggle[4]);
+            this.Log_Debug("subsystemToggle Massage        = " + info.subsystemToggle[5]);
+            this.Log_Debug("guiSectionEnableFlag Subsystem = " + info.guiSectionEnableFlag[0]);
+            this.Log_Debug("guiSectionEnableFlag Reserve   = " + info.guiSectionEnableFlag[1]);
+            this.Log_Debug("guiSectionEnableFlag Luxury    = " + info.guiSectionEnableFlag[2]);
+            this.Log_Debug("EmgcyShutActive = " + info.EmgcyShutActive + " AutoPilotDisabled = " + info.AutoPilotDisabled + " AutoPilotDisCounter = " + info.AutoPilotDisCounter);
+            this.Log_Debug("AutoPilotDisTime = " + info.AutoPilotDisTime + " numCrew = " + info.numCrew + " numOccupiedParts = " + info.numOccupiedParts);
+        }
+
+        private bool ValidVslType(Vessel v)
+        {
+            switch (v.vesselType)
+            {
+                case VesselType.Base:
+                case VesselType.Lander:
+                case VesselType.Probe:
+                case VesselType.Rover:
+                case VesselType.Ship:
+                case VesselType.Station:
+                    return true;
+
+                default:
+                    return false;
             }
         }
 
@@ -2193,7 +2235,8 @@ namespace AY
         {
             get
             {
-                return timewarpIsValid && managerEnabled && (hasPower || hasReservePower);
+                //return timewarpIsValid && managerEnabled && (hasPower || hasReservePower);
+                return managerEnabled && (hasPower || hasReservePower);
             }
         }
 
@@ -2213,7 +2256,7 @@ namespace AY
             switch (subsystem)
             {
                 case Subsystem.POWER_TURN:
-                    return "TurnBooster";
+                    return "Turn Booster";
 
                 case Subsystem.SAS:
                     return "SAS";
@@ -2223,7 +2266,7 @@ namespace AY
 
                 case Subsystem.CLIMATE:
                     return "Climate Control";
-                
+
                 case Subsystem.MUSIC:
                     return "Smooth Jazz";
 
@@ -2313,17 +2356,17 @@ namespace AY
         {
             switch (subsystem)
             {
-                case Subsystem.SAS:                    
+                case Subsystem.SAS:
                     return SAS_BASE_DRAIN;
 
                 case Subsystem.RCS:
                     return RCS_DRAIN + currentPoweredRCSDrain;
-                    //return RCS_DRAIN;
+                //return RCS_DRAIN;
 
                 case Subsystem.POWER_TURN:
                     return sasAdditionalRotPower * POWER_TURN_DRAIN_FACTOR;
 
-                case Subsystem.CLIMATE:                
+                case Subsystem.CLIMATE:
                     if (mode == GameState.FLIGHT)
                         return CLIMATE_HEAT_RATE
                                * (crewablePartList.Count * AYsettings.CLIMATE_BASE_DRAIN_FACTOR + CLIMATE_CAPACITY_DRAIN_FACTOR * FlightGlobals.ActiveVessel.GetCrewCapacity());
@@ -2349,26 +2392,26 @@ namespace AY
         }
 
         private void changeCrewedPartsTemperature(double target_temp)
-        {            
+        {
             foreach (Part crewed_part in crewablePartList)
-            {                
-                    foreach (PartModule module in crewed_part.Modules)
+            {
+                foreach (PartModule module in crewed_part.Modules)
+                {
+                    if (module.moduleName == "AYCrewPart")
                     {
-                        if (module.moduleName == "AYCrewPart")
+                        if (((AYCrewPart)module).CabinTemp < target_temp)
                         {
-                            if (((AYCrewPart)module).CabinTemp < target_temp)
+                            ((AYCrewPart)module).CabinTemp += AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
+                        }
+                        else
+                        {
+                            if (((AYCrewPart)module).CabinTemp > target_temp)
                             {
-                                ((AYCrewPart)module).CabinTemp += AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
-                            }
-                            else
-                            {
-                                if (((AYCrewPart)module).CabinTemp > target_temp)
-                                {
-                                    ((AYCrewPart)module).CabinTemp -= AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
-                                }
+                                ((AYCrewPart)module).CabinTemp -= AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
                             }
                         }
-                    }              
+                    }
+                }
             }
         }
 
@@ -2376,22 +2419,19 @@ namespace AY
 
         private double requestResource(Part cvp, String name, double amount)
         {
-            //Part cvp = FlightGlobals.ActiveVessel.rootPart;
-            //return requestResource(name, amount, cvp);
             if (amount <= 0.0)
                 return 0.0;
             double total_received = 0.0;
             double request_amount = amount;
-            for (int attempts = 0; ((attempts < MAX_TRANSFER_ATTEMPTS) && (amount > 0.0)); attempts++)
+            for (int attempts = 0; ((attempts < MAX_TRANSFER_ATTEMPTS) && (amount > 0.000000000001)); attempts++)
             {
                 double received = cvp.RequestResource(name, request_amount, ResourceFlowMode.ALL_VESSEL);
                 this.Log_Debug("requestResource attempt " + attempts);
-                this.Log_Debug("requested power = " + request_amount.ToString("0.000000000000"));
-                this.Log_Debug("received power = " + received.ToString("0.000000000000"));
+                this.Log_Debug("requested power = " + request_amount.ToString("0.0000000000000000000000"));
+                this.Log_Debug("received power = " + received.ToString("0.0000000000000000000000"));
                 total_received += received;
                 amount -= received;
-                this.Log_Debug("amount = " + amount.ToString("0.000000000000"));
-
+                this.Log_Debug("amount = " + amount.ToString("0.0000000000000000000000"));
                 if (received <= 0.0)
                     request_amount = amount * 0.5;
                 else
@@ -2443,6 +2483,8 @@ namespace AY
 
         private void onDraw()
         {
+            if (!GuiVisible) return;
+
             if (HighLogic.LoadedSceneIsFlight)
             {
                 if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
@@ -2465,21 +2507,45 @@ namespace AY
                 if (mode == GameState.FLIGHT)
                 {
                     GUI.skin = HighLogic.Skin;
-                    if (!Utilities.WindowVisibile(FwindowPos))
-                        Utilities.MakeWindowVisible(FwindowPos);
-                    FwindowPos = GUILayout.Window(windowID, FwindowPos, windowF, "AmpYear Power Manager",
-                        GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));                    
+                    if (!Utilities.WindowVisibile(FwindowPos)) Utilities.MakeWindowVisible(FwindowPos);
+                    FwindowPos = GUILayout.Window(FwindowID, FwindowPos, windowF, "AmpYear Power Manager", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+
+                    CheckPowerLowWarning();
+                    if (WarnWinOn)
+                    {
+                        WarnWinPos = GUILayout.Window(WwindowID, WarnWinPos, stopAndWarn, "WARNING!", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                    }
                 }
             }
 
             if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
                 GUI.skin = HighLogic.Skin;
-                if (!Utilities.WindowVisibile(EwindowPos))
-                    Utilities.MakeWindowVisible(EwindowPos);
-                EwindowPos = GUILayout.Window(windowID, EwindowPos, windowE, "AmpYear Power Manager",
-                    GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+                if (!Utilities.WindowVisibile(EwindowPos)) Utilities.MakeWindowVisible(EwindowPos);
+                EwindowPos = GUILayout.Window(EwindowID, EwindowPos, windowE, "AmpYear Power Manager", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                 if (ShowParts) ScrollParts();
+            }
+        }
+
+        private void CheckPowerLowWarning()
+        {
+            double chrgpct = ((totalElectricCharge / totalElectricChargeCapacity) * 100);
+            //this.Log_Debug("CheckPowerLowWarning ShowWarn = " + ShowWarn + " POWER_LOW_WARNING_AMT = " + AYsettings.POWER_LOW_WARNING_AMT + " Current % = " + chrgpct.ToString());
+            if (ShowWarn && !WarnWinOn) // If Warning is on check if it's triggered
+            {
+                if ((TimeWarp.CurrentRate > 0) && (chrgpct < AYsettings.POWER_LOW_WARNING_AMT)) // We have hit the warning stop timewarp and show warning
+                {
+                    this.Log_Debug("cutting timewarp power warning limit reached");
+                    TimeWarp.SetRate(0, false);
+                    ShowWarn = false;
+                    WarnWinOn = true;
+                }
+            }
+
+            if ((((totalElectricCharge / totalElectricChargeCapacity) * 100) > AYsettings.POWER_LOW_WARNING_AMT) && !ShowWarn) // Reset the Warning indicator
+            {
+                this.Log_Debug("Reset power warning");
+                ShowWarn = true;
             }
         }
 
@@ -2536,7 +2602,6 @@ namespace AY
                 else
                     consumptionLabel(managerActiveDrain, true);
                 GUILayout.EndHorizontal();
-                
             }
 
             //Manager status label
@@ -2688,7 +2753,7 @@ namespace AY
                     }
                 }
                 else if (timewarpIsValid)
-                    GUILayout.Label("No Crew OnBoard", warningStyle);              
+                    GUILayout.Label("No Crew OnBoard", warningStyle);
             }
 
             GUILayout.EndVertical();
@@ -2761,7 +2826,7 @@ namespace AY
 
         private void ScrollParts()
         {
-            GUI.skin = HighLogic.Skin;
+            //GUI.skin = HighLogic.Skin;
 
             PartListStyle = new GUIStyle(GUI.skin.label);
             PartListStyle.alignment = TextAnchor.LowerLeft;
@@ -2773,11 +2838,11 @@ namespace AY
             PartListPartStyle.stretchWidth = false;
             PartListPartStyle.normal.textColor = Color.white;
 
-            Rect EPLwindowPos = new Rect(EwindowPos.x + EWINDOW_WIDTH + 10, EwindowPos.y, AYController.EWINDOW_WIDTH, Screen.height / 2 - 100);
+            Rect EPLwindowPos = new Rect(EwindowPos.x + EWINDOW_WIDTH + 10, EwindowPos.y, AYController.EWINDOW_WIDTH + 20, Screen.height / 2 - 100);
             // Begin the ScrollView
             scrollViewVector = GUI.BeginScrollView(EPLwindowPos, scrollViewVector, new Rect(0, 0, EWINDOW_WIDTH + 100, 1700));
             // Put something inside the ScrollView
-            GUILayout.Label("Power Production Parts",PartListStyle);
+            GUILayout.Label("Power Production Parts", PartListStyle);
             if (vesselProdPartsList.Count == 0)
                 GUILayout.Label("No Power Producing Parts", PartListPartStyle);
             foreach (var entry in vesselProdPartsList)
@@ -2790,11 +2855,33 @@ namespace AY
             foreach (var entry in vesselConsPartsList)
             {
                 GUILayout.Label(entry.Value.PrtName + " " + entry.Value.PrtPower, PartListPartStyle);
-            }            
+            }
             // End the ScrollView
             GUI.EndScrollView();
         }
-               
+
+        private void stopAndWarn(int id)
+        {
+            GUIStyle WarnStyle = new GUIStyle(GUI.skin.label);
+            WarnStyle.fontStyle = FontStyle.Bold;
+            WarnStyle.alignment = TextAnchor.UpperLeft;
+            WarnStyle.normal.textColor = Color.white;
+
+            GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Ship Electric charge has dropped below the Warp Warning Percentage.", WarnStyle);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("This will not trigger again until Electric charge > Warning Percentage again.", WarnStyle);
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+            if (GUILayout.Button("OK"))
+            {
+                this.Log_Debug("ElectricCharge Warning Threshold Triggered Alert Msg");
+                WarnWinOn = false;
+            }
+        }
+
         private void subsystemButton(Subsystem subsystem)
         {
             setSubsystemEnabled(

@@ -29,25 +29,47 @@ namespace AY
     public class AYSettings
     {
         private const string configNodeName = "AYSettings";
+
         public float FwindowPosX { get; set; }
+
         public float FwindowPosY { get; set; }
+
         public float EwindowPosX { get; set; }
+
         public float EwindowPosY { get; set; }
+
         public float SCwindowPosX { get; set; }
+
         public float SCwindowPosY { get; set; }
+
         public double CLIMATE_BASE_DRAIN_FACTOR { get; set; }
-        public float CLIMATE_TARGET_TEMP { get; set; }        
+
+        public float CLIMATE_TARGET_TEMP { get; set; }
+
         public double MASSAGE_BASE_DRAIN_FACTOR { get; set; }
+
         public double RECHARGE_RESERVE_THRESHOLD { get; set; }
+
+        public double POWER_LOW_WARNING_AMT { get; set; }
+
         public bool Craziness_Function { get; set; }
+
         public double CRAZY_BASE_DRAIN_FACTOR { get; set; }
+
         public double CRAZY_CLIMATE_UNCOMF_FACTOR { get; set; }
+
         public double CRAZY_CLIMATE_REDUCE_FACTOR { get; set; }
+
         public double CRAZY_RADIO_REDUCE_FACTOR { get; set; }
+
         public double CRAZY_MASSAGE_REDUCE_FACTOR { get; set; }
+
         public double CRAZY_MINOR_LIMIT { get; set; }
+
         public double CRAZY_MAJOR_LIMIT { get; set; }
+
         public bool UseAppLauncher { get; set; }
+
         public bool debugging { get; set; }
 
         public AYSettings()
@@ -59,9 +81,10 @@ namespace AY
             SCwindowPosX = 40;
             SCwindowPosY = 50;
             CLIMATE_BASE_DRAIN_FACTOR = 1.0;
-            CLIMATE_TARGET_TEMP = 20.0f;            
+            CLIMATE_TARGET_TEMP = 20.0f;
             MASSAGE_BASE_DRAIN_FACTOR = 3.0;
             RECHARGE_RESERVE_THRESHOLD = 0.95;
+            POWER_LOW_WARNING_AMT = 5;
             Craziness_Function = true;
             CRAZY_BASE_DRAIN_FACTOR = 0.05;
             CRAZY_CLIMATE_UNCOMF_FACTOR = 0.02;
@@ -91,6 +114,7 @@ namespace AY
                 CLIMATE_TARGET_TEMP = Utilities.GetNodeValue(AYsettingsNode, "CLIMATE_TARGET_TEMP", CLIMATE_TARGET_TEMP);
                 MASSAGE_BASE_DRAIN_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "MASSAGE_BASE_DRAIN_FACTOR", MASSAGE_BASE_DRAIN_FACTOR);
                 RECHARGE_RESERVE_THRESHOLD = Utilities.GetNodeValue(AYsettingsNode, "RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
+                POWER_LOW_WARNING_AMT = Utilities.GetNodeValue(AYsettingsNode, "POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
                 Craziness_Function = Utilities.GetNodeValue(AYsettingsNode, "Craziness_Function", Craziness_Function);
                 CRAZY_BASE_DRAIN_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_BASE_DRAIN_FACTOR", CRAZY_BASE_DRAIN_FACTOR);
                 CRAZY_CLIMATE_UNCOMF_FACTOR = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_CLIMATE_UNCOMF_FACTOR", CRAZY_CLIMATE_UNCOMF_FACTOR);
@@ -101,7 +125,7 @@ namespace AY
                 CRAZY_MAJOR_LIMIT = Utilities.GetNodeValue(AYsettingsNode, "CRAZY_MAJOR_LIMIT", CRAZY_MAJOR_LIMIT);
                 UseAppLauncher = Utilities.GetNodeValue(AYsettingsNode, "UseAppLauncher", UseAppLauncher);
                 debugging = Utilities.GetNodeValue(AYsettingsNode, "debugging", debugging);
-                this.Log_Debug( "AYSettings AYSettings load complete");
+                this.Log_Debug("AYSettings AYSettings load complete");
             }
         }
 
@@ -125,8 +149,10 @@ namespace AY
             settingsNode.AddValue("SCwindowPosX", SCwindowPosX);
             settingsNode.AddValue("SCwindowPosY", SCwindowPosY);
             settingsNode.AddValue("CLIMATE_BASE_DRAIN_FACTOR", CLIMATE_BASE_DRAIN_FACTOR);
-            settingsNode.AddValue("CLIMATE_TARGET_TEMP", CLIMATE_TARGET_TEMP);            
+            settingsNode.AddValue("CLIMATE_TARGET_TEMP", CLIMATE_TARGET_TEMP);
             settingsNode.AddValue("MASSAGE_BASE_DRAIN_FACTOR", MASSAGE_BASE_DRAIN_FACTOR);
+            settingsNode.AddValue("RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
+            settingsNode.AddValue("POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
             settingsNode.AddValue("Craziness_Function", Craziness_Function);
             settingsNode.AddValue("CRAZY_BASE_DRAIN_FACTOR", CRAZY_BASE_DRAIN_FACTOR);
             settingsNode.AddValue("CRAZY_CLIMATE_UNCOMF_FACTOR", CRAZY_CLIMATE_UNCOMF_FACTOR);
@@ -137,7 +163,7 @@ namespace AY
             settingsNode.AddValue("CRAZY_MAJOR_LIMIT", CRAZY_MAJOR_LIMIT);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
-            this.Log_Debug( "AYSettings AYSettings save complete");
+            this.Log_Debug("AYSettings AYSettings save complete");
         }
     }
 }

@@ -1,51 +1,80 @@
 # AmpYear
 A KSP plugin that allows better management of electricity and adds ION RCS & Pulsed Plasma Thruster RCS.
 Fork of original AmpYear by SodiumEyes until he returns or gives permission to take over the Mod. 
-Requires Module Manager by Sarbian. Link available in the KSP forum Post.
+
+    Dependency: Requires Module Manager (not in this distribution).
+    Optional: Blizzy's Tool Bar.
+    To install unzip to gamedata folder where you have KSP installed. (remove any previous versions from Gamedata/AmpYear first).
+
 
 Notes for Operation:
-The manager function must be switched on (via the menu) for a small Electrical cost to manage power consumption across the vehicle. You cannot activate autopilot/SAS, subysstems, luxury items unless the Manager is active.
-Gives indicators of Current Battery capacities, Electric Charge usage and generation.
-Reserve Batteries : Used to store, well reserve Electric Charge, which will be used when main Charge runs out. You can transfer charge from reserve to main batteries. Parts that produce electric charge will fill Main electric charge batteries first and then reserve batteries.
-In the Editor you can can indicatications of total power production and consumption. You can also get a full list of all power production and consumption parts.
+Manager
 
-ION RCS (linear only) - Add them to your vehicle, but don't forget to add Xenon Gas tanks and ensure you are generating enough electrical charge for them to operate.
+    The manager function is attached to all probes and command pods through the power of Module Manager - thanks Sarbian.
+    The AmpYear menu can be switched on/off via integration with Stock or Toolbar by blizzy.
+    Emergency Shutdown procedure - when All power is critical will activate solar panels (if attached and not in atmosphere) and shutdown non-essential parts using electricity.
+    Automatically Saves all settings and window positions per vehicle to persistent save file.
+    Gives %age indicators of Current Battery capacities, Electric Charge usage and generation. You can transfer charge from reserve to main batteries. Parts that produce electric charge will fill Main batteries first and then reserve batteries.
+    In the Editor you can get indications of total power production and consumption of your vessel. You can also get a full list of all power production and consumption parts.
+	Functions using stock toolbar or Blizzy's Toolbar (can be changed via Settings menu from the Space center).
+	Includes correct power calculations if you have the following Mods installed (but not required for mod to function): Regolith, Near Future Electrical/Solar, KAS, RemoteTech, ScanSat, Telemachus, TAC LS, AntennaRange.
 
-PPT RCS (linear only) - Add them to your vehicle, they include a portion of Teflon (check google/wiki for how they function in real life) and ensure you are generating enough electrical charge for them to operate.
-Reserve Batteries - Come in various sizes. Command pods and probes come with 50 of Reserve power by default. Adding Batteries gives you more.
+ION RCS
 
-Cabin Craziness - attribute attached to parts that have crew capacity. Increases over time and is influenced by crew capacity and space. When percentages are reached random events will occur. 
-Has two levels - Minor and Major (configurable via settings menu on Spacecenter screen).
-Once these levels are reached there are random changes that the crew may:-
-Disable Autopilot functions for a period of time (cumulative).
-Throw out (dump) some resources.
-Throw out (dump) some science experiments.
-A crew member may go randomly decide to go on EVA.
+    Thrusters that use Xenon-gas and electricity for incredibly efficient RCS. Some limitations:
+    Has half the Isp of normal Ion engines.
+    One quarter of the thrust of normal monopropellant RCS thrusters.
+    Only linear thrusters are available.
+    Integrated to TechTree at ionPropulsion.
 
-Turn Booster - When active uses Electric Charge to boost reaction wheels by 25%.
-Once the Manager is active via the GUI you can switch Subsystems, Luxury and Reserve power areas of the GUI on and off.
-Read-outs in the GUI give you Power production, capacity, stored, and used. All colour coded.
+Pulsed Plasma Thrusters RCS
 
-Luxury Items : Reduce CabinCraziness. The heater/Cooler changes crewable parts internal temperature, you can view the Temperature via the Right-click menu of each part. Crewable parts internal temperatures slowly change towards the ambient external temperature over time. Use of the heater and cooler will control the internal climate based on set values (via the settings menu). The music and Massage chairs - reduce the Cabin Fever percentage of each crewable part (can be seen via the part right-click menu). Warnings are given when Cabin Fever reaches certain percentages - and random events may occur.
+    Each thruster contains a fixed amount of Teflon and uses this along with Electric Charge for incredibly efficient propulsion for small craft or maneuvering. Some limitations:
+    Has roughly quarter the ISP of normal RCS thrusters.
+    One eighth of the thrust of normal monopropellant RCS thrusters.
+    Only linear thrusters are available.
+    Integrated to TechTree at advFlightControl.
+    See (http://en.wikipedia.org/wiki/Pulsed_plasma_thruster).
 
-Changes from Original Version include: Removed original AmpYear Part - no longer requires special part to function. 
-Instead you just need a command pod or probe core. 
-Removes the original AmpYear ASAS, not really required any more as ASAS modules available in stock. (see further comments below). 
-Removed the 'copied' RemoteTech flight computer. If you want a flight computer install RemoteTech. 
-Removed obsolete functions around SAS and ASAS electrical usage. 
-Amended the PowerTurn function :- Powerturn function remains whilst ASAS was removed. 
-Base SAS as per .90 is supported. Powerturn provides additional ability to use Electrical Power to Power-Assist ReactionWheels and SAS (both seperate parts and where the modules are used in Pods and Probes). 
-Added ModuleManager dependency to add default small amount of ReservePower to command pods and probe cores. 
-Additional Reserve Power Batteries can be added to vessels.
-Functions using stock toolbar or Blizzy's Toolbar (can be changed via Settings menu from the Spacecentre).
-Added Config Settings to SpaceCentre to change various settings. 
-Corrected calculations for Electricity Consumption, Generation and GUI improvements. 
-In Editor (VAB) you can see Power Production and Consumption parts and totals. - Still somewhat BUGGED and pretty rough. Don't know if I want to include this on-going as there are other mods that do this a lot better. 
-Includes power calculations if you have the following Mods installed (but not required for mod to function): 
-Near Future Electrical KAS RemoteTech KAS ScanSat Telemachus TAC LS AntennaRange 
+TurnBooster
 
-Planned/Ideas: 
-Complete testing and bug fixes. 
-Review Turn Booster calculations.
-Revision of Luxury components and the Cabin Fever attribute - Not sure where this is going, would prefer to integrate to other such mods. but can't find anything suitable at this time. Extend Cabin Fever calculations to be relative to other factors such as distance from Kerbin.
-Improve subsystems and other mod integration, such as Interstellar, Near Future Solar, Karbonite mods, AviationLights, Infernal robotics. 
+    Allows you to use electrical power to harness SAS/Reaction Wheel modules for additional turning power. Boosting them by 25%.
+
+Reserve Power
+
+    Attach Reserve Power batteries to your ship to save power for emergencies. Ideal for keeping your probes from dying.
+    Power can be transferred to and from main and reserve power resources.
+    Electrical power generators (solar panels, etc) will re-charge main power followed by reserve power when a threshold is reached.
+
+Luxury Fitted Command Pods
+
+    Yes all command pods now come with Klimate Kontrol, Jazz music and Massage chairs. These items reduce KabinKraziness (see below), consume electricity and makes missions more pleasant for the crew.
+    The Klimate Kontrol function maintains the cabin temperature to a pre-set value, and the cabin temp can be viewed through the command pod right click menu. If turned off Cabin Temperature will slowly change towards the outside ambient temperature having a negative effect on KabinKraziness.
+
+Auto-Hibernate (REMOVED in 0.13)
+
+    All AmpYear functions will now continue to run during timewarp. A Warning Pop-up will appear and stop warp if the ElectricCharge falls below a set percentage (configurable via the spacecenter window).
+
+Show Crew
+
+    Show Crew feature - with 0.90 - I added this to show the crew and their roles rather than having to switch to the map view all the time.
+
+WIP Features:
+KabinKraziness
+
+    A modifier attached to crew-able parts. Goes up over time based on how much space the crew have, how far from Kerbin you are and if your Cabin temperature is within 5 degrees of the climate control setting. You can turn KabinKraziness features of the mod on or off via the SpaceCenter config menu.
+
+    Has two levels of Kraziness - Minor and Major (configurable via settings menu on Space center screen). Once these levels are reached random events may occur where the crew may:-
+    Disable Autopilot functions for a period of time (cumulative).
+    Throw out (dump) some resources.
+    Throw out (dump) some science experiments.
+    A crew member may randomly decide to go on EVA.
+	    
+
+ChangeLog:
+
+V0.12d Fixed Vessel switching bug (save settings correctly). Kraziness balancing. Removed Auto-Hibernate and added timewarp/low power warning pop-up. Updated to latest versions of other mods.
+V0.12c Fixed duplicated batteries in distribution zip file. Completely delete the AmpYear folder in your gamedata directory and re-install.
+V0.12b Tweaks to Cabin Craziness calculations. Correctly includes craziness increases based on how far from Kerbin you are. Tweaked base values in calculations. Merged the Heater/Cooler function into one Climate Control function.
+V0.12a Loading fix and Gui Improvements Added distance from Kerbal in the Cabin Craziness Calculation.
+V0.12 - Forked from SodiumEyes - Updated and Upgraded for KSP 0.90. Too many changes to mention. Refer to the Mod forum link for details.

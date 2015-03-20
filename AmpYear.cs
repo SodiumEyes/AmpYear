@@ -37,7 +37,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace AY
@@ -55,14 +54,14 @@ namespace AY
             var Currentgame = HighLogic.CurrentGame;
             Utilities.Log("AmpYear  AddScenarioModules", " ScenarioModules Start");
             ProtoScenarioModule protoscenmod = Currentgame.scenarios.Find(s => s.moduleName == typeof(AmpYear).Name);
-            
+
             if (protoscenmod == null)
             {
                 Utilities.Log("AmpYear AddScenarioModules", " Adding the scenario module.");
                 protoscenmod = Currentgame.AddProtoScenarioModule(typeof(AmpYear), GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR);
             }
             else
-            {                
+            {
                 if (!protoscenmod.targetScenes.Any(s => s == GameScenes.SPACECENTER))
                 {
                     Utilities.Log("AmpYear  AddScenarioModules", " Adding the SpaceCenter scenario module.");
@@ -104,29 +103,29 @@ namespace AY
             AYsettings = new AYSettings();
             AYgameSettings = new AYGameSettings();
             globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
-            this.Log( "globalConfigFilename = " + globalConfigFilename);
+            this.Log("globalConfigFilename = " + globalConfigFilename);
         }
 
         public override void OnAwake()
         {
-            this.Log( "OnAwake in " + HighLogic.LoadedScene);
+            this.Log("OnAwake in " + HighLogic.LoadedScene);
             base.OnAwake();
 
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
-                this.Log( "Adding SpaceCenterManager");
+                this.Log("Adding SpaceCenterManager");
                 var child = gameObject.AddComponent<AYSCController>();
                 children.Add(child);
             }
             else if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                this.Log( "Adding FlightManager");
+                this.Log("Adding FlightManager");
                 var child = gameObject.AddComponent<AYController>();
                 children.Add(child);
             }
             else if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
-                this.Log( "Adding EditorController");
+                this.Log("Adding EditorController");
                 var child = gameObject.AddComponent<AYController>();
                 children.Add(child);
             }
@@ -143,11 +142,11 @@ namespace AY
                 AYsettings.Load(globalNode);
                 foreach (Savable s in children.Where(c => c is Savable))
                 {
-                    this.Log( "AmpYear Child Load Call for " + s.ToString());
+                    this.Log("AmpYear Child Load Call for " + s.ToString());
                     s.Load(globalNode);
                 }
             }
-            this.Log( "OnLoad: \n " + gameNode + "\n" + globalNode);
+            this.Log("OnLoad: \n " + gameNode + "\n" + globalNode);
         }
 
         public override void OnSave(ConfigNode gameNode)
@@ -158,21 +157,21 @@ namespace AY
             //AYSettings.Save(globalNode);
             foreach (Savable s in children.Where(c => c is Savable))
             {
-                this.Log( "AmpYear Child Save Call for " + s.ToString());
+                this.Log("AmpYear Child Save Call for " + s.ToString());
                 s.Save(globalNode);
             }
             AYsettings.Save(globalNode);
             globalNode.Save(globalConfigFilename);
 
-            this.Log( "OnSave: " + gameNode + "\n" + globalNode);
+            this.Log("OnSave: " + gameNode + "\n" + globalNode);
         }
 
         private void OnDestroy()
         {
-            this.Log( "OnDestroy");
+            this.Log("OnDestroy");
             foreach (Component child in children)
             {
-                this.Log( "AmpYear Child Destroy for " + child.name);
+                this.Log("AmpYear Child Destroy for " + child.name);
                 Destroy(child);
             }
             children.Clear();

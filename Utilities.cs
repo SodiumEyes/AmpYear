@@ -25,18 +25,14 @@
  *
  */
 
-using KSP.IO;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace AY
 {
     public static class Utilities
     {
-        
         //Geometry and space
 
         public static double DistanceFromHomeWorld(Vessel vessel)
@@ -50,9 +46,9 @@ namespace AY
             Log_Debug("AmpYear", "Distance from Home Planet = " + DstFrmHome);
             return DstFrmHome;
         }
-        
+
         //Formatting time functions
-        
+
         public static String formatTime(double seconds)
         {
             int y = (int)(seconds / (6.0 * 60.0 * 60.0 * 426.08));
@@ -100,7 +96,7 @@ namespace AY
                 return "0s";
             }
         }
-        
+
         // Get Config Node Values out of a config node Methods
 
         public static bool GetNodeValue(ConfigNode confignode, string fieldname, bool defaultValue)
@@ -290,14 +286,14 @@ namespace AY
         {
             AYSettings AYsettings = AmpYear.Instance.AYsettings;
             if (AYsettings.debugging)
-            Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+                Debug.Log(obj.GetType().FullName + "[" + obj.GetInstanceID().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
         public static void Log_Debug(this System.Object obj, string message)
         {
             AYSettings AYsettings = AmpYear.Instance.AYsettings;
             if (AYsettings.debugging)
-            Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
+                Debug.Log(obj.GetType().FullName + "[" + obj.GetHashCode().ToString("X") + "][" + Time.time.ToString("0.00") + "]: " + message);
         }
 
         public static void Log_Debug(string context, string message)
@@ -305,6 +301,6 @@ namespace AY
             AYSettings AYsettings = AmpYear.Instance.AYsettings;
             if (AYsettings.debugging)
                 Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);
-        }        
+        }
     }
 }

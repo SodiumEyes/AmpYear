@@ -35,11 +35,13 @@ namespace AY
 
         public bool Enabled { get; set; }
 
+        //public Dictionary<String, VesselInfo> knownVessels { get; private set; }
         public Dictionary<Guid, VesselInfo> knownVessels { get; private set; }
 
         public AYGameSettings()
         {
             Enabled = true;
+            //knownVessels = new Dictionary<String, VesselInfo>();
             knownVessels = new Dictionary<Guid, VesselInfo>();
         }
 
@@ -58,14 +60,15 @@ namespace AY
                 {
                     if (vesselNode.HasValue("Guid"))
                     {
+                        //String id = vesselNode.GetValue("Guid");
                         Guid id = new Guid(vesselNode.GetValue("Guid"));
-                        this.Log_Debug( "AYGameSettings Loading Guid = " + id);
+                        this.Log_Debug("AYGameSettings Loading Guid = " + id);
                         VesselInfo vesselInfo = VesselInfo.Load(vesselNode);
                         knownVessels[id] = vesselInfo;
                     }
                 }
             }
-            this.Log_Debug( "AYGameSettings Loading Complete");
+            this.Log_Debug("AYGameSettings Loading Complete");
         }
 
         public void Save(ConfigNode node)
@@ -85,10 +88,10 @@ namespace AY
             foreach (var entry in knownVessels)
             {
                 ConfigNode vesselNode = entry.Value.Save(settingsNode);
-                this.Log_Debug( "AYGameSettings Saviong Guid = " + entry.Key);
+                this.Log_Debug("AYGameSettings Saving Guid = " + entry.Key);
                 vesselNode.AddValue("Guid", entry.Key);
             }
-            this.Log_Debug( "AYGameSettings Saving Complete");
+            this.Log_Debug("AYGameSettings Saving Complete");
         }
     }
 }

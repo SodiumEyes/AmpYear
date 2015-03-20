@@ -80,7 +80,7 @@ namespace AY
             base.OnLoad(node);
 
             foreach (Propellant propellant in propellants)
-            {                
+            {
                 if (propellant.name == ElecChge)
                 {
                     powerRatio = propellant.ratio;

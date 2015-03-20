@@ -44,8 +44,8 @@ namespace AY
             base.OnStart(state);
             if (CabinTemp == 0f)
                 CabinTemp = base.part.temperature;
-            
-            this.Log_Debug( "AYCrewPart Onstart " + base.part.name + " " + base.part.flightID + " CabinTemp = " + CabinTemp);
+
+            this.Log_Debug("AYCrewPart Onstart " + base.part.name + " " + base.part.flightID + " CabinTemp = " + CabinTemp);
         }
 
         public override void OnUpdate()
@@ -54,9 +54,7 @@ namespace AY
             ambient = vessel.flightIntegrator.getExternalTemperature();
             float CabinTmpRngLow = ambient - 0.5f;
             float CabinTmpRngHgh = ambient + 0.5f;
-            if (CabinTemp < CabinTmpRngHgh && CabinTemp > CabinTmpRngLow)
-                this.Log_Debug( "AYcrewpart cabintemp almost outside temp ");
-            else
+            if (CabinTemp > CabinTmpRngHgh && CabinTemp < CabinTmpRngLow)
             {
                 if (CabinTemp < ambient)
                 {
