@@ -2170,7 +2170,7 @@ namespace AY
                     subsystemToggle[i] = false;
                 for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
                     guiSectionEnableFlag[i] = false;
-                managerEnabled = false;
+                managerEnabled = true;
                 ShowCrew = false;
                 EmgcyShutActive = false;
                 AutoPilotDisabled = false;

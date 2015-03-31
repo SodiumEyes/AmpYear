@@ -78,7 +78,7 @@ namespace AY
                 string Nme = ((GUISection)i).ToString();
                 info.guiSectionEnableFlag[i] = Utilities.GetNodeValue(node, Nme + "Flag", false);
             }
-            info.managerEnabled = Utilities.GetNodeValue(node, "managerEnabled", false);
+            info.managerEnabled = Utilities.GetNodeValue(node, "managerEnabled", true);
             info.ShowCrew = Utilities.GetNodeValue(node, "ShowCrew", false);
             info.ShowParts = Utilities.GetNodeValue(node, "ShowParts", false);
             info.hibernating = Utilities.GetNodeValue(node, "hibernating", false);
