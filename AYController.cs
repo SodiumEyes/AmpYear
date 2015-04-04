@@ -43,8 +43,52 @@ using UnityEngine;
 
 namespace AY
 {
-    public partial class AYController : MonoBehaviour, Savable
+    public partial class AYController : MonoBehaviour, Savable, Iayaddon
     {
+        #region Iayaddon
+
+        public List<Part> CrewablePartList
+        {
+            get
+            {
+                return this.crewablePartList;
+            }
+        }
+
+        public bool[] SubsystemToggle
+        {
+            get
+            {
+                return this.subsystemToggle;
+            }
+        }
+
+        public bool HasPower
+        {
+            get
+            {
+                return this.hasPower;
+            }
+        }
+
+        public bool ManagerisActive
+        {
+            get
+            {
+                return this.managerIsActive;
+            }
+        }
+
+        public bool DeBugging
+        {
+            get
+            {
+                return this.AYsettings.debugging;
+            }
+        }
+
+        #endregion Iayaddon
+
         public class PwrPartList
         {
             public string PrtName { get; set; }
@@ -98,8 +142,16 @@ namespace AY
             }
         }
 
+        public static AYController Instance { get; private set; }
+
+        public AYController()
+        {
+            Utilities.Log("AYController", "Constructor");
+            Instance = this;
+        }
+
         //AmpYear Properties
-        public static List<Part> crewablePartList = new List<Part>();
+        public List<Part> crewablePartList = new List<Part>();
 
         public Dictionary<uint, PwrPartList> vesselProdPartsList { get; private set; }
 
@@ -115,15 +167,15 @@ namespace AY
         public static double totalReservePowerCapacity = 0.0;
         public static double totalPowerDrain = 0.0;
         public static double totalPowerProduced = 0.0;
-        public static bool hasPower = true;
-        public static bool hasReservePower = true;
-        public static bool hasRCS = false;
-        public static float currentRCSThrust = 0.0f;
-        public static float currentPoweredRCSDrain = 0.0f;
+        public bool hasPower = true;
+        public bool hasReservePower = true;
+        public bool hasRCS = false;
+        public float currentRCSThrust = 0.0f;
+        public float currentPoweredRCSDrain = 0.0f;
         public static Guid currentvesselid;
-        public static int totalClimateParts = 0;
-        public static bool CrewTempComfortable = false;
-        public static int maxCrew = 0;
+        public int totalClimateParts = 0;
+        public int maxCrew = 0;
+        private bool KKPresent = false;
         private bool ALPresent = false;
         private bool NFEPresent = false;
         private bool NFSPresent = false;
@@ -158,14 +210,14 @@ namespace AY
         private static int EwindowID = new System.Random().Next();
         private static int WwindowID = new System.Random().Next();
         private static GameState mode = GameState.EVA;  // Display mode, currently  0 for In-Flight, 1 for Editor, 2 for EVA (Hide)
-        private static bool[] subsystemToggle = new bool[Enum.GetValues(typeof(Subsystem)).Length];
-        private static double[] subsystemDrain = new double[Enum.GetValues(typeof(Subsystem)).Length];
+        private bool[] subsystemToggle = new bool[Enum.GetValues(typeof(Subsystem)).Length];
+        private double[] subsystemDrain = new double[Enum.GetValues(typeof(Subsystem)).Length];
         private bool managerEnabled = true;
         private bool ShowCrew = false;
         private bool ShowParts = false;
+        private double timeLastElectricity;
+        private double lastUpdate;
         private float powerUpTime = 0.0f;
-        public static float sumDeltaTime = 0f;
-        private static bool doOneUpdate = false;
         public bool EmgcyShutActive = false;
         private static bool ShowWarn = true;
         private static bool WarnWinOn = false;
@@ -177,7 +229,7 @@ namespace AY
         public const double MANAGER_ACTIVE_DRAIN = 1.0 / 60.0;
 
         public const double RCS_DRAIN = 1.0 / 60.0;
-        public const float POWER_UP_DELAY = 1f;
+        public const float POWER_UP_DELAY = 10f;
         public const double SAS_BASE_DRAIN = 1.0 / 60.0;
         public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
         public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.25f;
@@ -205,14 +257,6 @@ namespace AY
             set
             {
                 _Visible = value;      //Set the private variable
-                /*if (_Visible)
-                {
-                    //RenderingManager.AddToPostDrawQueue(5, this.onDraw);
-                }
-                else
-                {
-                    //RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
-                }*/
             }
         }
 
@@ -276,20 +320,6 @@ namespace AY
         public void Start()
         {
             this.Log_Debug("AYController Start");
-            // add callbacks for vessel load and change
-            GameEvents.onVesselChange.Add(onVesselChange);
-            GameEvents.onVesselLoaded.Add(onVesselLoad);
-            GameEvents.onCrewBoardVessel.Add(onCrewBoardVessel);
-
-            RenderingManager.AddToPostDrawQueue(5, this.onDraw);
-
-            //check if inflight and active vessel set currentvesselid and load config settings for this vessel
-            if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
-            {
-                currentvesselid = FlightGlobals.ActiveVessel.id;
-                onVesselLoad(FlightGlobals.ActiveVessel);
-            }
-
             // Find out which mods are present
             ALPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "AviationLights");
             NFEPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "NearFutureElectrical");
@@ -305,8 +335,13 @@ namespace AY
             RegoPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "Regolith");
             BTSMPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "BTSM");
             RTKolPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "RTKolonists");
+            KKPresent = KKClient.KKInstalled;
 
             this.Log_Debug("Checked for mods");
+            if (KKPresent)
+                this.Log_Debug("KabinKraziness present");
+            else
+                this.Log_Debug("KabinKraziness NOT present");
             if (ALPresent)
                 this.Log_Debug("Aviation Lights present");
             if (NFEPresent)
@@ -333,6 +368,20 @@ namespace AY
                 this.Log_Debug("btsm present");
             if (RTKolPresent)
                 this.Log_Debug("RTKolonists present");
+            //check if inflight and active vessel set currentvesselid and load config settings for this vessel
+            if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
+            {
+                currentvesselid = FlightGlobals.ActiveVessel.id;
+                onVesselLoad(FlightGlobals.ActiveVessel);
+            }
+
+            // add callbacks for vessel load and change
+            GameEvents.onVesselChange.Add(onVesselChange);
+            GameEvents.onVesselLoaded.Add(onVesselLoad);
+            GameEvents.onCrewBoardVessel.Add(onCrewBoardVessel);
+
+            RenderingManager.AddToPostDrawQueue(5, this.onDraw);
+
             this.Log_Debug("AYController Start complete");
         }
 
@@ -360,108 +409,21 @@ namespace AY
             RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
         }
 
-        //GUI Section
-
-        public static string guiSectionName(GUISection section)
-        {
-            switch (section)
-            {
-                case GUISection.SUBSYSTEM:
-                    return "Subsys";
-
-                case GUISection.RESERVE:
-                    return "Reserve";
-
-                case GUISection.LUXURY:
-                    return "Luxury";
-
-                default:
-                    return String.Empty;
-            }
-        }
-
-        public bool guiSectionEnabled(GUISection section)
-        {
-            return guiSectionEnableFlag[(int)section];
-        }
-
-        public static bool subsystemIsLuxury(Subsystem subsystem)
-        {
-            switch (subsystem)
-            {
-                case Subsystem.CLIMATE:
-                case Subsystem.MUSIC:
-                case Subsystem.MASSAGE:
-                    return true;
-
-                default:
-                    return false;
-            }
-        }
-
-        public bool subsystemVisible(Subsystem subsystem)
-        {
-            Vessel cv = FlightGlobals.ActiveVessel;
-            switch (subsystem)
-            {
-                case Subsystem.POWER_TURN:
-                    return sasAdditionalRotPower > 0.0f;
-
-                case Subsystem.RCS:
-                    return hasRCS;
-
-                case Subsystem.CLIMATE:
-                case Subsystem.MUSIC:
-                    return crewablePartList.Count > 0;
-
-                case Subsystem.MASSAGE:
-                    return cv.GetCrewCount() > 0;
-
-                default:
-                    return true;
-            }
-        }
-
-        private void SetModeFlag()
-        {
-            //Set the mode flag, 0 = inflight, 1 = editor, 2 on EVA or F2
-            if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
-            {
-                if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal, do nothing
-                    mode = GameState.EVA;
-                else
-                    mode = GameState.FLIGHT;
-            }
-            else if (EditorLogic.fetch != null) // Check if in editor
-                mode = GameState.EDITOR;
-            else   // Not in flight, in editor or F2 pressed unset the mode and return
-                mode = GameState.EVA;
-        }
-
         private void FixedUpdate()
         {
             if (Time.timeSinceLevelLoad < 2.0f) // Check not loading level
             {
                 return;
             }
-
             //Set the mode flag, 0 = inflight, 1 = editor, 2 on EVA or F2
-            SetModeFlag();
+            mode = Utilities.SetModeFlag();
             if (mode == GameState.EVA) return;
 
             if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedSceneIsEditor) // Only execute Update in Flight or Editor Scene
             {
-                sumDeltaTime += TimeWarp.deltaTime;
-                if (sumDeltaTime > 2f) // Only update 1 times ever two second max.
-                {
-                    doOneUpdate = true;
-                }
-                // execute the next block if in flight, have active vessel and sumdeltatime has elapsed since last update, OR we are in the editor
-                if ((FlightGlobals.ready && FlightGlobals.ActiveVessel != null && doOneUpdate) || (HighLogic.LoadedSceneIsEditor))
+                if ((FlightGlobals.ready && FlightGlobals.ActiveVessel != null) || (HighLogic.LoadedSceneIsEditor))
                 {
                     this.Log_Debug("ampYearAYController  FixedUpdate mode == " + mode);
-                    doOneUpdate = false;
-
                     //get current vessel parts list
                     List<Part> parts = new List<Part> { };
                     if (mode == GameState.FLIGHT)
@@ -520,7 +482,6 @@ namespace AY
                     //loop through all parts in the parts list of the vessel
                     foreach (Part current_part in parts)
                     {
-                        //this.Log_Debug("AYController part = " + current_part.name);
                         bool currentEngActive = false;
                         double alt_rate = 0;
                         string PrtName = current_part.name;
@@ -575,7 +536,6 @@ namespace AY
                         //loop through all the modules in the current part
                         foreach (PartModule module in current_part.Modules)
                         {
-                            //this.Log_Debug("AYController module = " + module.name);
                             if (module is LaunchClamp)
                                 continue; // skip clamps
 
@@ -645,6 +605,7 @@ namespace AY
                                 if (mode == GameState.FLIGHT)
                                 {
                                     tmpPower = tmpSol.flowRate;
+                                    this.Log_Debug("totalPowerProduced SolarPanel Power = " + tmpPower + " Part = " + current_part.name);
                                     totalPowerProduced += tmpPower;
                                     if (!hasPower && EmgcyShutActive)
                                     {
@@ -659,7 +620,7 @@ namespace AY
                                             }
                                         }
                                         else
-                                            ScreenMessages.PostScreenMessage("Electricity Levels Critical! In Atmosphere Cannot Extending Solar Panels!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                            ScreenMessages.PostScreenMessage("Electricity Levels Critical! In Atmosphere can not Extend Solar Panels!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
                                     }
                                 }
                                 else
@@ -688,6 +649,7 @@ namespace AY
                                         if (mode == GameState.EDITOR)
                                         {
                                             tmpPower = outp.rate;
+                                            
                                             totalPowerProduced += tmpPower;
                                             PrtActive = true;
                                         }
@@ -696,11 +658,13 @@ namespace AY
                                             if (tmpGen.isAlwaysActive || tmpGen.generatorIsActive)
                                             {
                                                 tmpPower = outp.rate;
+                                                this.Log_Debug("totalPowerProduced Generator Output Active Power = " + tmpPower + " Part = " + current_part.name);
                                                 totalPowerProduced += tmpPower;
                                                 PrtActive = true;
                                             }
                                             else
                                             {
+                                                
                                                 tmpPower = outp.rate;
                                                 PrtActive = false;
                                             }
@@ -719,7 +683,7 @@ namespace AY
                                         if (mode == GameState.EDITOR)
                                         {
                                             tmpPower = inp.rate;
-                                            totalPowerProduced += tmpPower;
+                                            totalPowerDrain += tmpPower;
                                             PrtActive = true;
                                         }
                                         else
@@ -727,7 +691,7 @@ namespace AY
                                             if (tmpGen.isAlwaysActive || tmpGen.generatorIsActive)
                                             {
                                                 tmpPower = inp.rate;
-                                                totalPowerProduced += inp.rate;
+                                                totalPowerDrain += inp.rate;
                                                 PrtActive = true;
                                             }
                                             else
@@ -922,6 +886,8 @@ namespace AY
                                 currentEngActive = tmpEng.isOperational && (tmpEng.currentThrottle > 0);
                                 if (alt_rate > 0 && currentEngActive)
                                 {
+
+                                    this.Log_Debug("totalPowerProduced ModEngine Active Power = " + alt_rate + " Part = " + current_part.name);
                                     totalPowerProduced += alt_rate;
                                     PrtActive = true;
                                     PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)alt_rate, PrtActive);
@@ -974,6 +940,7 @@ namespace AY
                                 currentEngActive = tmpEngFX.isOperational && (tmpEngFX.currentThrottle > 0);
                                 if (alt_rate > 0 && currentEngActive)
                                 {
+                                    this.Log_Debug("totalPowerProduced ModEngine Active Power = " + alt_rate + " Part = " + current_part.name);
                                     totalPowerProduced += alt_rate;
                                     PrtActive = true;
                                     PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)alt_rate, PrtActive);
@@ -995,6 +962,7 @@ namespace AY
                                     {
                                         if (mode == GameState.EDITOR || (mode == GameState.FLIGHT && currentEngActive))
                                         {
+                                            this.Log_Debug("totalPowerProduced ModAlt Active Power = " + r.rate + " Part = " + current_part.name);
                                             totalPowerProduced += r.rate;
                                             PrtActive = true;
                                         }
@@ -1188,20 +1156,10 @@ namespace AY
                                     BTSMPresent = false;
                                 }
 
-                            if (module is AYCrewPart)
+                            /*if (KKPresent)
                             {
-                                float ComfortHigh = AYsettings.CLIMATE_TARGET_TEMP + 5;
-                                float ComfortLow = AYsettings.CLIMATE_TARGET_TEMP - 5;
-                                CrewTempComfortable = false;
-                                if ((((AYCrewPart)module).CabinTemp >= ComfortLow) && (((AYCrewPart)module).CabinTemp <= ComfortHigh))
-                                {
-                                    CrewTempComfortable = true;
-                                    totalClimateParts++;
-                                }
-
-                                if (mode == GameState.FLIGHT && AYsettings.Craziness_Function && timewarpIsValid)
-                                    CalcPartCraziness(FlightGlobals.ActiveVessel, current_part, module, sumDeltaTime);
-                            }
+                                checkKK(module, current_part);
+                            }*/
                         } // end modules loop
 
                         //Sum up the power resources
@@ -1226,10 +1184,11 @@ namespace AY
                     subsystemUpdate();
                 } // end if active vessel not null
             } // End if Highlogic check
-        } // End Function
+        }
 
         private void subsystemUpdate()
         {
+            //This is the Logic that Executes in Flight
             if (HighLogic.LoadedSceneIsFlight)
             {
                 Vessel cv = FlightGlobals.ActiveVessel;
@@ -1242,28 +1201,44 @@ namespace AY
                     reenableRCS = true;
                 }
 
-                if ((cv.ActionGroups[KSPActionGroup.SAS] && !subsystemPowered(Subsystem.SAS)) || AutoPilotDisabled)
+                if (KKPresent)
                 {
-                    this.Log("SAS - disabled.");
-                    //ScreenMessages.PostScreenMessage(cv.vesselName + " - SAS must be enabled through AmpYear first", 10.0f, ScreenMessageStyle.UPPER_CENTER);
-                    //Disable SAS when the subsystem isn't powered
-                    cv.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
-                    reenableSAS = true;
+                    KKAutopilotChk(cv);
+                }
+                else
+                {
+                    if ((cv.ActionGroups[KSPActionGroup.SAS] && !subsystemPowered(Subsystem.SAS)))
+                    {
+                        this.Log("SAS - disabled.");
+                        //ScreenMessages.PostScreenMessage(cv.vesselName + " - SAS must be enabled through AmpYear first", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        //Disable SAS when the subsystem isn't powered
+                        cv.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+                        reenableSAS = true;
+                    }
                 }
 
                 if (managerIsActive && hasPower)
                 {
                     //Re-enable SAS/RCS if they were shut off by the manager and can be run again
-                    if (reenableSAS && !AutoPilotDisabled)
+                    if (KKPresent)
                     {
-                        setSubsystemEnabled(Subsystem.SAS, true);
-                        reenableSAS = false;
+                        KKSASChk();
+                    }
+                    else
+                    {
+                        if (reenableSAS)
+                        {
+                            setSubsystemEnabled(Subsystem.SAS, true);
+                            reenableSAS = false;
+                            this.Log("SAS - enabled.");
+                        }
                     }
 
                     if (reenableRCS)
                     {
                         setSubsystemEnabled(Subsystem.RCS, true);
                         reenableRCS = false;
+                        this.Log("RCS - enabled.");
                     }
                 }
 
@@ -1286,11 +1261,9 @@ namespace AY
                         pod.rotPower = default_rot_power; //Use default rot power
                 }
 
-                if (subsystemPowered(Subsystem.CLIMATE))
-                    changeCrewedPartsTemperature(AYsettings.CLIMATE_TARGET_TEMP);
-
                 //Calculate total drain from subsystems
                 double subsystem_drain = 0.0;
+                subsystemDrain[(int)Subsystem.RCS] -= currentPoweredRCSDrain;
                 foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
                 {
                     subsystemDrain[(int)subsystem] = subsystemCurrentDrain(subsystem);
@@ -1298,50 +1271,111 @@ namespace AY
                 }
 
                 double manager_drain = managerCurrentDrain;
-                subsystemDrain[(int)Subsystem.RCS] -= currentPoweredRCSDrain;
+                
                 double total_manager_drain = subsystem_drain + manager_drain;
                 totalPowerDrain += total_manager_drain;
 
                 //Recharge reserve power if main power is above a certain threshold
-                if (managerIsActive && totalElectricCharge > 0 && totalElectricCharge / totalElectricChargeCapacity > AYsettings.RECHARGE_RESERVE_THRESHOLD
-                    && totalReservePower < totalReservePowerCapacity)
-                    transferMainToReserve(RECHARGE_RESERVE_RATE * sumDeltaTime);
+                if (managerIsActive && (totalElectricCharge > 0) && (totalElectricCharge / totalElectricChargeCapacity > AYsettings.RECHARGE_RESERVE_THRESHOLD)
+                    && (totalReservePower < totalReservePowerCapacity))
+                    transferMainToReserve(RECHARGE_RESERVE_RATE * TimeWarp.fixedDeltaTime);
 
                 //Drain main power
                 Part cvp = FlightGlobals.ActiveVessel.rootPart;
-                double timestep_drain = total_manager_drain * sumDeltaTime;
+                double currentTime = Planetarium.GetUniversalTime();
+                double timestep_drain = total_manager_drain * TimeWarp.fixedDeltaTime;
                 double minimum_sufficient_charge = managerActiveDrain + 4;
-                if (totalElectricCharge >= minimum_sufficient_charge)
+                double deltaTime = Math.Min(currentTime - timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
+                double desiredElectricity = total_manager_drain * deltaTime;
+
+                this.Log_Debug("Timewarp CurrentRate = " + TimeWarp.CurrentRate + " FixedDeltaTime = " + TimeWarp.fixedDeltaTime);
+                this.Log_Debug("totalelectriccharge = " + totalElectricCharge + " total_manager_drain = " + total_manager_drain);
+                this.Log_Debug("totalPowerDrain = " + totalPowerDrain + " totalPowerProduced = " + totalPowerProduced);
+                this.Log_Debug("timestep_drain = " + timestep_drain + "deltaTime = " + deltaTime + " desiredElectricity = " + desiredElectricity);
+                this.Log_Debug("currentTime = " + currentTime + " timeLastElectricity = " + timeLastElectricity);
+                this.Log_Debug("timewarp CurrentRateIndex = " + TimeWarp.CurrentRateIndex);
+                this.Log_Debug("hasReservePower = " + hasReservePower);
+                this.Log_Debug("hasPower = " + hasPower);
+
+                if (desiredElectricity > 0.0 && timewarpIsValid) // if power required > 0 and time warp is valid
                 {
-                    hasPower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
-                     && (timestep_drain <= 0.0 || requestResource(cvp, MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99));
-                }
-                else
-                {
-                    hasPower = false;
-                    if (EmgcyShutActive)
+                    //if (totalElectricCharge >= minimum_sufficient_charge)
+                    if (totalElectricCharge >= desiredElectricity) // if main power >= power required
                     {
-                        //***** perform emergency shutdown procedure here
+                        this.Log_Debug("drawing main power");
+                        double totalElecreceived = requestResource(cvp, MAIN_POWER_NAME, desiredElectricity);  //get power
+                        timeLastElectricity = currentTime - ((desiredElectricity - totalElecreceived) / total_manager_drain); //set time last power received
+                        hasPower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
+                        && (desiredElectricity <= 0.0 || totalElecreceived >= (desiredElectricity * 0.99)); //set hasPower > power up delay and we received power requested
+                        this.Log_Debug("reatime = " + UnityEngine.Time.realtimeSinceStartup + " poweruptime = " + powerUpTime);
+                        this.Log_Debug("desiredelec = " + desiredElectricity + " totalElecreceived = " + totalElecreceived);
+                        this.Log_Debug("hasPower = " + hasPower);
+
+                        //hasPower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
+                        // && (timestep_drain <= 0.0 || requestResource(cvp, MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99));
+                    }
+                    else //not enough main power try reserve power
+                    {
+                        if (TimeWarp.CurrentRateIndex > 3)
+                        {
+                            TimeWarp.SetRate(0, false);
+                            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Not Enough Power to run TimeWarp - Deactivated.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        }
+                        hasPower = false; //hasPower is false - ie no main power
+                        this.Log_Debug("drawing reserve power");
+                        if (totalReservePower > minimum_sufficient_charge) // if reserve power available > minimum charge required
+                        {
+                            //If main power is insufficient, drain reserve power for manager
+                            //EmergencyPowerDown(); //***** perform emergency shutdown procedure here
+                            double manager_timestep_drain = manager_drain * TimeWarp.fixedDeltaTime; //we only drain manager function
+                            double deltaTime2 = Math.Min(currentTime - timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
+                            double desiredElectricity2 = manager_drain * deltaTime;
+                            double totalElecreceived2 = requestResource(cvp, RESERVE_POWER_NAME, desiredElectricity2); // get power
+                            timeLastElectricity = currentTime - ((desiredElectricity2 - totalElecreceived2) / manager_drain); // set time last power received
+                            hasReservePower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
+                            && (desiredElectricity2 <= 0.0 || totalElecreceived2 >= (desiredElectricity2 * 0.99)); // set hasReservePower > power up delay and we received power
+
+                            //hasReservePower = manager_drain <= 0.0
+                            //    || requestResource(cvp, RESERVE_POWER_NAME, manager_timestep_drain) >= (manager_timestep_drain * 0.99);
+                        }
+                        else  // not enough reservepower
+                        {
+                            this.Log_Debug("not enough reserve power");
+                            hasReservePower = totalReservePower > minimum_sufficient_charge; //set hasReservePower
+                            //timeLastElectricity += UnityEngine.Random.Range(60, 600);
+                            timeLastElectricity += currentTime - lastUpdate; //set time we last received electricity to current time - last update
+                        }                        
                     }
                 }
-
-                if (!hasPower && UnityEngine.Time.realtimeSinceStartup > powerUpTime)
+                else  // no electricity required OR time warp is too high (so we hibernate)
                 {
-                    //Set a delay for powering back up to avoid rapid flickering of the system
-                    powerUpTime = UnityEngine.Time.realtimeSinceStartup + POWER_UP_DELAY;
+                    this.Log_Debug("Timewarp not valid or elec < 0");
+                    timeLastElectricity += currentTime - lastUpdate;
                 }
 
-                if (!hasPower && totalReservePower > minimum_sufficient_charge)
+                if (!hasPower) //some processing if we are out of power
                 {
-                    //If main power is insufficient, drain reserve power for manager
-                    double manager_timestep_drain = manager_drain * sumDeltaTime;
-
-                    hasReservePower = manager_drain <= 0.0
-                        || requestResource(cvp, RESERVE_POWER_NAME, manager_timestep_drain) >= (manager_timestep_drain * 0.99);
-                }
-                else
-                    hasReservePower = totalReservePower > minimum_sufficient_charge;
+                    this.Log_Debug("no main power processing");
+                    if (EmgcyShutActive) //emergency shutdown activate
+                    {
+                        this.Log_Debug("emergency shutdown");
+                        EmergencyPowerDown();
+                    }
+                    if (UnityEngine.Time.realtimeSinceStartup > powerUpTime) //reset the power up delay - for powering back up to avoid rapid flickering of the system
+                    {
+                        this.Log_Debug("reset power up delay");
+                        powerUpTime = UnityEngine.Time.realtimeSinceStartup + POWER_UP_DELAY;
+                        this.Log_Debug("powerup time = " + powerUpTime);
+                    }
+                    hasReservePower = totalReservePower > minimum_sufficient_charge; //set hasReservePower
+                    hasPower = totalElectricCharge >= minimum_sufficient_charge; //set hasPower
+                    this.Log_Debug("hasReservePower = " + hasReservePower);
+                    this.Log_Debug("hasPower = " + hasPower);
+                }                                                     
+                lastUpdate = currentTime;
             }
+
+            //This is the Logic that Executes in the Editor (VAB/SPH)
             if (HighLogic.LoadedSceneIsEditor)
             {
                 //Calculate total drain from subsystems
@@ -1361,9 +1395,11 @@ namespace AY
                 hasPower = true;
                 hasReservePower = true;
             }
-            sumDeltaTime = 0;
         }
 
+        #region OtherMods
+
+        
         private void checkAv(PartModule psdpart, Part current_part)
         {
             //string PrtName = current_part.name;
@@ -1936,55 +1972,44 @@ namespace AY
         }
 */
 
+        #endregion OtherMods
+
         //Current Vessel Parts list maintenance - used primarily in editor for parts list, also used for emergency shutdown procedure
 
         private void addPart(uint Pkey, PwrPartList PartAdd, bool ProdPrt)
         {
             PwrPartList PartFnd;
-
-            //this.Log_Debug("AYController Partadd " + Pkey + " " + PartAdd.PrtName);
-            //this.Log_Debug("AYController Partadd S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
-
             if (ProdPrt) // Producer part list
             {
                 if (vesselProdPartsList.TryGetValue(Pkey, out PartFnd))
                 {
-                    //this.Log_Debug("AYController Partfnd " + Pkey + " " + PartFnd.PrtName);
-                    //this.Log_Debug("AYController Partfnd S" + PartFnd.PrtPower + " F" + PartFnd.PrtPowerF.ToString("00.00000"));
-
                     PartAdd.PrtPowerF += PartFnd.PrtPowerF;
                     PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselProdPartsList[Pkey] = PartAdd;
-                    //this.Log_Debug("AYController Partadded " + Pkey + " " + PartAdd.PrtName);
-                    //this.Log_Debug("AYController Partadded S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
                 }
                 else
                 {
                     PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselProdPartsList.Add(Pkey, PartAdd);
-                    //this.Log_Debug("AYController new Partadded");
                 }
             }
             else // consumer part list
             {
                 if (vesselConsPartsList.TryGetValue(Pkey, out PartFnd))
                 {
-                    //this.Log_Debug("AYController Partfnd " + Pkey + " " + PartFnd.PrtName);
-                    //this.Log_Debug("AYController Partfnd S" + PartFnd.PrtPower + " F" + PartFnd.PrtPowerF.ToString("00.00000"));
                     PartAdd.PrtPowerF += PartFnd.PrtPowerF;
                     PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselConsPartsList[Pkey] = PartAdd;
-                    //this.Log_Debug("AYController Partadded " + Pkey + " " + PartAdd.PrtName);
-                    //this.Log_Debug("AYController Partadded S" + PartAdd.PrtPower + " F" + PartAdd.PrtPowerF.ToString("00.00000"));
                 }
                 else
                 {
                     PartAdd.PrtPower = PartAdd.PrtPowerF.ToString("00.000");
                     vesselConsPartsList.Add(Pkey, PartAdd);
-                    //this.Log_Debug("AYController new Partadded");
                 }
             }
         }
+
+        #region VesselFunctions
 
         //Vessel Functions Follow - to store list of vessels and store/retrieve AmpYear settings for each vessel
 
@@ -2066,6 +2091,8 @@ namespace AY
             vesselInfo.managerEnabled = managerEnabled;
             vesselInfo.ShowCrew = ShowCrew;
             vesselInfo.ShowParts = ShowParts;
+            vesselInfo.timeLastElectricity = timeLastElectricity;
+            vesselInfo.lastUpdate = lastUpdate;
             for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
             {
                 vesselInfo.subsystemToggle[i] = subsystemToggle[i];
@@ -2074,9 +2101,16 @@ namespace AY
             for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
                 vesselInfo.guiSectionEnableFlag[i] = guiSectionEnableFlag[i];
             vesselInfo.EmgcyShutActive = EmgcyShutActive;
-            vesselInfo.AutoPilotDisabled = AutoPilotDisabled;
-            vesselInfo.AutoPilotDisCounter = AutoPilotDisCounter;
-            vesselInfo.AutoPilotDisTime = AutoPilotDisTime;
+            if (KKPresent)
+            {
+                KKUpdateVslInfo(vesselInfo);
+            }
+            else
+            {
+                vesselInfo.AutoPilotDisabled = false;
+                vesselInfo.AutoPilotDisCounter = 0;
+                vesselInfo.AutoPilotDisTime = 0;
+            }
         }
 
         private int UpdateVesselCounts(VesselInfo vesselInfo, Vessel vessel)
@@ -2118,7 +2152,11 @@ namespace AY
             if (currentvesselid == newvessel.id) // which would be the case if it's an EVA kerbal re-joining ship
                 return;
             double currentTime = Planetarium.GetUniversalTime();
-            if (AutoPilotDisabled) ScreenMessages.RemoveMessage(AutoTimer);
+            if (KKPresent)
+            {
+                KKonVslChng();
+            }
+
             // Update Old Vessel settings into Dictionary
             VesselInfo oldvslinfo = new VesselInfo(newvessel.name, currentTime);
             if (AYgameSettings.knownVessels.TryGetValue(currentvesselid, out oldvslinfo))
@@ -2158,9 +2196,13 @@ namespace AY
                 managerEnabled = info.managerEnabled;
                 ShowCrew = info.ShowCrew;
                 EmgcyShutActive = info.EmgcyShutActive;
-                AutoPilotDisabled = info.AutoPilotDisabled;
-                AutoPilotDisCounter = info.AutoPilotDisCounter;
-                AutoPilotDisTime = info.AutoPilotDisTime;
+                timeLastElectricity = info.timeLastElectricity;
+                lastUpdate = info.lastUpdate;
+                
+                if (KKPresent)
+                {
+                    KKLoadVesselSettings(info, false);
+                }
                 DbgListVesselInfo(info);
             }
             else //New Vessel not found in Dictionary so set default
@@ -2173,9 +2215,11 @@ namespace AY
                 managerEnabled = true;
                 ShowCrew = false;
                 EmgcyShutActive = false;
-                AutoPilotDisabled = false;
-                AutoPilotDisTime = 0f;
-                AutoPilotDisCounter = 0f;
+                timeLastElectricity = 0f;
+                if (KKPresent)
+                {
+                    KKLoadVesselSettings(info, true);
+                }
             }
         }
 
@@ -2192,6 +2236,7 @@ namespace AY
             this.Log_Debug("guiSectionEnableFlag Subsystem = " + info.guiSectionEnableFlag[0]);
             this.Log_Debug("guiSectionEnableFlag Reserve   = " + info.guiSectionEnableFlag[1]);
             this.Log_Debug("guiSectionEnableFlag Luxury    = " + info.guiSectionEnableFlag[2]);
+            this.Log_Debug("timeLastElectricity = " + info.timeLastElectricity + " lastUpdate = " + info.lastUpdate);
             this.Log_Debug("EmgcyShutActive = " + info.EmgcyShutActive + " AutoPilotDisabled = " + info.AutoPilotDisabled + " AutoPilotDisCounter = " + info.AutoPilotDisCounter);
             this.Log_Debug("AutoPilotDisTime = " + info.AutoPilotDisTime + " numCrew = " + info.numCrew + " numOccupiedParts = " + info.numOccupiedParts);
         }
@@ -2213,13 +2258,17 @@ namespace AY
             }
         }
 
+        #endregion VesselFunctions
+
+        #region SubSystemFunctions
+
         //Subsystem Functions Follow
 
         private bool timewarpIsValid
         {
             get
             {
-                return TimeWarp.CurrentRate <= 4;
+                return TimeWarp.CurrentRateIndex < 7;
             }
         }
 
@@ -2235,8 +2284,8 @@ namespace AY
         {
             get
             {
-                //return timewarpIsValid && managerEnabled && (hasPower || hasReservePower);
-                return managerEnabled && (hasPower || hasReservePower);
+                return timewarpIsValid && managerEnabled && (hasPower || hasReservePower);
+                //return managerEnabled && (hasPower || hasReservePower);
             }
         }
 
@@ -2316,6 +2365,20 @@ namespace AY
             }
         }
 
+        public void EmergencyPowerDown()
+        {
+            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Emergency Power Procedures Activated. Shutdown Subsystems.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+            setSubsystemEnabled(Subsystem.CLIMATE, false);
+            setSubsystemEnabled(Subsystem.MASSAGE, false);
+            setSubsystemEnabled(Subsystem.MUSIC, false);
+            setSubsystemEnabled(Subsystem.POWER_TURN, false);
+            setSubsystemEnabled(Subsystem.RCS, false);
+            setSubsystemEnabled(Subsystem.SAS, false);
+            TimeWarp.SetRate(0, false);
+            reenableRCS = true;
+            reenableSAS = true;
+        }
+
         public bool subsystemActive(Subsystem subsystem)
         {
             if (!subsystemEnabled(subsystem))
@@ -2367,19 +2430,25 @@ namespace AY
                     return sasAdditionalRotPower * POWER_TURN_DRAIN_FACTOR;
 
                 case Subsystem.CLIMATE:
-                    if (mode == GameState.FLIGHT)
-                        return CLIMATE_HEAT_RATE
-                               * (crewablePartList.Count * AYsettings.CLIMATE_BASE_DRAIN_FACTOR + CLIMATE_CAPACITY_DRAIN_FACTOR * FlightGlobals.ActiveVessel.GetCrewCapacity());
-                    else return CLIMATE_HEAT_RATE
-                               * (crewablePartList.Count * AYsettings.CLIMATE_BASE_DRAIN_FACTOR + CLIMATE_CAPACITY_DRAIN_FACTOR);
+                    if (KKPresent)
+                    {
+                        double clmtrate = KKClimateActDrain();
+                        return clmtrate;
+                    }
+                    else
+                        return 0.0;
 
                 case Subsystem.MUSIC:
                     return 1.0 * crewablePartList.Count;
 
                 case Subsystem.MASSAGE:
-                    if (mode == GameState.FLIGHT)
-                        return AYsettings.MASSAGE_BASE_DRAIN_FACTOR * FlightGlobals.ActiveVessel.GetCrewCount();
-                    else return AYsettings.MASSAGE_BASE_DRAIN_FACTOR;
+                    if (KKPresent)
+                    {
+                        double msgrate = KKMassActDrain();
+                        return msgrate;
+                    }
+                    else
+                        return 0.0;
 
                 default:
                     return 0.0;
@@ -2391,29 +2460,9 @@ namespace AY
             return hasPower && managerIsActive && subsystemActive(subsystem);
         }
 
-        private void changeCrewedPartsTemperature(double target_temp)
-        {
-            foreach (Part crewed_part in crewablePartList)
-            {
-                foreach (PartModule module in crewed_part.Modules)
-                {
-                    if (module.moduleName == "AYCrewPart")
-                    {
-                        if (((AYCrewPart)module).CabinTemp < target_temp)
-                        {
-                            ((AYCrewPart)module).CabinTemp += AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
-                        }
-                        else
-                        {
-                            if (((AYCrewPart)module).CabinTemp > target_temp)
-                            {
-                                ((AYCrewPart)module).CabinTemp -= AYController.CLIMATE_HEAT_RATE * sumDeltaTime;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        #endregion SubSystemFunctions
+
+        #region ResourceFunctions
 
         //Resources Functions Follow
 
@@ -2479,6 +2528,10 @@ namespace AY
             }
         }
 
+        #endregion ResourceFunctions
+
+        #region GUIFunctions
+
         //GUI Functions Follow
 
         private void onDraw()
@@ -2530,7 +2583,6 @@ namespace AY
         private void CheckPowerLowWarning()
         {
             double chrgpct = ((totalElectricCharge / totalElectricChargeCapacity) * 100);
-            //this.Log_Debug("CheckPowerLowWarning ShowWarn = " + ShowWarn + " POWER_LOW_WARNING_AMT = " + AYsettings.POWER_LOW_WARNING_AMT + " Current % = " + chrgpct.ToString());
             if (ShowWarn && !WarnWinOn) // If Warning is on check if it's triggered
             {
                 if ((TimeWarp.CurrentRate > 0) && (chrgpct < AYsettings.POWER_LOW_WARNING_AMT)) // We have hit the warning stop timewarp and show warning
@@ -2541,8 +2593,7 @@ namespace AY
                     WarnWinOn = true;
                 }
             }
-
-            if ((((totalElectricCharge / totalElectricChargeCapacity) * 100) > AYsettings.POWER_LOW_WARNING_AMT) && !ShowWarn) // Reset the Warning indicator
+            if ((chrgpct > AYsettings.POWER_LOW_WARNING_AMT) && !ShowWarn) // Reset the Warning indicator
             {
                 this.Log_Debug("Reset power warning");
                 ShowWarn = true;
@@ -2587,8 +2638,23 @@ namespace AY
             GUILayout.BeginHorizontal();
             foreach (GUISection section in Enum.GetValues(typeof(GUISection)))
             {
-                guiSectionEnableFlag[(int)section]
+                if (section == GUISection.LUXURY)
+                {
+                    if (KKPresent)
+                    {
+                        guiSectionEnableFlag[(int)section]
+                        = GUILayout.Toggle(guiSectionEnableFlag[(int)section], guiSectionName(section), GUI.skin.button);
+                    }
+                    else
+                    {
+                        guiSectionEnableFlag[(int)section] = false;
+                    }
+                }
+                else
+                {
+                    guiSectionEnableFlag[(int)section]
                     = GUILayout.Toggle(guiSectionEnableFlag[(int)section], guiSectionName(section), GUI.skin.button);
+                }
             }
             GUILayout.EndHorizontal();
 
@@ -2631,28 +2697,25 @@ namespace AY
                     else
                         GUILayout.Label("Running on Reserve Power!", warningStyle);
                 }
-                else if (timewarpIsValid)
-                    GUILayout.Label("Manager Disabled", warningStyle);
                 else
-                    GUILayout.Label("Auto-Hibernation", statusStyle);
+                {
+                    if (timewarpIsValid)
+                    {
+                        GUILayout.Label("Manager Disabled", warningStyle);
+                    }
+                    else
+                    {
+                        GUILayout.Label("Auto-Hibernation", statusStyle);
+                    }
+                }   
             }
             else
                 GUILayout.Label("Insufficient Power", warningStyle);
 
-            if (AYsettings.Craziness_Function)
+            //if (AYsettings.Craziness_Function)
+            if (KKPresent)
             {
-                if (FirstMajCrazyWarning)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label("Craziness Major Alert!", warningStyle);
-                    GUILayout.EndHorizontal();
-                }
-                else if (FirstMinCrazyWarning)
-                {
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label("Craziness Minor Alert!", sectionTitleStyle);
-                    GUILayout.EndHorizontal();
-                }
+                KKKrazyWrngs();
             }
 
             if (managerIsActive)
@@ -2675,7 +2738,7 @@ namespace AY
                     ShowCrew = GUILayout.Toggle(ShowCrew, "ShowCrew", subsystemButtonStyle, subsystemButtonOptions);
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
-                    EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, "EmgcyShutActive", subsystemButtonStyle, subsystemButtonOptions);
+                    EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, "EmergencyProc.Active", subsystemButtonStyle, subsystemButtonOptions);
                     GUILayout.EndHorizontal();
                 }
 
@@ -2752,7 +2815,7 @@ namespace AY
                         GUILayout.Label(CrewMbr.name + " - " + CrewMbr.experienceTrait.Title, statusStyle);
                     }
                 }
-                else if (timewarpIsValid)
+                else //if (timewarpIsValid)
                     GUILayout.Label("No Crew OnBoard", warningStyle);
             }
 
@@ -2923,6 +2986,70 @@ namespace AY
             GUILayout.Label(drain.ToString("0.000") + "/s", subsystemConsumptionStyle);
         }
 
+        public static string guiSectionName(GUISection section)
+        {
+            switch (section)
+            {
+                case GUISection.SUBSYSTEM:
+                    return "Subsys";
+
+                case GUISection.RESERVE:
+                    return "Reserve";
+
+                case GUISection.LUXURY:
+                    return "Luxury";
+
+                default:
+                    return String.Empty;
+            }
+        }
+
+        public bool guiSectionEnabled(GUISection section)
+        {
+            return guiSectionEnableFlag[(int)section];
+        }
+
+        public static bool subsystemIsLuxury(Subsystem subsystem)
+        {
+            switch (subsystem)
+            {
+                case Subsystem.CLIMATE:
+                case Subsystem.MUSIC:
+                case Subsystem.MASSAGE:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        public bool subsystemVisible(Subsystem subsystem)
+        {
+            Vessel cv = FlightGlobals.ActiveVessel;
+            switch (subsystem)
+            {
+                case Subsystem.POWER_TURN:
+                    return sasAdditionalRotPower > 0.0f;
+
+                case Subsystem.RCS:
+                    return hasRCS;
+
+                case Subsystem.CLIMATE:
+                case Subsystem.MUSIC:
+                    return crewablePartList.Count > 0;
+
+                case Subsystem.MASSAGE:
+                    return cv.GetCrewCount() > 0;
+
+                default:
+                    return true;
+            }
+        }
+
+        #endregion GUIFunctions
+
+        #region Savable
+
         //Class Load and Save of global settings
         public void Load(ConfigNode globalNode)
         {
@@ -2943,5 +3070,109 @@ namespace AY
             AYsettings.EwindowPosY = EwindowPos.y;
             this.Log_Debug("AYController Save end");
         }
+
+        #endregion Savable
+
+        #region KabinKrazinessInterfaces
+
+        private double KKClimateActDrain()
+        {
+            //KabinKraziness Interface to Calculate the Climate Control Electrical Drain amount
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if (mode == GameState.FLIGHT)
+                return CLIMATE_HEAT_RATE
+                       * (crewablePartList.Count * _KK.CLMT_BSE_DRN_FTR + CLIMATE_CAPACITY_DRAIN_FACTOR * FlightGlobals.ActiveVessel.GetCrewCapacity());
+            else return CLIMATE_HEAT_RATE
+                       * (crewablePartList.Count * _KK.CLMT_BSE_DRN_FTR + CLIMATE_CAPACITY_DRAIN_FACTOR);
+        }
+
+        private double KKMassActDrain()
+        {
+            //KabinKraziness Interface to Calculate the Massage Chairs Electrical Drain amount
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if (mode == GameState.FLIGHT)
+                return _KK.MSG_BSE_DRN_FTR * FlightGlobals.ActiveVessel.GetCrewCount();
+            else return _KK.MSG_BSE_DRN_FTR;
+        }
+
+        private void KKAutopilotChk(Vessel vessel)
+        {
+            //KabinKraziness Interface to check if the crew have Disabled the SAS
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if ((vessel.ActionGroups[KSPActionGroup.SAS] && !subsystemPowered(Subsystem.SAS)) || _KK.AutoPilotDisabled)
+            {
+                this.Log("KKSASChk SAS - disabled.");
+                //ScreenMessages.PostScreenMessage(cv.vesselName + " - SAS must be enabled through AmpYear first", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                //Disable SAS when the subsystem isn't powered
+                vessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+                reenableSAS = true;
+            }
+        }
+
+        private void KKSASChk()
+        {
+            //KabinKraziness Interface to check if the crew haven't disabled the SAS before re-enabling it
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if (reenableSAS && !_KK.AutoPilotDisabled)
+            {
+                this.Log("KKSASChk SAS - enabled.");
+                setSubsystemEnabled(Subsystem.SAS, true);
+                reenableSAS = false;
+            }
+        }
+
+        private void KKLoadVesselSettings(VesselInfo info, bool isnew)
+        {
+            //KabinKraziness Interface to Load Vessel values for KabinKraziness, as they are stored in the vessel settings for AmpYear rather than separately.
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if (isnew)
+            {
+                _KK.AutoPilotDisabled = false;
+                _KK.AutoPilotDisTime = 0f;
+                _KK.AutoPilotDisCounter = 0f;
+            }
+            else
+            {
+                _KK.AutoPilotDisabled = info.AutoPilotDisabled;
+                _KK.AutoPilotDisCounter = info.AutoPilotDisCounter;
+                _KK.AutoPilotDisTime = info.AutoPilotDisTime;
+            }
+        }
+
+        private void KKonVslChng()
+        {
+            //KabinKraziness Interface on Vessel change, to remove autopilot disabled countdown if it is active
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if (_KK.AutoPilotDisabled) ScreenMessages.RemoveMessage(_KK.AutoTimer);
+        }
+
+        private void KKUpdateVslInfo(VesselInfo vesselInfo)
+        {
+            //KabinKraziness Interface to Save Vessel values for KabinKraziness, as they are stored in the vessel settings for AmpYear rather than separately.
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            vesselInfo.AutoPilotDisabled = _KK.AutoPilotDisabled;
+            vesselInfo.AutoPilotDisCounter = _KK.AutoPilotDisCounter;
+            vesselInfo.AutoPilotDisTime = _KK.AutoPilotDisTime;
+        }
+
+        private void KKKrazyWrngs()
+        {
+            //KabinKraziness Interface to display Kraziness Warnings in the AmpYear GUI
+            KabinKraziness.Ikkaddon _KK = KKClient.GetKK();
+            if (_KK.FirstMajCrazyWarning)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Craziness Major Alert!", warningStyle);
+                GUILayout.EndHorizontal();
+            }
+            else if (_KK.FirstMinCrazyWarning)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Craziness Minor Alert!", sectionTitleStyle);
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        #endregion KabinKrazinessInterfaces
     }
 }

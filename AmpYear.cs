@@ -153,8 +153,6 @@ namespace AY
         {
             base.OnSave(gameNode);
             AYgameSettings.Save(gameNode);
-            // Save the global settings
-            //AYSettings.Save(globalNode);
             foreach (Savable s in children.Where(c => c is Savable))
             {
                 this.Log("AmpYear Child Save Call for " + s.ToString());

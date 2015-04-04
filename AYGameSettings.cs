@@ -35,13 +35,11 @@ namespace AY
 
         public bool Enabled { get; set; }
 
-        //public Dictionary<String, VesselInfo> knownVessels { get; private set; }
         public Dictionary<Guid, VesselInfo> knownVessels { get; private set; }
 
         public AYGameSettings()
         {
             Enabled = true;
-            //knownVessels = new Dictionary<String, VesselInfo>();
             knownVessels = new Dictionary<Guid, VesselInfo>();
         }
 

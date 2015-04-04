@@ -51,11 +51,15 @@ namespace AY
         public bool AutoPilotDisabled = false;
         public double AutoPilotDisTime = 0f;
         public double AutoPilotDisCounter = 0f;
+        public double timeLastElectricity = 0f;
+        public double lastUpdate = 0f;
 
         public VesselInfo(string vesselName, double currentTime)
         {
             this.vesselName = vesselName;
             hibernating = false;
+            lastUpdate = currentTime;
+            timeLastElectricity = currentTime;
         }
 
         public static VesselInfo Load(ConfigNode node)
@@ -86,6 +90,7 @@ namespace AY
             info.AutoPilotDisabled = Utilities.GetNodeValue(node, "AutoPilotDisabled", false);
             info.AutoPilotDisTime = Utilities.GetNodeValue(node, "AutoPilotDisTime", 0f);
             info.AutoPilotDisCounter = Utilities.GetNodeValue(node, "AutoPilotDisCounter", 0f);
+            info.timeLastElectricity = Utilities.GetNodeValue(node, "timeLastElectricity", lastUpdate);
 
             return info;
         }
@@ -118,6 +123,8 @@ namespace AY
             node.AddValue("AutoPilotDisabled", AutoPilotDisabled);
             node.AddValue("AutoPilotDisTime", AutoPilotDisTime);
             node.AddValue("AutoPilotDisCounter", AutoPilotDisCounter);
+            node.AddValue("timeLastElectricity", timeLastElectricity);
+            node.AddValue("lastUpdate", lastUpdate);
             return node;
         }
 

@@ -27,7 +27,7 @@
 
 namespace AY
 {
-    internal class AYCrewPart : PartModule
+    public class AYCrewPart : PartModule
     {
         // New context menu info
         [KSPField(isPersistant = true, guiName = "Cabin Temperature", guiUnits = "C", guiFormat = "F1", guiActive = true)]
@@ -36,7 +36,7 @@ namespace AY
         [KSPField(isPersistant = true, guiName = "Outside Temperature", guiUnits = "C", guiFormat = "F1", guiActive = true)]
         public float ambient = 0f;
 
-        [KSPField(isPersistant = true, guiName = "CabinCraziness", guiUnits = "%", guiFormat = "N", guiActive = true)]
+        [KSPField(isPersistant = true, guiName = "KabinKraziness", guiUnits = "%", guiFormat = "N", guiActive = true)]
         public float CabinCraziness = 0f;
 
         public override void OnStart(PartModule.StartState state)
@@ -54,7 +54,7 @@ namespace AY
             ambient = vessel.flightIntegrator.getExternalTemperature();
             float CabinTmpRngLow = ambient - 0.5f;
             float CabinTmpRngHgh = ambient + 0.5f;
-            if (CabinTemp > CabinTmpRngHgh && CabinTemp < CabinTmpRngLow)
+            if (CabinTemp > CabinTmpRngHgh || CabinTemp < CabinTmpRngLow)
             {
                 if (CabinTemp < ambient)
                 {
