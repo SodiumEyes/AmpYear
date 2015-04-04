@@ -51,28 +51,20 @@ Luxury Fitted Command Pods
     Yes all command pods now come with Klimate Kontrol, Jazz music and Massage chairs. These items reduce KabinKraziness (see below), consume electricity and makes missions more pleasant for the crew.
     The Klimate Kontrol function maintains the cabin temperature to a pre-set value, and the cabin temp can be viewed through the command pod right click menu. If turned off Cabin Temperature will slowly change towards the outside ambient temperature having a negative effect on KabinKraziness.
 
-Auto-Hibernate (REMOVED in 0.13)
+Auto-Hibernate 
 
-    All AmpYear functions will now continue to run during timewarp. A Warning Pop-up will appear and stop warp if the ElectricCharge falls below a set percentage (configurable via the spacecenter window).
+    All AmpYear functions will now continue to run during timewarp up to 7x at which time it will Auto-Hibernate. A Warning Pop-up will appear and stop warp if the ElectricCharge falls below a set percentage (configurable via the spacecenter window).
 
 Show Crew
 
     Show Crew feature - with 0.90 - I added this to show the crew and their roles rather than having to switch to the map view all the time.
 
-WIP Features:
-KabinKraziness
 
-    A modifier attached to crew-able parts. Goes up over time based on how much space the crew have, how far from Kerbin you are and if your Cabin temperature is within 5 degrees of the climate control setting. You can turn KabinKraziness features of the mod on or off via the SpaceCenter config menu.
-
-    Has two levels of Kraziness - Minor and Major (configurable via settings menu on Space center screen). Once these levels are reached random events may occur where the crew may:-
-    Disable Autopilot functions for a period of time (cumulative).
-    Throw out (dump) some resources.
-    Throw out (dump) some science experiments.
-    A crew member may randomly decide to go on EVA.
-	    
 
 ChangeLog:
 
+V0.13 Removed KabinKraziness - Will be released as a separate mod. Re-implmented Auto_hibernate at high (7x) time warp.
+V0.12e Set the Default value for AmpYear Power Manager to ON
 V0.12d Fixed Vessel switching bug (save settings correctly). Kraziness balancing. Removed Auto-Hibernate and added timewarp/low power warning pop-up. Updated to latest versions of other mods.
 V0.12c Fixed duplicated batteries in distribution zip file. Completely delete the AmpYear folder in your gamedata directory and re-install.
 V0.12b Tweaks to Cabin Craziness calculations. Correctly includes craziness increases based on how far from Kerbin you are. Tweaked base values in calculations. Merged the Heater/Cooler function into one Climate Control function.
