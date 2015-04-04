@@ -46,10 +46,6 @@ Reserve Power
     Power can be transferred to and from main and reserve power resources.
     Electrical power generators (solar panels, etc) will re-charge main power followed by reserve power when a threshold is reached.
 
-Luxury Fitted Command Pods
-
-    Yes all command pods now come with Klimate Kontrol, Jazz music and Massage chairs. These items reduce KabinKraziness (see below), consume electricity and makes missions more pleasant for the crew.
-    The Klimate Kontrol function maintains the cabin temperature to a pre-set value, and the cabin temp can be viewed through the command pod right click menu. If turned off Cabin Temperature will slowly change towards the outside ambient temperature having a negative effect on KabinKraziness.
 
 Auto-Hibernate 
 
