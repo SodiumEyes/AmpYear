@@ -266,10 +266,11 @@ namespace AY
             AYgameSettings = AmpYear.Instance.AYgameSettings;
             vesselProdPartsList = new Dictionary<uint, PwrPartList>();
             vesselConsPartsList = new Dictionary<uint, PwrPartList>();
+            /*
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                button1.TexturePath = "AmpYear/Icons/toolbarIcon";
+                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
                 button1.ToolTip = "AmpYear";
                 button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR);
                 button1.OnClick += (e) => GuiVisible = !GuiVisible;
@@ -285,6 +286,7 @@ namespace AY
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
             }
+             * */
             this.Log_Debug("AYController Awake complete");
         }
 
@@ -297,7 +299,7 @@ namespace AY
                 this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggleOn, onAppLaunchToggleOff, DummyVoid,
                                           DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH |
                                           ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW,
-                                          (Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOff", false));
+                                          (Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
             }
         }
 
@@ -307,19 +309,40 @@ namespace AY
 
         public void onAppLaunchToggleOn()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOn", false));
+            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOn", false));
             GuiVisible = true;
         }
 
         public void onAppLaunchToggleOff()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOff", false));
+            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
             GuiVisible = false;
         }
 
         public void Start()
         {
             this.Log_Debug("AYController Start");
+
+            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
+            {
+                button1 = ToolbarManager.Instance.add("AmpYear", "button1");
+                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
+                button1.ToolTip = "AmpYear";
+                button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR);
+                button1.OnClick += (e) => GuiVisible = !GuiVisible;
+            }
+            else
+            {
+                // Set up the stock toolbar
+                this.Log_Debug("Adding onGUIAppLauncher callbacks");
+                if (ApplicationLauncher.Ready)
+                {
+                    OnGUIAppLauncherReady();
+                }
+                else
+                    GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+            }
+            
             // Find out which mods are present
             ALPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "AviationLights");
             NFEPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "NearFutureElectrical");
@@ -615,12 +638,12 @@ namespace AY
                                             if (tmpSol.panelState == ModuleDeployableSolarPanel.panelStates.RETRACTED)
                                             {
                                                 tmpSol.Extend();
-                                                ScreenMessages.PostScreenMessage("Electricity Levels Critical! Extending Solar Panels!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                                ScreenMessages.PostScreenMessage("Electricity Levels Critical! Extending Solar Panels!", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                                 this.Log("Extending solar array");
                                             }
                                         }
                                         else
-                                            ScreenMessages.PostScreenMessage("Electricity Levels Critical! In Atmosphere can not Extend Solar Panels!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                            ScreenMessages.PostScreenMessage("Electricity Levels Critical! In Atmosphere can not Extend Solar Panels!", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                     }
                                 }
                                 else
@@ -725,7 +748,7 @@ namespace AY
                                             if (!hasPower && EmgcyShutActive)
                                             {
                                                 tmpWheel.DisableMotor();
-                                                ScreenMessages.PostScreenMessage("Electricity Levels Critical! Disabling Wheel Motors!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                                ScreenMessages.PostScreenMessage("Electricity Levels Critical! Disabling Wheel Motors!", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                                 this.Log("Disabling Wheel motors");
                                             }
                                         }
@@ -779,7 +802,7 @@ namespace AY
                                     if (!hasPower && EmgcyShutActive && (mode == GameState.FLIGHT && tmpLight.isOn))
                                     {
                                         tmpLight.LightsOff();
-                                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Lights!", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Lights!", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                                         this.Log("Turning off lights");
                                     }
                                 }
@@ -1319,9 +1342,9 @@ namespace AY
                         if (TimeWarp.CurrentRateIndex > 3)
                         {
                             TimeWarp.SetRate(0, false);
-                            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Not Enough Power to run TimeWarp - Deactivated.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Not Enough Power to run TimeWarp - Deactivated.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                         }
-                        hasPower = false; //hasPower is false - ie no main power
+                        hasPower = totalElectricCharge >= minimum_sufficient_charge; //set hasPower
                         this.Log_Debug("drawing reserve power");
                         if (totalReservePower > minimum_sufficient_charge) // if reserve power available > minimum charge required
                         {
@@ -2190,7 +2213,10 @@ namespace AY
             {
                 this.Log_Debug("AYController Vessel Loading Settings " + newvessel.name + " (" + newvessel.id + ")");
                 for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+                {
                     subsystemToggle[i] = info.subsystemToggle[i];
+                    subsystemDrain[i] = info.subsystemDrain[i];
+                }                    
                 for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
                     guiSectionEnableFlag[i] = info.guiSectionEnableFlag[i];
                 managerEnabled = info.managerEnabled;
@@ -2209,7 +2235,11 @@ namespace AY
             {
                 this.Log_Debug("AYController Vessel Setting Default Settings");
                 for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+                {
                     subsystemToggle[i] = false;
+                    subsystemDrain[i] = 0.0;
+                }
+                    
                 for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
                     guiSectionEnableFlag[i] = false;
                 managerEnabled = true;
@@ -2220,6 +2250,16 @@ namespace AY
                 {
                     KKLoadVesselSettings(info, true);
                 }
+            }
+            if (!KKPresent) //KabinKraziness not present turn off settings for KabinKraziness on vessel
+            {
+                subsystemToggle[3] = false;
+                subsystemToggle[4] = false;
+                subsystemToggle[5] = false;
+                subsystemDrain[3] = 0.0;
+                subsystemDrain[4] = 0.0;
+                subsystemDrain[5] = 0.0;
+                guiSectionEnableFlag[2] = false;                   
             }
         }
 
@@ -2352,7 +2392,7 @@ namespace AY
                     if (cv.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.StabilityAssist))
                         cv.ActionGroups.SetGroup(KSPActionGroup.SAS, enabled);
                     else
-                        ScreenMessages.PostScreenMessage(cv.vesselName + " - Cannot Engage SAS - Autopilot function not available", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(cv.vesselName + " - Cannot Engage SAS - Autopilot function not available", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     break;
 
                 case Subsystem.RCS:
@@ -2367,7 +2407,7 @@ namespace AY
 
         public void EmergencyPowerDown()
         {
-            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Emergency Power Procedures Activated. Shutdown Subsystems.", 10.0f, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Emergency Power Procedures Activated. Shutdown Subsystems.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
             setSubsystemEnabled(Subsystem.CLIMATE, false);
             setSubsystemEnabled(Subsystem.MASSAGE, false);
             setSubsystemEnabled(Subsystem.MUSIC, false);

@@ -61,7 +61,7 @@ namespace AY
             RECHARGE_RESERVE_THRESHOLD = 0.95;
             POWER_LOW_WARNING_AMT = 5;
             UseAppLauncher = true;
-            debugging = false;
+            debugging = true;
         }
 
         //Settings Functions Follow

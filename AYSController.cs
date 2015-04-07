@@ -120,17 +120,17 @@ namespace AY
                 }
             }
         }
-
+        
         public void Awake()
         {
             AYsettings = AmpYear.Instance.AYsettings;
             AYgameSettings = AmpYear.Instance.AYgameSettings;
-
+            /*
             // create toolbar button
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                button1.TexturePath = "AmpYear/Icons/toolbarIcon";
+                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
                 button1.ToolTip = "AmpYear";
                 button1.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
                 button1.OnClick += (e) => GuiVisible = !GuiVisible;
@@ -145,10 +145,11 @@ namespace AY
                 }
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-            }
+                
+            }*/
             this.Log_Debug("AYSCController Awake complete");
         }
-
+        
         private void OnGUIAppLauncherReady()
         {
             this.Log_Debug("OnGUIAppLauncherReady");
@@ -157,7 +158,7 @@ namespace AY
                 this.Log_Debug("Adding AppLauncherButton");
                 this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggleOn, onAppLaunchToggleOff, DummyVoid,
                                           DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.SPACECENTER,
-                                          (Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOff", false));
+                                          (Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
             }
         }
 
@@ -167,13 +168,13 @@ namespace AY
 
         private void onAppLaunchToggleOn()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOn", false));
+            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOn", false));
             GuiVisible = true;
         }
 
         private void onAppLaunchToggleOff()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("AmpYear/Icons/AYIconOff", false));
+            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
             GuiVisible = false;
         }
 
@@ -199,6 +200,32 @@ namespace AY
 
         public void Start()
         {
+            //AYsettings = AmpYear.Instance.AYsettings;
+            //AYgameSettings = AmpYear.Instance.AYgameSettings;
+
+            // create toolbar button
+            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
+            {
+                button1 = ToolbarManager.Instance.add("AmpYear", "button1");
+                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
+                button1.ToolTip = "AmpYear";
+                button1.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
+                button1.OnClick += (e) => GuiVisible = !GuiVisible;
+            }
+            else
+            {
+                // Set up the stock toolbar
+                this.Log_Debug("AYSCController Adding onGUIAppLauncher callbacks");
+                if (ApplicationLauncher.Ready)
+                {
+                    OnGUIAppLauncherReady();
+                }
+                else
+                    GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+
+            }
+
+            this.Log_Debug("AYSCController Awake complete");
             this.Log_Debug("AYSController Start");
             KKPresent = KKClient.KKInstalled;
 
@@ -336,7 +363,7 @@ namespace AY
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Use Application Launcher", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Use Application Launcher (restart required)", statusStyle, GUILayout.Width(300));
             InputAppL = GUILayout.Toggle(InputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
