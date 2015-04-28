@@ -59,6 +59,7 @@ Show Crew
 
 ChangeLog:
 
+v0.14 Release for KSP V1.0.0 - Basic support for new 1.0 resource parts (needs more work), fuel cells, removed Regolith, SCANSat support (now covered by stock). Deprecated Z500 Reserve power battery (was actually a copy of the z1-K). 
 V0.13 Removed KabinKraziness - Will be released as a separate mod. Re-implmented Auto_hibernate at high (7x) time warp.
 V0.12e Set the Default value for AmpYear Power Manager to ON
 V0.12d Fixed Vessel switching bug (save settings correctly). Kraziness balancing. Removed Auto-Hibernate and added timewarp/low power warning pop-up. Updated to latest versions of other mods.

@@ -8,8 +8,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Addon MOD for KerbalSpaceProgram")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Jamie Leighton")]
-[assembly: AssemblyProduct("AmpYear.Properties")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyProduct("AmpYear")]
+[assembly: AssemblyCopyright("Copyright © Jamie Leighton 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -28,5 +28,7 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("0.12.*")]
-//[assembly: AssemblyFileVersion("0.12.0.0")]
+[assembly: AssemblyVersion("0.14.*")]
+[assembly: KSPAssembly("AmpYear", 0, 14)]
+[assembly: KSPAssemblyDependency("KKInterfaces", 2, 0)]
+[assembly: KSPAssemblyDependency("AYInterfaces", 2, 0)]

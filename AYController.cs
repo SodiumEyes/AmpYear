@@ -1038,6 +1038,118 @@ namespace AY
                                 }
                             }
 
+                            if (module.moduleName == "ModuleResourceHarvester")
+                            {
+                                double tmpPwr = 0;
+                                this.Log_Debug("Resource Harvester " + current_part.name);
+                                    ModuleResourceHarvester tmpHvstr = (ModuleResourceHarvester)module;
+                                    List<PartResourceDefinition> Rscse = tmpHvstr.GetConsumedResources();
+
+                                    if (mode == GameState.FLIGHT)
+                                    {
+                                        PrtActive = tmpHvstr.ModuleIsActive();
+                                        this.Log_Debug("Inflight andIsactive = " + PrtActive);
+                                    }                                        
+                                    if (mode == GameState.EDITOR)
+                                    {
+                                        PrtActive = true;
+                                        this.Log_Debug("In VAB so part active");
+                                    }
+
+                                    foreach (PartResourceDefinition r in tmpHvstr.GetConsumedResources())
+                                    {
+                                        this.Log_Debug("Harvester resource = " + r.name + " cost = " + r.unitCost);                                        
+                                        if (r.name == MAIN_POWER_NAME && PrtActive)
+                                        {                                            
+                                            //Appears to be NO way to get to the input resources.... set to 15 for current value in distro files
+                                            //totalPowerDrain += r.unitCost;
+                                            //tmpPwr += r.unitCost;
+                                            totalPowerDrain += 15.0;
+                                            tmpPwr += 15.0;
+                                        }
+                                    }
+                                    tmpPower = (float)tmpPwr;
+                                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                                    if (mode == GameState.FLIGHT)
+                                        addPart(current_part.flightID, PartAdd, false);
+                                    else
+                                        addPart(current_part.craftID, PartAdd, false);                                 
+                                
+
+                                
+                            }
+
+                            if (module.moduleName == "ModuleResourceConverter")
+                            {
+                                
+                                
+                                ModuleResourceConverter tmpRegRC = (ModuleResourceConverter)module;
+                                //PrtName = current_part.name + " " + tmpRegRC.ConverterName;
+                                this.Log_Debug("Resource Converter " + PrtName);
+
+                                if (mode == GameState.FLIGHT)
+                                {
+                                    PrtActive = tmpRegRC.ModuleIsActive();
+                                    this.Log_Debug("Inflight andIsactive = " + PrtActive);
+                                    this.Log_Debug("Info : " + tmpRegRC.GetInfo());
+                                    this.Log_Debug("TakeAmount " + tmpRegRC.TakeAmount.ToString("00.00000"));
+                                    this.Log_Debug("Status :" + tmpRegRC.status);
+                                } 
+                                if (mode == GameState.EDITOR)
+                                {
+                                    PrtActive = true;
+                                    this.Log_Debug("In VAB so part active");
+                                }
+
+                                PrtPower = "";
+                                tmpPower = 0f;
+                                List<ResourceRatio> RecInputs = tmpRegRC.Recipe.Inputs;
+
+                                foreach (ResourceRatio r in RecInputs)
+                                {
+                                    this.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                                    if (r.ResourceName == MAIN_POWER_NAME && PrtActive)
+                                    {                                        
+                                        tmpPower = (float)r.Ratio;
+                                        totalPowerDrain += r.Ratio;
+                                        PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                                        if (mode == GameState.FLIGHT)
+                                            addPart(current_part.flightID, PartAdd, false);
+                                        else
+                                            addPart(current_part.craftID, PartAdd, false);
+                                    }
+                                }
+
+                                
+
+                                PrtPower = "";
+                                tmpPower = 0f;
+                                List<ResourceRatio> RecOutputs = tmpRegRC.Recipe.Outputs;
+
+                                foreach (ResourceRatio r in RecOutputs)
+                                {
+                                    this.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                                    if (r.ResourceName == MAIN_POWER_NAME && PrtActive)
+                                    {
+                                        tmpPower = (float)r.Ratio;
+                                        totalPowerProduced += r.Ratio;
+                                        PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                                        if (mode == GameState.FLIGHT)
+                                            addPart(current_part.flightID, PartAdd, true);
+                                        else
+                                            addPart(current_part.craftID, PartAdd, true);
+                                    }
+                                }         
+                      
+                                List<ResourceRatio> RecreqList = tmpRegRC.reqList;
+
+                                foreach (ResourceRatio r in RecOutputs)
+                                {
+                                    this.Log_Debug("Converter reqList resource = " + r.ResourceName + " ratio= " + r.Ratio);
+                                }
+                            }
+
+
                             if (KASPresent)
                                 try
                                 {
@@ -1139,7 +1251,7 @@ namespace AY
                             if (RegoPresent)
                                 try
                                 {
-                                    checkRego(module, current_part);
+                                    //checkRego(module, current_part);
                                 }
                                 catch
                                 {
@@ -1783,7 +1895,7 @@ namespace AY
             }
         }
 */
-
+        /*
         private void checkRego(PartModule psdpart, Part current_part)
         {
             //string PrtName = " ";
@@ -1867,7 +1979,7 @@ namespace AY
                     break;
             }
         }
-
+        */
         /*
          * private void checkRTKol(PartModule psdpart, Part current_part)
         {
@@ -2941,7 +3053,7 @@ namespace AY
             PartListPartStyle.stretchWidth = false;
             PartListPartStyle.normal.textColor = Color.white;
 
-            Rect EPLwindowPos = new Rect(EwindowPos.x + EWINDOW_WIDTH + 10, EwindowPos.y, AYController.EWINDOW_WIDTH + 20, Screen.height / 2 - 100);
+            Rect EPLwindowPos = new Rect(EwindowPos.x + EWINDOW_WIDTH + 10, EwindowPos.y, AYController.EWINDOW_WIDTH + 30, Screen.height / 2 - 100);
             // Begin the ScrollView
             scrollViewVector = GUI.BeginScrollView(EPLwindowPos, scrollViewVector, new Rect(0, 0, EWINDOW_WIDTH + 100, 1700));
             // Put something inside the ScrollView
@@ -2999,6 +3111,7 @@ namespace AY
             switch (subsystem)
             {
                 case Subsystem.RCS:
+                    if (currentPoweredRCSDrain > 0.001)
                     drain += drain + currentPoweredRCSDrain;
                     break;
 
