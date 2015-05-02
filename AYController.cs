@@ -184,10 +184,8 @@ namespace AY
         private bool ScSPresent = false;
         private bool TelPresent = false;
         private bool TACLPresent = false;
-        private bool KISPPresent = false;
-        private bool BioPresent = false;
+        private bool KISEPresent = false;        
         private bool AntRPresent = false;
-        private bool RegoPresent = false;
         private bool BTSMPresent = false;
         private bool RTKolPresent = false;
         private bool reenableRCS = false;
@@ -353,9 +351,7 @@ namespace AY
             TelPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "Telemachus");
             TACLPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "TacLifeSupport");
             AntRPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "AntennaRange");
-            KISPPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "WarpPlugin");
-            BioPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "Biomatic");
-            RegoPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "Regolith");
+            KISEPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "WarpPlugin");         
             BTSMPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "BTSM");
             RTKolPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "RTKolonists");
             KKPresent = KKClient.KKInstalled;
@@ -381,12 +377,8 @@ namespace AY
                 this.Log_Debug("TAC LS present");
             if (AntRPresent)
                 this.Log_Debug("AntennaRange present");
-            if (KISPPresent)
-                this.Log_Debug("Interstellar present");
-            if (BioPresent)
-                this.Log_Debug("Biomatic present");
-            if (RegoPresent)
-                this.Log_Debug("Regolith present");
+            if (KISEPresent)
+                this.Log_Debug("Interstellar present");            
             if (BTSMPresent)
                 this.Log_Debug("btsm present");
             if (RTKolPresent)
@@ -1235,29 +1227,7 @@ namespace AY
                                 {
                                     this.Log("Wrong AntennaRange library version - disabled.");
                                     AntRPresent = false;
-                                }
-
-                            if (BioPresent)
-                                try
-                                {
-                                    //checkBio(module);
-                                }
-                                catch
-                                {
-                                    this.Log("Wrong Biomatic library version - disabled.");
-                                    BioPresent = false;
-                                }
-
-                            if (RegoPresent)
-                                try
-                                {
-                                    //checkRego(module, current_part);
-                                }
-                                catch
-                                {
-                                    this.Log("Wrong Karbonite library version - disabled.");
-                                    RegoPresent = false;
-                                }
+                                }                            
 
                             if (BTSMPresent)
                                 try
@@ -1287,8 +1257,8 @@ namespace AY
                                 }
                                 catch
                                 {
-                                    this.Log("Wrong BTSM library version - disabled.");
-                                    BTSMPresent = false;
+                                    this.Log("Wrong TACLS library version - disabled.");
+                                    TACLPresent = false;
                                 }
 
                             /*if (KKPresent)
@@ -1876,110 +1846,8 @@ namespace AY
                     break;
             }
         }
-
-        /*
-        private void checkBio(PartModule psdpart, Part current_part)
-        {
-            switch (psdpart.moduleName)
-            {
-                case "Biomatic":
-                    string PrtName = current_part.name;
-                    string PrtPower = "";
-                    bool PrtActive = false;
-                    const double biouse = 0.04;
-                    biouse = global::   Telemachus.TelemachusPowerDrain.powerConsumption;
-                    totalPowerDrain += biouse;
-                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower);
-                    PowerConsList.Add(PartAdd);
-                    break;
-            }
-        }
-*/
-        /*
-        private void checkRego(PartModule psdpart, Part current_part)
-        {
-            //string PrtName = " ";
-            bool PrtActive = false;
-            //string PrtPower = " ";
-            float tmpPower = 0f;
-
-            switch (psdpart.moduleName)
-            {
-                case "REGO_ModuleResourceConverter":
-                    global::Regolith.Common.REGO_ModuleResourceConverter tmpRegRC = (global::Regolith.Common.REGO_ModuleResourceConverter)psdpart;
-                    string PrtName = tmpRegRC.name;
-                    string PrtPower = "";
-                    PrtActive = tmpRegRC.ModuleIsActive();
-                    string[] arr = tmpRegRC.RecipeInputs.Split(',');
-                    for (int i = 0; i < arr.Length; i += 2)
-                    {
-                        string ResName = arr[i];
-                        if (ResName == MAIN_POWER_NAME)
-                        {
-                            double ResAmt = 0;
-                            bool prse = double.TryParse(arr[i + 1], out ResAmt);
-                            if (!prse) ResAmt = 0;
-                            tmpPower = (float)ResAmt;
-                            break;
-                        }
-                    }
-                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
-                    if (mode == GameState.FLIGHT)
-                        addPart(current_part.flightID, PartAdd, false);
-                    else
-                        addPart(current_part.craftID, PartAdd, false);
-
-                    PrtPower = "";
-                    tmpPower = 0f;
-                    arr = tmpRegRC.RecipeOutputs.Split(',');
-                    for (int i = 0; i < arr.Length; i += 2)
-                    {
-                        string ResName = arr[i];
-                        if (ResName == MAIN_POWER_NAME)
-                        {
-                            double ResAmt = 0;
-                            bool prse = double.TryParse(arr[i + 1], out ResAmt);
-                            if (!prse) ResAmt = 0;
-                            tmpPower = (float)ResAmt;
-                            break;
-                        }
-                    }
-                    PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
-                    if (mode == GameState.FLIGHT)
-                        addPart(current_part.flightID, PartAdd, true);
-                    else
-                        addPart(current_part.craftID, PartAdd, true);
-
-                    break;
-
-                case "REGO_ModuleResourceHarvester":
-                    global::Regolith.Common.REGO_ModuleResourceHarvester tmpRegRH = (global::Regolith.Common.REGO_ModuleResourceHarvester)psdpart;
-                    PrtName = tmpRegRH.name;
-                    PrtPower = "";
-                    PrtActive = tmpRegRH.ModuleIsActive();
-                    string[] arr2 = tmpRegRH.RecipeInputs.Split(',');
-                    for (int i = 0; i < arr2.Length; i += 2)
-                    {
-                        string ResName = arr2[i];
-                        if (ResName == MAIN_POWER_NAME)
-                        {
-                            double ResAmt = 0;
-                            bool prse = double.TryParse(arr2[i + 1], out ResAmt);
-                            if (!prse) ResAmt = 0;
-                            tmpPower = (float)ResAmt;
-                            break;
-                        }
-                    }
-                    PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
-                    if (mode == GameState.FLIGHT)
-                        addPart(current_part.flightID, PartAdd, false);
-                    else
-                        addPart(current_part.craftID, PartAdd, false);
-
-                    break;
-            }
-        }
-        */
+               
+        
         /*
          * private void checkRTKol(PartModule psdpart, Part current_part)
         {
