@@ -264,7 +264,7 @@ namespace AY
             AYgameSettings = AmpYear.Instance.AYgameSettings;
             vesselProdPartsList = new Dictionary<uint, PwrPartList>();
             vesselConsPartsList = new Dictionary<uint, PwrPartList>();
-            /*
+            
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1 = ToolbarManager.Instance.add("AmpYear", "button1");
@@ -284,7 +284,7 @@ namespace AY
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
             }
-             * */
+            
             this.Log_Debug("AYController Awake complete");
         }
 
@@ -320,26 +320,6 @@ namespace AY
         public void Start()
         {
             this.Log_Debug("AYController Start");
-
-            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
-            {
-                button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
-                button1.ToolTip = "AmpYear";
-                button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR);
-                button1.OnClick += (e) => GuiVisible = !GuiVisible;
-            }
-            else
-            {
-                // Set up the stock toolbar
-                this.Log_Debug("Adding onGUIAppLauncher callbacks");
-                if (ApplicationLauncher.Ready)
-                {
-                    OnGUIAppLauncherReady();
-                }
-                else
-                    GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-            }
             
             // Find out which mods are present
             ALPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "AviationLights");
@@ -394,9 +374,7 @@ namespace AY
             GameEvents.onVesselChange.Add(onVesselChange);
             GameEvents.onVesselLoaded.Add(onVesselLoad);
             GameEvents.onCrewBoardVessel.Add(onCrewBoardVessel);
-
-            RenderingManager.AddToPostDrawQueue(5, this.onDraw);
-
+            RenderingManager.AddToPostDrawQueue(5, this.onDraw);                      
             this.Log_Debug("AYController Start complete");
         }
 
@@ -438,7 +416,7 @@ namespace AY
             {
                 if ((FlightGlobals.ready && FlightGlobals.ActiveVessel != null) || (HighLogic.LoadedSceneIsEditor))
                 {
-                    this.Log_Debug("ampYearAYController  FixedUpdate mode == " + mode);
+                    this.Log_Debug("ampYearAYController  FixedUpdate mode == " + mode);                    
                     //get current vessel parts list
                     List<Part> parts = new List<Part> { };
                     if (mode == GameState.FLIGHT)
@@ -449,7 +427,8 @@ namespace AY
                     else
                         try
                         {
-                            parts = EditorLogic.SortedShipList;
+                            //parts = EditorLogic.SortedShipList;
+                            parts = EditorLogic.fetch.ship.parts;
                             if (parts == null)
                             {
                                 this.Log_Debug("In Editor but couldn't get parts list");
@@ -457,7 +436,7 @@ namespace AY
                             }
                         }
                         catch (Exception Ex)
-                        {
+                        {                            
                             if (Ex.Message.Contains("Reference"))
                             {
                                 this.Log("NullRef occurred getting parts list");
@@ -467,8 +446,7 @@ namespace AY
                                 this.Log_Debug("Error occurred getting parts list " + Ex.Message);
                             }
                             return;
-                        }
-
+                        }                    
                     //Compile information about the vessel and its parts
                     // zero accumulators
                     sasAdditionalRotPower = 0.0f;
@@ -1403,8 +1381,7 @@ namespace AY
                 this.Log_Debug("hasPower = " + hasPower);
 
                 if (desiredElectricity > 0.0 && timewarpIsValid) // if power required > 0 and time warp is valid
-                {
-                    //if (totalElectricCharge >= minimum_sufficient_charge)
+                {                    
                     if (totalElectricCharge >= desiredElectricity) // if main power >= power required
                     {
                         this.Log_Debug("drawing main power");
@@ -1415,9 +1392,6 @@ namespace AY
                         this.Log_Debug("reatime = " + UnityEngine.Time.realtimeSinceStartup + " poweruptime = " + powerUpTime);
                         this.Log_Debug("desiredelec = " + desiredElectricity + " totalElecreceived = " + totalElecreceived);
                         this.Log_Debug("hasPower = " + hasPower);
-
-                        //hasPower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
-                        // && (timestep_drain <= 0.0 || requestResource(cvp, MAIN_POWER_NAME, timestep_drain) >= (timestep_drain * 0.99));
                     }
                     else //not enough main power try reserve power
                     {
@@ -1439,15 +1413,11 @@ namespace AY
                             timeLastElectricity = currentTime - ((desiredElectricity2 - totalElecreceived2) / manager_drain); // set time last power received
                             hasReservePower = (UnityEngine.Time.realtimeSinceStartup > powerUpTime)
                             && (desiredElectricity2 <= 0.0 || totalElecreceived2 >= (desiredElectricity2 * 0.99)); // set hasReservePower > power up delay and we received power
-
-                            //hasReservePower = manager_drain <= 0.0
-                            //    || requestResource(cvp, RESERVE_POWER_NAME, manager_timestep_drain) >= (manager_timestep_drain * 0.99);
                         }
                         else  // not enough reservepower
                         {
                             this.Log_Debug("not enough reserve power");
-                            hasReservePower = totalReservePower > minimum_sufficient_charge; //set hasReservePower
-                            //timeLastElectricity += UnityEngine.Random.Range(60, 600);
+                            hasReservePower = totalReservePower > minimum_sufficient_charge; //set hasReservePower                            
                             timeLastElectricity += currentTime - lastUpdate; //set time we last received electricity to current time - last update
                         }                        
                     }
