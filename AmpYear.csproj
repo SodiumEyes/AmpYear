@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{AACF3579-E4E6-48BB-B278-E7B664D06F65}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AY</RootNamespace>
+    <AssemblyName>AmpYear</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AntennaRange">
+      <HintPath>.\AntennaRange.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="AYInterfaces, Version=0.12.5576.13956, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>GameData\REPOSoftTech\AmpYear\Plugins\AYInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="KAS, Version=1.0.5325.39758, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\KAS.dll</HintPath>
+    </Reference>
+    <Reference Include="KKInterfaces, Version=0.1.5576.14537, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>GameData\REPOSoftTech\KabinKraziness\Plugins\KKInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="NearFutureElectrical, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\NearFutureElectrical.dll</HintPath>
+    </Reference>
+    <Reference Include="NearFutureSolar, Version=0.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\NearFutureSolar.dll</HintPath>
+    </Reference>
+    <Reference Include="RemoteTech, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\RemoteTech.dll</HintPath>
+    </Reference>
+    <Reference Include="SCANsat, Version=1.1.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\SCANsat.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="TacLifeSupport, Version=0.10.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\TacLifeSupport.dll</HintPath>
+    </Reference>
+    <Reference Include="Telemachus">
+      <HintPath>.\Telemachus.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\UnityEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AmpYear.cs" />
+    <Compile Include="AYEnums.cs" />
+    <Compile Include="AYGameSettings.cs" />
+    <Compile Include="AYSController.cs" />
+    <Compile Include="KKClient.cs" />
+    <Compile Include="ModuleAmpYearPPTRCS.cs" />
+    <Compile Include="Utilities.cs" />
+    <Compile Include="VesselInfo.cs" />
+    <None Include="AmpYear.version" />
+    <None Include="AYCrewPart.cs" />
+    <Compile Include="AYSettings.cs" />
+    <Compile Include="AYController.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ToolBarManager.cs" />
+    <Compile Include="ModuleAmpYearPoweredRCS.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ksp_dir.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
+
+xcopy "$(TargetPath)" "$(SolutionDir)GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+where /q "C:\7za\:7za.exe"
+if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
+
+if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectName).zip"   
+c:\7za\7za a -tzip "$(SolutionDir)..\$(ProjectName).zip" "$(SolutionDir)\GameData" 
+c:\7za\7za d -r "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" 
+xcopy /E /Y "$(SolutionDir)GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

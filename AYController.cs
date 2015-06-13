@@ -1210,7 +1210,7 @@ namespace AY
                             if (BTSMPresent)
                                 try
                                 {
-                                    //checkBTSM(module, current_part);
+                                    checkBTSM(module, current_part);
                                 }
                                 catch
                                 {
@@ -1477,14 +1477,15 @@ namespace AY
         
         private void checkAv(PartModule psdpart, Part current_part)
         {
-            //string PrtName = current_part.name;
-            //string PrtPower = "";
-            //bool PrtActive = false;
-            //float tmpPower = 0;
-            switch (psdpart.moduleName)
+            string PrtName = current_part.name;
+            string PrtPower = "";
+            bool PrtActive = false;
+            float tmpPower = 0;
+            /*switch (psdpart.moduleName)
             {
+                /*
                 case "ModuleNavLight":
-                    /*        //global::AviationLights.ModuleNavLight tmpLight = (global::AviationLights.ModuleNavLight)psdpart;
+                        global::AviationLights.ModuleNavLight tmpLight = (global::AviationLights.ModuleNavLight)psdpart;
                         if ((tmpLight.navLightSwitch != 0) || mode == GameState.EDITOR)
                         {
                             PrtActive = true;
@@ -1498,9 +1499,10 @@ namespace AY
                         else
                             addPart(current_part.craftID, PartAdd, false);
 
-         */
+               
                     break;
-            }
+                 
+            }*/
         }
 
         private void checkNFE(PartModule psdpart, Part current_part)
@@ -1511,28 +1513,77 @@ namespace AY
             float tmpPower = 0;
             switch (psdpart.moduleName)
             {
-                case "FissionGenerator":
+                case "FissionReactor":
 
-                    global::NearFutureElectrical.FissionGenerator tmpGen = (global::NearFutureElectrical.FissionGenerator)psdpart;
-                    if (mode == GameState.FLIGHT && tmpGen.Enabled)
+                    //global::NearFutureElectrical.FissionReactor tmpGen = (global::NearFutureElectrical.FissionReactor)psdpart;
+                    foreach (PartModule module in current_part.Modules)
                     {
-                        PrtActive = true;
-                        totalPowerProduced += tmpGen.GetCurrentPower();
-                        tmpPower = (float)tmpGen.GetCurrentPower();
-                    }
-                    else if (mode == GameState.EDITOR)
-                    {
-                        PrtActive = true;
-                        totalPowerProduced += tmpGen.PowerGenerationMaximum;
-                        tmpPower = (float)tmpGen.PowerGenerationMaximum;
-                    }
-                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                        if (module.moduleName == "ModuleResourceConverter")
+                        {
+                            ModuleResourceConverter tmpRegRC = (ModuleResourceConverter)module;
+                            //PrtName = current_part.name + " " + tmpRegRC.ConverterName;
+                            this.Log_Debug("Resource Converter " + PrtName);
 
-                    if (mode == GameState.FLIGHT)
-                        addPart(current_part.flightID, PartAdd, true);
-                    else
-                        addPart(current_part.craftID, PartAdd, true);
+                            if (mode == GameState.FLIGHT)
+                            {
+                                PrtActive = tmpRegRC.ModuleIsActive();
+                                this.Log_Debug("Inflight andIsactive = " + PrtActive);
+                                this.Log_Debug("Info : " + tmpRegRC.GetInfo());
+                                this.Log_Debug("TakeAmount " + tmpRegRC.TakeAmount.ToString("00.00000"));
+                                this.Log_Debug("Status :" + tmpRegRC.status);
+                            }
+                            if (mode == GameState.EDITOR)
+                            {
+                                PrtActive = true;
+                                this.Log_Debug("In VAB so part active");
+                            }
 
+                            PrtPower = "";
+                            tmpPower = 0f;
+                            List<ResourceRatio> RecInputs = tmpRegRC.Recipe.Inputs;
+
+                            foreach (ResourceRatio r in RecInputs)
+                            {
+                                this.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                                if (r.ResourceName == MAIN_POWER_NAME && PrtActive)
+                                {
+                                    tmpPower = (float)r.Ratio;
+                                    totalPowerDrain += r.Ratio;
+                                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                                    if (mode == GameState.FLIGHT)
+                                        addPart(current_part.flightID, PartAdd, false);
+                                    else
+                                        addPart(current_part.craftID, PartAdd, false);
+                                }
+                            }
+
+                            PrtPower = "";
+                            tmpPower = 0f;
+                            List<ResourceRatio> RecOutputs = tmpRegRC.Recipe.Outputs;
+
+                            foreach (ResourceRatio r in RecOutputs)
+                            {
+                                this.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                                if (r.ResourceName == MAIN_POWER_NAME && PrtActive)
+                                {
+                                    tmpPower = (float)r.Ratio;
+                                    totalPowerProduced += r.Ratio;
+                                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                                    if (mode == GameState.FLIGHT)
+                                        addPart(current_part.flightID, PartAdd, true);
+                                    else
+                                        addPart(current_part.craftID, PartAdd, true);
+                                }
+                            }
+
+                            List<ResourceRatio> RecreqList = tmpRegRC.reqList;
+
+                            foreach (ResourceRatio r in RecOutputs)
+                            {
+                                this.Log_Debug("Converter reqList resource = " + r.ResourceName + " ratio= " + r.Ratio);
+                            }
+                        }
+                    }
                     break;
             }
         }
@@ -1854,12 +1905,24 @@ namespace AY
             }
         }
 
-        /*
+        */
         private void checkBTSM(PartModule psdpart, Part current_part)
         {
             string PrtName = current_part.name;
             string PrtPower = "";
             bool PrtActive = false;
+            float tmpPower = 0;
+            if (mode == GameState.FLIGHT)
+            {
+                if (psdpart.isEnabled)
+                {
+                    PrtActive = true;                    
+                }
+            }
+            if (mode == GameState.EDITOR)
+            {
+                PrtActive = true;                
+            }
             switch (psdpart.moduleName)
             {
                 case "BTSMModuleProbePower":
@@ -1872,36 +1935,56 @@ namespace AY
 
                             totalPowerDrain += 0.16666668;
                             PrtPower = "0.166";
-                            PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd);
+                            tmpPower = 0.166f;
+                            PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd, true);
+                            else
+                                addPart(current_part.craftID, PartAdd, true);
                             break;
 
                         case "probeCoreCube":
                             totalPowerDrain += 0.08333334;
                             PrtPower = "0.083";
-                            PwrPartList PartAdd2 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd2);
+                            tmpPower = 0.083f;
+                            PwrPartList PartAdd2 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd2, true);
+                            else
+                                addPart(current_part.craftID, PartAdd2, true);
                             break;
 
                         case "probeCoreHex":
                             totalPowerDrain += 0.04166667;
                             PrtPower = "0.041";
-                            PwrPartList PartAdd3 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd3);
+                            tmpPower = 0.041f;
+                            PwrPartList PartAdd3 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd3, true);
+                            else
+                                addPart(current_part.craftID, PartAdd3, true);
                             break;
 
                         case "probeCoreOcto":
                             totalPowerDrain += 0.033333336;
                             PrtPower = "0.033";
-                            PwrPartList PartAdd4 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd4);
+                            tmpPower = 0.033f;
+                            PwrPartList PartAdd4 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd4, true);
+                            else
+                                addPart(current_part.craftID, PartAdd4, true);
                             break;
 
                         default:
                             totalPowerDrain += 0.02777778;
                             PrtPower = "0.027";
-                            PwrPartList PartAdd5 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd5);
+                            tmpPower = 0.027f;
+                            PwrPartList PartAdd5 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd5, true);
+                            else
+                                addPart(current_part.craftID, PartAdd5, true);
                             break;
                     }
 
@@ -1914,36 +1997,52 @@ namespace AY
                         case "Mark1-2Pod":
                             totalPowerDrain += 0.20833335;
                             PrtPower = "0.208";
-                            PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd);
+                            tmpPower = 0.208f;
+                            PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd, true);
+                            else
+                                addPart(current_part.craftID, PartAdd, true);
                             break;
 
                         case "landerCabinSmall":
                             totalPowerDrain += 0.25000002;
                             PrtPower = "0.250";
-                            PwrPartList PartAdd2 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd2);
+                            tmpPower = 0.250f;
+                            PwrPartList PartAdd2 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd2, true);
+                            else
+                                addPart(current_part.craftID, PartAdd2, true);
                             break;
 
                         case "mark3Cockpit":
                             totalPowerDrain += 0.19444446;
                             PrtPower = "0.194";
-                            PwrPartList PartAdd3 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd3);
+                            tmpPower = 0.194f;
+                            PwrPartList PartAdd3 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd3, true);
+                            else
+                                addPart(current_part.craftID, PartAdd3, true);
                             break;
 
                         default:
                             totalPowerDrain += 0.2777778;
                             PrtPower = "0.277";
-                            PwrPartList PartAdd4 = new PwrPartList(PrtName, PrtPower);
-                            PowerConsList.Add(PartAdd4);
+                            tmpPower = 0.277f;
+                            PwrPartList PartAdd4 = new PwrPartList(PrtName, PrtPower, tmpPower, PrtActive);
+                            if (mode == GameState.FLIGHT)
+                                addPart(current_part.flightID, PartAdd4, true);
+                            else
+                                addPart(current_part.craftID, PartAdd4, true);
                             break;
                     }
 
                     break;
             }
         }
-*/
+
 
         #endregion OtherMods
 
@@ -2031,7 +2130,7 @@ namespace AY
                 this.Log_Debug("Add new vessels check? " + VesselID + " " + vessel.vesselType);
                 if (!AYgameSettings.knownVessels.ContainsKey(VesselID) && ValidVslType(vessel))
                 {
-                    if (vessel.FindPartModulesImplementing<ModuleCommand>().First() != null)
+                    if (vessel.FindPartModulesImplementing<ModuleCommand>().FirstOrDefault() != null)
                     {
                         this.Log_Debug("New vessel: " + vessel.vesselName + " (" + vessel.id + ")");
                         VesselInfo vesselInfo = new VesselInfo(vessel.vesselName, currentTime);
