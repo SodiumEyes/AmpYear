@@ -48,17 +48,17 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="AYInterfaces, Version=0.12.5576.13956, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="AYInterfaces, Version=2.0.5596.17031, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>GameData\REPOSoftTech\AmpYear\Plugins\AYInterfaces.dll</HintPath>
+      <HintPath>AYInterfaces\bin\Debug\AYInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="KAS, Version=1.0.5325.39758, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\KAS.dll</HintPath>
     </Reference>
-    <Reference Include="KKInterfaces, Version=0.1.5576.14537, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="KKInterfaces, Version=2.0.5596.17006, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>GameData\REPOSoftTech\KabinKraziness\Plugins\KKInterfaces.dll</HintPath>
+      <HintPath>..\KabinKraziness\KKInterfaces\bin\Debug\KKInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="NearFutureElectrical, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
