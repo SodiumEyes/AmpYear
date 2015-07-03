@@ -2,8 +2,8 @@
 "NAME":"AmpYear",
 "URL":"http://ksp-avc.cybutek.net/version.php?id=147",
 "DOWNLOAD":"https://kerbalstuff.com/mod/630/AmpYear%20Power%20Manager%20+%20Reserve%20Power%20+%20Ion%20RCS",
-"VERSION":{"MAJOR":0,"MINOR":18,"PATCH":0,"BUILD":0},
-"KSP_VERSION":{"MAJOR":1,"MINOR":0,"PATCH":3},
+"VERSION":{"MAJOR":1,"MINOR":0,"PATCH":0,"BUILD":0},
+"KSP_VERSION":{"MAJOR":1,"MINOR":0,"PATCH":4},
 "KSP_VERSION_MIN":{"MAJOR":1,"MINOR":0,"PATCH":0},
-"KSP_VERSION_MAX":{"MAJOR":1,"MINOR":0,"PATCH":3}
+"KSP_VERSION_MAX":{"MAJOR":1,"MINOR":0,"PATCH":4}
 }
