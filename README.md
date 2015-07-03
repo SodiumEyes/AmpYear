@@ -24,7 +24,7 @@ ION RCS
     Thrusters that use Xenon-gas and electricity for incredibly efficient RCS. Some limitations:
     Has half the Isp of normal Ion engines.
     One quarter of the thrust of normal monopropellant RCS thrusters.
-    Only linear thrusters are available.
+    Linear thrusters, 4-way Thurster block and 4-ay 45 degrees thruster blocks are available.
     Integrated to TechTree at ionPropulsion.
 
 Pulsed Plasma Thrusters RCS
@@ -54,16 +54,3 @@ Auto-Hibernate
 Show Crew
 
     Show Crew feature - with 0.90 - I added this to show the crew and their roles rather than having to switch to the map view all the time.
-
-
-
-ChangeLog:
-
-v0.14 Release for KSP V1.0.0 - Basic support for new 1.0 resource parts (needs more work), fuel cells, removed Regolith, SCANSat support (now covered by stock). Deprecated Z500 Reserve power battery (was actually a copy of the z1-K). 
-V0.13 Removed KabinKraziness - Will be released as a separate mod. Re-implmented Auto_hibernate at high (7x) time warp.
-V0.12e Set the Default value for AmpYear Power Manager to ON
-V0.12d Fixed Vessel switching bug (save settings correctly). Kraziness balancing. Removed Auto-Hibernate and added timewarp/low power warning pop-up. Updated to latest versions of other mods.
-V0.12c Fixed duplicated batteries in distribution zip file. Completely delete the AmpYear folder in your gamedata directory and re-install.
-V0.12b Tweaks to Cabin Craziness calculations. Correctly includes craziness increases based on how far from Kerbin you are. Tweaked base values in calculations. Merged the Heater/Cooler function into one Climate Control function.
-V0.12a Loading fix and Gui Improvements Added distance from Kerbal in the Cabin Craziness Calculation.
-V0.12 - Forked from SodiumEyes - Updated and Upgraded for KSP 0.90. Too many changes to mention. Refer to the Mod forum link for details.
