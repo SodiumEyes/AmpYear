@@ -125,28 +125,7 @@ namespace AY
         {
             AYsettings = AmpYear.Instance.AYsettings;
             AYgameSettings = AmpYear.Instance.AYgameSettings;
-            /*
-            // create toolbar button
-            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
-            {
-                button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
-                button1.ToolTip = "AmpYear";
-                button1.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
-                button1.OnClick += (e) => GuiVisible = !GuiVisible;
-            }
-            else
-            {
-                // Set up the stock toolbar
-                this.Log_Debug("AYSCController Adding onGUIAppLauncher callbacks");
-                if (ApplicationLauncher.Ready)
-                {
-                    OnGUIAppLauncherReady();
-                }
-                else
-                    GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-                
-            }*/
+            
             this.Log_Debug("AYSCController Awake complete");
         }
         
@@ -363,7 +342,7 @@ namespace AY
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Use Application Launcher (restart required)", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Use Application Launcher", statusStyle, GUILayout.Width(300));
             InputAppL = GUILayout.Toggle(InputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 

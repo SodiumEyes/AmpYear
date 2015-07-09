@@ -72,7 +72,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\RemoteTech.dll</HintPath>
     </Reference>
-    <Reference Include="SCANsat, Version=1.1.6.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SCANsat, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\SCANsat.dll</HintPath>
     </Reference>

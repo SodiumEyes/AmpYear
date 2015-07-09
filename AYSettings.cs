@@ -42,6 +42,10 @@ namespace AY
 
         public float SCwindowPosY { get; set; }
 
+        public float EPLwindowPosX { get; set; }
+
+        public float EPLwindowPosY { get; set; }
+
         public double RECHARGE_RESERVE_THRESHOLD { get; set; }
 
         public double POWER_LOW_WARNING_AMT { get; set; }
@@ -58,6 +62,8 @@ namespace AY
             EwindowPosY = 50;
             SCwindowPosX = 40;
             SCwindowPosY = 50;
+            EPLwindowPosX = 270;
+            EPLwindowPosY = 50;
             RECHARGE_RESERVE_THRESHOLD = 0.95;
             POWER_LOW_WARNING_AMT = 5;
             UseAppLauncher = true;
@@ -77,6 +83,8 @@ namespace AY
                 EwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "EwindowPosY", EwindowPosY);
                 SCwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "SCwindowPosX", SCwindowPosX);
                 SCwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "SCwindowPosY", SCwindowPosY);
+                EPLwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "EPLwindowPosX", EPLwindowPosX);
+                EPLwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "EPLwindowPosY", EPLwindowPosY);
                 RECHARGE_RESERVE_THRESHOLD = Utilities.GetNodeValue(AYsettingsNode, "RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
                 POWER_LOW_WARNING_AMT = Utilities.GetNodeValue(AYsettingsNode, "POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
                 UseAppLauncher = Utilities.GetNodeValue(AYsettingsNode, "UseAppLauncher", UseAppLauncher);
@@ -103,6 +111,8 @@ namespace AY
             settingsNode.AddValue("EwindowPosY", EwindowPosY);
             settingsNode.AddValue("SCwindowPosX", SCwindowPosX);
             settingsNode.AddValue("SCwindowPosY", SCwindowPosY);
+            settingsNode.AddValue("EPLwindowPosX", EPLwindowPosX);
+            settingsNode.AddValue("EPLwindowPosY", EPLwindowPosY);
             settingsNode.AddValue("RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
             settingsNode.AddValue("POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);

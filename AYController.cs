@@ -198,15 +198,16 @@ namespace AY
         private ApplicationLauncherButton stockToolbarButton = null; // Stock Toolbar Button
         private readonly double[] RESERVE_TRANSFER_INCREMENTS = new double[3] { 0.25, 0.1, 0.01 };
         private bool[] guiSectionEnableFlag = new bool[Enum.GetValues(typeof(GUISection)).Length];
-        private const float FWINDOW_WIDTH = 200;
-        private const float EWINDOW_WIDTH = 200;
+        private const float FWINDOW_WIDTH = 220;
+        private const float EWINDOW_WIDTH = 220;
         private const float WINDOW_BASE_HEIGHT = 140;
-        private Vector2 scrollViewVector = Vector2.zero;
-        private GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle, PartListStyle, PartListPartStyle;
+        private Vector2 GUIscrollViewVector = Vector2.zero;
+        private GUIStyle sectionTitleStyle, subsystemButtonStyle, subsystemConsumptionStyle, statusStyle, warningStyle, powerSinkStyle, PartListStyle, PartListPartStyle, resizeStyle;
         public GUILayoutOption[] subsystemButtonOptions;
-        private static int FwindowID = new System.Random().Next();
-        private static int EwindowID = new System.Random().Next();
-        private static int WwindowID = new System.Random().Next();
+        private static int FwindowID;
+        private static int EwindowID;
+        private static int WwindowID;
+        private static int SwindowID;
         private static GameState mode = GameState.EVA;  // Display mode, currently  0 for In-Flight, 1 for Editor, 2 for EVA (Hide)
         private bool[] subsystemToggle = new bool[Enum.GetValues(typeof(Subsystem)).Length];
         private double[] subsystemDrain = new double[Enum.GetValues(typeof(Subsystem)).Length];
@@ -222,6 +223,7 @@ namespace AY
         private Rect FwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.FWINDOW_WIDTH, 200); // Flight Window position and size
         private Rect EwindowPos = new Rect(40, Screen.height / 2 - 100, AYController.EWINDOW_WIDTH, 200); // Editor Window position and size
         private Rect WarnWinPos = new Rect(Screen.width / 2 - 250, Screen.height / 4, 500, 150);  // Warp warning window position and size
+        private Rect EPLwindowPos = new Rect(270, Screen.height / 2 - 100, 250, 500); //Extended Parts List Window position and size
 
         //Constants
         public const double MANAGER_ACTIVE_DRAIN = 1.0 / 60.0;
@@ -248,6 +250,8 @@ namespace AY
 
         //GuiVisibility
         private bool _Visible = false;
+        private bool mouseDown;
+        private bool gamePaused = false;
 
         public Boolean GuiVisible
         {
@@ -255,6 +259,14 @@ namespace AY
             set
             {
                 _Visible = value;      //Set the private variable
+                if (_Visible)
+                {
+                    RenderingManager.AddToPostDrawQueue(3, this.onDraw);
+                }
+                else
+                {
+                    RenderingManager.RemoveFromPostDrawQueue(3, this.onDraw);
+                }
             }
         }
 
@@ -264,7 +276,43 @@ namespace AY
             AYgameSettings = AmpYear.Instance.AYgameSettings;
             vesselProdPartsList = new Dictionary<uint, PwrPartList>();
             vesselConsPartsList = new Dictionary<uint, PwrPartList>();
-            
+            FwindowID = new System.Random().Next();
+            EwindowID = FwindowID + 1;
+            WwindowID = EwindowID + 1;
+            SwindowID = WwindowID + 1;
+            this.Log_Debug("AYController FwindowID=" + FwindowID + ",EwindowID=" + EwindowID + ",WwindowID=" + WwindowID + ",SwindowID=" + SwindowID);
+            this.Log_Debug("AYController Awake complete");
+        }
+
+        private void OnGUIAppLauncherReady()
+        {
+            this.Log_Debug("OnGUIAppLauncherReady");
+            if (ApplicationLauncher.Ready)
+            {
+                this.Log_Debug("Adding AppLauncherButton");
+                this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggle, onAppLaunchToggle, DummyVoid,
+                                          DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH |
+                                          ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW,
+                                          (Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
+            }
+        }
+
+        private void DummyVoid()
+        {
+        }
+
+        public void onAppLaunchToggle()
+        {
+            GuiVisible = !GuiVisible;
+            if (AYsettings.UseAppLauncher == true)
+                this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture(GuiVisible ? "REPOSoftTech/AmpYear/Icons/AYIconOn" : "REPOSoftTech/AmpYear/Icons/AYIconOff", false));            
+        }
+        
+        public void Start()
+        {
+            this.Log_Debug("AYController Start");
+
+            this.Log_Debug("AYcontroller ToolbarAvailable=" + ToolbarManager.ToolbarAvailable + ",UseAppLauncher=" + AYsettings.UseAppLauncher);
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1 = ToolbarManager.Instance.add("AmpYear", "button1");
@@ -284,43 +332,6 @@ namespace AY
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
             }
-            
-            this.Log_Debug("AYController Awake complete");
-        }
-
-        private void OnGUIAppLauncherReady()
-        {
-            this.Log_Debug("OnGUIAppLauncherReady");
-            if (ApplicationLauncher.Ready)
-            {
-                this.Log_Debug("Adding AppLauncherButton");
-                this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggleOn, onAppLaunchToggleOff, DummyVoid,
-                                          DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH |
-                                          ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW,
-                                          (Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
-            }
-        }
-
-        private void DummyVoid()
-        {
-        }
-
-        public void onAppLaunchToggleOn()
-        {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOn", false));
-            GuiVisible = true;
-        }
-
-        public void onAppLaunchToggleOff()
-        {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
-            GuiVisible = false;
-        }
-
-        public void Start()
-        {
-            this.Log_Debug("AYController Start");
-            
             // Find out which mods are present
             ALPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "AviationLights");
             NFEPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "NearFutureElectrical");
@@ -374,12 +385,14 @@ namespace AY
             GameEvents.onVesselChange.Add(onVesselChange);
             GameEvents.onVesselLoaded.Add(onVesselLoad);
             GameEvents.onCrewBoardVessel.Add(onCrewBoardVessel);
-            RenderingManager.AddToPostDrawQueue(5, this.onDraw);                      
+            GameEvents.onGamePause.Add(GamePaused);
+            GameEvents.onGameUnpause.Add(GameUnPaused);
             this.Log_Debug("AYController Start complete");
         }
 
         public void OnDestroy()
         {
+            this.Log_Debug("AYcontroller ToolbarAvailable=" + ToolbarManager.ToolbarAvailable + ",UseAppLauncher=" + AYsettings.UseAppLauncher);
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1.Destroy();
@@ -399,7 +412,18 @@ namespace AY
             GameEvents.onVesselChange.Remove(onVesselChange);
             GameEvents.onVesselLoaded.Remove(onVesselLoad);
             GameEvents.onCrewBoardVessel.Remove(onCrewBoardVessel);
-            RenderingManager.RemoveFromPostDrawQueue(5, this.onDraw);
+            GameEvents.onGamePause.Remove(GamePaused);
+            GameEvents.onGameUnpause.Remove(GameUnPaused);
+        }
+
+        private void GamePaused()
+        {
+            gamePaused = true;
+        }
+
+        private void GameUnPaused()
+        {
+            gamePaused = false;
         }
 
         private void FixedUpdate()
@@ -1710,7 +1734,7 @@ namespace AY
                     string PrtPower = "";
                     bool PrtActive = false;
                     float tmpPower = 0;
-                    global::SCANsat.SCANsat tmpSS = (global::SCANsat.SCANsat)psdpart;
+                    global::SCANsat.SCAN_PartModules.SCANsat tmpSS = (global::SCANsat.SCAN_PartModules.SCANsat)psdpart;
                     if ((mode == GameState.EDITOR) || (mode == GameState.FLIGHT && (tmpSS.power > 0.0 && tmpSS.scanningNow())))
                     {
                         totalPowerDrain += tmpSS.power;
@@ -2625,7 +2649,7 @@ namespace AY
 
         private void onDraw()
         {
-            if (!GuiVisible) return;
+            if (!GuiVisible || gamePaused) return;
 
             if (HighLogic.LoadedSceneIsFlight)
             {
@@ -2651,7 +2675,12 @@ namespace AY
                     GUI.skin = HighLogic.Skin;
                     if (!Utilities.WindowVisibile(FwindowPos)) Utilities.MakeWindowVisible(FwindowPos);
                     FwindowPos = GUILayout.Window(FwindowID, FwindowPos, windowF, "AmpYear Power Manager", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
-
+                    if (ShowParts)
+                    {
+                        if (!Utilities.WindowVisibile(EPLwindowPos)) Utilities.MakeWindowVisible(EPLwindowPos);
+                        EPLwindowPos = GUILayout.Window(SwindowID, EPLwindowPos, windowScrollParts, "AmpYear Parts List", GUILayout.ExpandWidth(true),
+                            GUILayout.ExpandHeight(true), GUILayout.MinWidth(50), GUILayout.MinHeight(100));
+                    }
                     CheckPowerLowWarning();
                     if (WarnWinOn)
                     {
@@ -2665,7 +2694,12 @@ namespace AY
                 GUI.skin = HighLogic.Skin;
                 if (!Utilities.WindowVisibile(EwindowPos)) Utilities.MakeWindowVisible(EwindowPos);
                 EwindowPos = GUILayout.Window(EwindowID, EwindowPos, windowE, "AmpYear Power Manager", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
-                if (ShowParts) ScrollParts();
+                if (ShowParts)
+                {
+                    if (!Utilities.WindowVisibile(EPLwindowPos)) Utilities.MakeWindowVisible(EPLwindowPos);
+                    EPLwindowPos = GUILayout.Window(SwindowID, EPLwindowPos, windowScrollParts, "AmpYear Parts List", GUILayout.ExpandWidth(true),
+                            GUILayout.ExpandHeight(true), GUILayout.MinWidth(50), GUILayout.MinHeight(100));
+                }
             }
         }
 
@@ -2722,6 +2756,14 @@ namespace AY
             subsystemButtonStyle.margin.bottom = 0;
             subsystemButtonStyle.padding.top = 0;
             subsystemButtonStyle.padding.bottom = 0;
+
+            GUIContent closeContent = new GUIContent("X", "Close Window");
+            Rect closeRect = new Rect(FwindowPos.width - 17, 4, 16, 16);
+            if (GUI.Button(closeRect, closeContent))
+            {
+                onAppLaunchToggle();
+                return;
+            }
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
@@ -2816,7 +2858,7 @@ namespace AY
                     foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
                     {
                         if (!subsystemIsLuxury(subsystem) && subsystemVisible(subsystem))
-                        {
+                        {  
                             GUILayout.BeginHorizontal();
                             subsystemButton(subsystem);
                             subsystemConsumptionLabel(subsystem);
@@ -2828,6 +2870,9 @@ namespace AY
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, "EmergencyProc.Active", subsystemButtonStyle, subsystemButtonOptions);
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    ShowParts = GUILayout.Toggle(ShowParts, "ShowParts", subsystemButtonStyle, subsystemButtonOptions);
                     GUILayout.EndHorizontal();
                 }
 
@@ -2946,6 +2991,13 @@ namespace AY
             subsystemButtonStyle.padding.top = 0;
             subsystemButtonStyle.padding.bottom = 0;
 
+            GUIContent closeContent = new GUIContent("X", "Close Window");
+            Rect closeRect = new Rect(EwindowPos.width - 17, 4, 16, 16);
+            if (GUI.Button(closeRect, closeContent))
+            {
+                onAppLaunchToggle();
+                return;
+            }
             GUILayout.BeginVertical();
 
             //Manager status+drain
@@ -2976,25 +3028,38 @@ namespace AY
             GUI.DragWindow();
         }
 
-        private void ScrollParts()
+        private void windowScrollParts(int id)
         {
-            //GUI.skin = HighLogic.Skin;
-
+            
             PartListStyle = new GUIStyle(GUI.skin.label);
-            PartListStyle.alignment = TextAnchor.LowerLeft;
-            PartListStyle.stretchWidth = false;
+            PartListStyle.alignment = TextAnchor.MiddleCenter;
+            PartListStyle.stretchWidth = true;
             PartListStyle.normal.textColor = Color.yellow;
 
             PartListPartStyle = new GUIStyle(GUI.skin.label);
-            PartListPartStyle.alignment = TextAnchor.LowerLeft;
-            PartListPartStyle.stretchWidth = false;
+            PartListPartStyle.alignment = TextAnchor.MiddleLeft;
+            PartListPartStyle.stretchWidth = true;
             PartListPartStyle.normal.textColor = Color.white;
 
-            Rect EPLwindowPos = new Rect(EwindowPos.x + EWINDOW_WIDTH + 10, EwindowPos.y, AYController.EWINDOW_WIDTH + 30, Screen.height / 2 - 100);
+            resizeStyle = new GUIStyle(GUI.skin.button);
+            resizeStyle.alignment = TextAnchor.MiddleCenter;
+            resizeStyle.padding = new RectOffset(1, 1, 1, 1);
+
+            GUIContent closeContent = new GUIContent("X", "Close Window");
+            Rect closeRect = new Rect(EPLwindowPos.width - 17, 4, 16, 16);
+            if (GUI.Button(closeRect, closeContent))
+            {
+                ShowParts = false;
+                return;
+            }
+
             // Begin the ScrollView
-            scrollViewVector = GUI.BeginScrollView(EPLwindowPos, scrollViewVector, new Rect(0, 0, EWINDOW_WIDTH + 100, 1700));
+            GUILayout.BeginVertical();            
+            GUIscrollViewVector = GUILayout.BeginScrollView(GUIscrollViewVector, false, false);
             // Put something inside the ScrollView
+            
             GUILayout.Label("Power Production Parts", PartListStyle);
+                       
             if (vesselProdPartsList.Count == 0)
                 GUILayout.Label("No Power Producing Parts", PartListPartStyle);
             foreach (var entry in vesselProdPartsList)
@@ -3008,8 +3073,49 @@ namespace AY
             {
                 GUILayout.Label(entry.Value.PrtName + " " + entry.Value.PrtPower, PartListPartStyle);
             }
+            
             // End the ScrollView
-            GUI.EndScrollView();
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+            GUILayout.Space(14);
+
+            GUIContent resizeContent = new GUIContent("R", "Resize Window");
+            Rect resizeRect = new Rect(EPLwindowPos.width - 17, EPLwindowPos.height - 17, 16, 16);
+            GUI.Label(resizeRect, resizeContent, resizeStyle);
+            HandleResizeEvents(resizeRect);
+
+            GUI.DragWindow();
+        }
+
+        private void HandleResizeEvents(Rect resizeRect)
+        {
+            var theEvent = Event.current;
+            if (theEvent != null)
+            {
+                if (!mouseDown)
+                {
+                    if (theEvent.type == EventType.MouseDown && theEvent.button == 0 && resizeRect.Contains(theEvent.mousePosition))
+                    {
+                        mouseDown = true;
+                        theEvent.Use();
+                    }
+                }
+                else if (theEvent.type != EventType.Layout)
+                {
+                    if (Input.GetMouseButton(0))
+                    {
+                        // Flip the mouse Y so that 0 is at the top
+                        float mouseY = Screen.height - Input.mousePosition.y;
+
+                        EPLwindowPos.width = Mathf.Clamp(Input.mousePosition.x - EPLwindowPos.x + (resizeRect.width / 2), 50, Screen.width - EPLwindowPos.x);
+                        EPLwindowPos.height = Mathf.Clamp(mouseY - EPLwindowPos.y + (resizeRect.height / 2), 50, Screen.height - EPLwindowPos.y);                      
+                    }
+                    else
+                    {
+                        mouseDown = false;
+                    }
+                }
+            }
         }
 
         private void stopAndWarn(int id)
@@ -3148,6 +3254,8 @@ namespace AY
             FwindowPos.y = AYsettings.FwindowPosY;
             EwindowPos.x = AYsettings.EwindowPosX;
             EwindowPos.y = AYsettings.EwindowPosY;
+            EPLwindowPos.x = AYsettings.EPLwindowPosX;
+            EPLwindowPos.y = AYsettings.EPLwindowPosY;
             this.Log_Debug("AYController Load end");
         }
 
@@ -3158,6 +3266,8 @@ namespace AY
             AYsettings.FwindowPosY = FwindowPos.y;
             AYsettings.EwindowPosX = EwindowPos.x;
             AYsettings.EwindowPosY = EwindowPos.y;
+            AYsettings.EPLwindowPosX = EPLwindowPos.x;
+            AYsettings.EPLwindowPosY = EPLwindowPos.y;
             this.Log_Debug("AYController Save end");
         }
 
