@@ -172,6 +172,7 @@ namespace AY
         public bool hasRCS = false;
         public float currentRCSThrust = 0.0f;
         public float currentPoweredRCSDrain = 0.0f;
+        private double sasPwrDrain = 0;
         public static Guid currentvesselid;
         public int totalClimateParts = 0;
         public int maxCrew = 0;
@@ -481,6 +482,7 @@ namespace AY
                     totalClimateParts = 0;
                     totalPowerDrain = 0;
                     totalPowerProduced = 0;
+                    sasPwrDrain = 0.0f;
                     hasRCS = false;
                     currentRCSThrust = 0.0f;
                     currentPoweredRCSDrain = 0.0f;
@@ -848,6 +850,7 @@ namespace AY
                                         {
                                             totalPowerDrain += r.currentAmount;
                                             tmpPower += (float)r.currentAmount;
+                                            sasPwrDrain += r.currentAmount;
                                         }
                                     }
                                 }
@@ -2445,7 +2448,7 @@ namespace AY
             Vessel cv = FlightGlobals.ActiveVessel;
             switch (subsystem)
             {
-                case Subsystem.SAS:
+                case Subsystem.SAS:                    
                     return cv.ActionGroups[KSPActionGroup.SAS];
 
                 case Subsystem.RCS:
@@ -2509,6 +2512,11 @@ namespace AY
 
         public double subsystemCurrentDrain(Subsystem subsystem)
         {
+            if (subsystem == Subsystem.SAS)
+            {
+                if (sasPwrDrain > 0) return subsystemActiveDrain(subsystem) + sasPwrDrain;
+            }
+
             if (!subsystemActive(subsystem) || !managerIsActive || !hasPower)
                 return 0.0;
 

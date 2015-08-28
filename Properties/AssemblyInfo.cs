@@ -28,7 +28,7 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0")] 
-[assembly: KSPAssembly("AmpYear", 1, 0)] 
+[assembly: AssemblyVersion("1.0.2")] 
+[assembly: KSPAssembly("AmpYear", 1, 2)]  
 [assembly: KSPAssemblyDependency("KKInterfaces", 2, 1)]
 [assembly: KSPAssemblyDependency("AYInterfaces", 2, 1)]
