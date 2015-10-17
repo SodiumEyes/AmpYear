@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace AY
 {
-    public class ModuleAmpYearPoweredRCS : ModuleRCS
+    public class ModuleAmpYearPoweredRCS : ModuleRCS, IResourceConsumer
     {
         //private Propellant definition;
         private string ElecChge = "ElectricCharge";
@@ -48,29 +48,35 @@ namespace AY
         [KSPField(isPersistant = true, guiName = "Power Ratio", guiUnits = "U/s", guiFormat = "F3", guiActive = true)]
         public float powerRatio = 0f;
 
+        //[KSPField(guiActive = true)]
+        private float inputAngularX;
 
         //[KSPField(guiActive = true)]
-        float inputAngularX;
+        private float inputAngularY;
+
         //[KSPField(guiActive = true)]
-        float inputAngularY;
+        private float inputAngularZ;
+
         //[KSPField(guiActive = true)]
-        float inputAngularZ;
+        private float inputLinearX;
+
         //[KSPField(guiActive = true)]
-        float inputLinearX;
+        private float inputLinearY;
+
         //[KSPField(guiActive = true)]
-        float inputLinearY;
-        //[KSPField(guiActive = true)]
-        float inputLinearZ;
+        private float inputLinearZ;
 
         private Vector3 inputLinear;
         private Vector3 inputAngular;
         private bool precision;
+
         /// <summary>
         /// Stock KSP lever compensation in precision mode (instead of just reduced thrsut
         /// Defaults to false (reduce thrust uniformly
         /// </summary>
         [KSPField]
         public bool useLever = false;
+
         /// <summary>
         /// Always use the full thrust of the thruster, don't decrease it when off-alignment
         /// </summary>
@@ -93,13 +99,16 @@ namespace AY
         /// If control actuation < this, ignore.
         /// </summary>
         [KSPField]
-        float EPSILON = 0.05f; // 5% control actuation
+        private float EPSILON = 0.05f; // 5% control actuation
+
         //[KSPField(guiActive = true)]
         public float curThrust = 0f;
+
         /// <summary>
         /// Fuel flow in tonnes/sec
         /// </summary>
         public double fuelFlow = 0f;
+
         private double exhaustVel = 0d;
 
         public double flowMult = 1d;
@@ -145,13 +154,13 @@ namespace AY
             Log_Debug("AYIONRCS", "#of transforms=" + this.thrusterTransforms.Count);
             foreach (Transform t in this.thrusterTransforms)
             {
-                Log_Debug("AYIONRCS", "Transform pos=" + t.localPosition +",rot=" + t.localRotation);
+                Log_Debug("AYIONRCS", "Transform pos=" + t.localPosition + ",rot=" + t.localRotation);
             }
 
             foreach (Propellant propellant in propellants)
             {
                 Log_Debug("AYIONRCS", "Propellant=" + propellant.name + ",ratio=" + propellant.ratio + ",flowmode=" + propellant.GetFlowMode().ToString());
-                
+
                 if (propellant.name == ElecChge)
                 {
                     powerRatio = propellant.ratio;
@@ -186,9 +195,9 @@ namespace AY
             if (this.part.vessel == null)
                 return;
 
-            inputLinear = vessel.ReferenceTransform.rotation * new Vector3(vessel.ctrlState.X , vessel.ctrlState.Z , vessel.ctrlState.Y );
-            inputAngular = vessel.ReferenceTransform.rotation * new Vector3(vessel.ctrlState.pitch , vessel.ctrlState.roll , vessel.ctrlState.yaw );
-            
+            inputLinear = vessel.ReferenceTransform.rotation * new Vector3(vessel.ctrlState.X, vessel.ctrlState.Z, vessel.ctrlState.Y);
+            inputAngular = vessel.ReferenceTransform.rotation * new Vector3(vessel.ctrlState.pitch, vessel.ctrlState.roll, vessel.ctrlState.yaw);
+
             // Epsilon checks (min values)
             float EPSILON2 = EPSILON * EPSILON;
             inputAngularX = inputAngular.x;
@@ -228,7 +237,6 @@ namespace AY
             int fxC = thrusterFX.Count;
             if (TimeWarp.CurrentRate > 1.0f && TimeWarp.WarpMode == TimeWarp.Modes.HIGH)
             {
-
                 for (int i = 0; i < fxC; ++i)
                 {
                     FXGroup fx = thrusterFX[i];
@@ -250,15 +258,12 @@ namespace AY
 
             if (rcsEnabled && !part.ShieldedFromAirstream)
             {
-                
-
                 if (vessel.ActionGroups[KSPActionGroup.RCS] != rcs_active)
                 {
                     rcs_active = vessel.ActionGroups[KSPActionGroup.RCS];
                 }
                 if (vessel.ActionGroups[KSPActionGroup.RCS] && (inputAngular != Vector3.zero || inputLinear != Vector3.zero))
                 {
-
                     // rb_velocity should include timewarp, right?
                     Vector3 CoM = vessel.CoM + vessel.rb_velocity * Time.fixedDeltaTime;
 
@@ -276,7 +281,7 @@ namespace AY
                             //if (useZaxis)
                             //    thruster = xform.forward;
                             //else
-                                thruster = xform.up;
+                            thruster = xform.up;
                             float thrust = Mathf.Max(Vector3.Dot(thruster, torque), 0f);
                             thrust += Mathf.Max(Vector3.Dot(thruster, inputLinear.normalized), 0f);
                             //Log_Debug("IONRCS", "thrust=" + thrust);
@@ -352,7 +357,6 @@ namespace AY
                     fx.Power = 0f;
                 }
             }
-
         }
 
         private void UpdatePropellantStatus()
@@ -365,7 +369,6 @@ namespace AY
                     propellants[i].UpdateConnectedResources(part);
                     //Log_Debug("IONRCS", "prop=" + propellants[i].name + ",isdeprived=" + propellants[i].isDeprived);
                 }
-                    
             }
         }
 
@@ -376,14 +379,14 @@ namespace AY
             double propAvailable = 1.0d;
 
             //if (!CheatOptions.InfiniteRCS)
-                propAvailable = RequestPropellant(massFlow * TimeWarp.fixedDeltaTime);
+            propAvailable = RequestPropellant(massFlow * TimeWarp.fixedDeltaTime);
             //Log_Debug("IONRCS", "propAvailable=" + propAvailable);
             totalForce = (float)(massFlow * exhaustVel * propAvailable);
 
             success = (propAvailable > 0f); // had some fuel
             return totalForce;
         }
-                                     
+
         public void Log_Debug(string context, string message)
         {
             Debug.Log(context + "[][" + Time.time.ToString("0.00") + "]: " + message);

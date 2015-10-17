@@ -1,0 +1,41 @@
+﻿V1.0.4.0 Added Engineers Report in Editor to Provide Information report if Vessel ElectricCharge usage is higher than production.
+    Re-added Dummy PartModule to all command pods so that they are considered ReservePower consumers by the Engineers report in the Editor, this will stop the Engineers report reporting that there is no consumer of ReservePower 
+	on each vessel.	
+	Power Turn feature - Now applies power turn power to ALL reaction wheels on the vessel and consumes additional power turn EC for ALL reaction wheels whilst power turn is active.
+	Fixed compatibility with NearFuture Technologies reactors to correctly show power production from reactors.
+	Fixed compatibility with NearFuture Solar arrays to correctly show the actual power output in flight.
+	Fixed compatibility with Aviation Lights mod to correctly show power usage of lights.
+	Fixed compatibility with SCANSat to show correct power usage when scanners are active only.
+	Fixed compatibility with TAC LS - Command pods and converter modules now correctly show power usage.
+	Under the covers internal code changes to reflect other mods for EC usage (going forward AmpYear does not need to be updated every time a mod that it tracks for EC is updated). It should also now support backwards and forwards compatibility
+	of all supported mods (unless the authors of those mods made drastic changes, which can still occur, but less frequently than before).
+V1.0.3.0 Updated to support NFE V0.5.3 and RemoteTech 1.6.8
+V1.0.2.0 Exclude MechJeb parts from having reserve power by default.    
+    Changed SAS usage to include any reaction wheel usage that is not via standard SAS (eg. Mechjeb). 
+    Added REPOSoftTech Agency config.  
+    Updated to support the following versions of other mods to report their EC usage correctly:   
+        AntennaRange 1.10.1, KAS 0.5.4, NFE 0.5.1, NFS 0.5.21, RemoteTech 1.6.7, SCANSat 14.1, TeleMachus 1.4.30        
+V1.0.1.0 GUI Fixes and Enhancements  
+    Fixed Toolbar/AppLauncher Icon issue.  
+     GUI Improvements.  
+     Added Part List screen to the Flight GUI. So you can now see EC  consumption and production per part in Flight (as well as SPH/VAB as you  could before).  
+     Support latest SCANSat V14.0. if you use SCANSat you will have to update it to this version for it to work with AmpYear.  
+V1.00 Time for full release.  Version bumped to 1.0.0.0
+    Fixes to new 4-way ION RCS, it now works. Fixed attach points for 4-way ION RCS. Fixed texture for 4-way ION RCS.  
+    Updated to latest versions of NFE/NFS, KAS, AntennaRange, RemoteTech, ScanSat, Telemachus.  
+    Support for KSP 1.0.4  
+V0.18 Support for KSP 1.0.3
+V0.17 Added NEW 4-way ION RCS Block.  
+    Fixed NullRef errors when active vessel is destroyed.
+    Updated to latest version of all supported mods.  
+V0.16a Fix ZIP File binary. Had V0.15 Binary in the zip.  
+V0.16 bug fix in editor causing log spam. added KSP-AVC support.  converted all textures to DDS format. Updated to support RemoteTech  v1.6.4. Updated to support ScanSAT v12  
+V0.15 Support KSP 1.0.2. Fixed log spam if incorrect version of TACLS is  installed. Support for: TACLS v0.11.1.20, AntennaRange V1.8, Near  Future Solar V0.5.0  
+V0.14 Support for KSP V1.0.0. Removed support for SCANSat and Regolith  (now covered by stock). Basic support for new resources parts.  Deprecated z500 reserve power battery. Balanced parts to new Tech Tree.  
+V0.13a Fixed Blizzy Toolbar and Stock AppLauncher, recompiled for  correct integration with KabinKraziness. Merged install directories for  AmpYear and KabinKraziness to /gamedata/REPOSoftTech/ folder.  
+V0.13 Removed KabinKraziness. Fixed high warp rates, re-implemented auto-hibernate at high warp.   
+V0.12e Changed default setting for the Power Manager to be ON  
+V0.12d Fixed Vessel switching bug (save settings correctly). Kraziness  balancing. Removed Auto-Hibernate and added timewarp/low power warning  pop-up. Updated to latest versions of other mods.  
+V0.12c Fixed duplicated battery parts in distribution zip file.  
+v0.12b Merged Heater and Cooler into one Climate Control Function. More tweaks to craziness calculations.  
+v0.12a fixed loading error. GUI improvements. Added distance from Kerbin to Craziness calc.

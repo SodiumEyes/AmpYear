@@ -51,7 +51,7 @@ namespace AY
         {
             get
             {
-                _KKAvailable = GetKK() != null;                
+                _KKAvailable = GetKK() != null;
                 return (bool)_KKAvailable;
             }
         }

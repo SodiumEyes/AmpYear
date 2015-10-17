@@ -120,15 +120,15 @@ namespace AY
                 }
             }
         }
-        
+
         public void Awake()
         {
             AYsettings = AmpYear.Instance.AYsettings;
             AYgameSettings = AmpYear.Instance.AYgameSettings;
-            
+
             this.Log_Debug("AYSCController Awake complete");
         }
-        
+
         private void OnGUIAppLauncherReady()
         {
             this.Log_Debug("OnGUIAppLauncherReady");
@@ -201,7 +201,6 @@ namespace AY
                 }
                 else
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
-
             }
 
             this.Log_Debug("AYSCController Awake complete");
