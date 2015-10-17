@@ -25,47 +25,18 @@
  *
  */
 
+using System.Collections.Generic;
+
 namespace AY
 {
-    public class AYCrewPart : PartModule
+    public class AYCrewPart : PartModule, IResourceConsumer
     {
-        // New context menu info
-        [KSPField(isPersistant = true, guiName = "Cabin Temperature", guiUnits = "C", guiFormat = "F1", guiActive = true)]
-        public float CabinTemp = 0f;
-
-        [KSPField(isPersistant = true, guiName = "Outside Temperature", guiUnits = "C", guiFormat = "F1", guiActive = true)]
-        public float ambient = 0f;
-
-        [KSPField(isPersistant = true, guiName = "KabinKraziness", guiUnits = "%", guiFormat = "N", guiActive = true)]
-        public float CabinCraziness = 0f;
-
-        public override void OnStart(PartModule.StartState state)
+        public List<PartResourceDefinition> GetConsumedResources()
         {
-            base.OnStart(state);
-            if (CabinTemp == 0f)
-                CabinTemp = base.part.temperature;
-
-            this.Log_Debug("AYCrewPart Onstart " + base.part.name + " " + base.part.flightID + " CabinTemp = " + CabinTemp);
-        }
-
-        public override void OnUpdate()
-        {
-            //Update the Cabin Temperature slowly towards the outside ambient temperature.
-            ambient = vessel.flightIntegrator.getExternalTemperature();
-            float CabinTmpRngLow = ambient - 0.5f;
-            float CabinTmpRngHgh = ambient + 0.5f;
-            if (CabinTemp > CabinTmpRngHgh || CabinTemp < CabinTmpRngLow)
-            {
-                if (CabinTemp < ambient)
-                {
-                    CabinTemp += TimeWarp.deltaTime * 0.05f;
-                }
-                else
-                {
-                    CabinTemp -= TimeWarp.deltaTime * 0.05f;
-                }
-            }
-            base.OnUpdate();
+            List<PartResourceDefinition> resources = new List<PartResourceDefinition>();
+            PartResourceDefinition reservepower = PartResourceLibrary.Instance.GetDefinition("ReservePower");
+            resources.Add(reservepower);
+            return resources;
         }
     }
 }

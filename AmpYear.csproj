@@ -37,9 +37,6 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AntennaRange">
-      <HintPath>.\AntennaRange.dll</HintPath>
-    </Reference>
     <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Assembly-CSharp.dll</HintPath>
@@ -52,29 +49,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>AYInterfaces\bin\Debug\AYInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="KAS, Version=1.0.5325.39758, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\KAS.dll</HintPath>
-    </Reference>
     <Reference Include="KKInterfaces, Version=2.0.5596.17006, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\KabinKraziness\KKInterfaces\bin\Debug\KKInterfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="NearFutureElectrical, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\NearFutureElectrical.dll</HintPath>
-    </Reference>
-    <Reference Include="NearFutureSolar, Version=0.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\NearFutureSolar.dll</HintPath>
-    </Reference>
-    <Reference Include="RemoteTech, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\RemoteTech.dll</HintPath>
-    </Reference>
-    <Reference Include="SCANsat, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\SCANsat.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -82,29 +59,30 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TacLifeSupport, Version=0.10.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\TacLifeSupport.dll</HintPath>
-    </Reference>
-    <Reference Include="Telemachus">
-      <HintPath>.\Telemachus.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ALWrapper.cs" />
     <Compile Include="AmpYear.cs" />
     <Compile Include="AYEnums.cs" />
     <Compile Include="AYGameSettings.cs" />
     <Compile Include="AYSController.cs" />
+    <Compile Include="EngineerReport.cs" />
+    <Compile Include="KASWrapper.cs" />
     <Compile Include="KKClient.cs" />
     <Compile Include="ModuleAmpYearPPTRCS.cs" />
+    <Compile Include="NFSWrapper.cs" />
+    <Compile Include="RTWrapper.cs" />
+    <Compile Include="ScanSatWrapper.cs" />
+    <Compile Include="TACLSWrapper.cs" />
+    <Compile Include="TeleWrapper.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="VesselInfo.cs" />
     <None Include="AmpYear.version" />
-    <None Include="AYCrewPart.cs" />
+    <Compile Include="AYCrewPart.cs" />
     <Compile Include="AYSettings.cs" />
     <Compile Include="AYController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -112,6 +90,7 @@
     <Compile Include="ModuleAmpYearPoweredRCS.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ChangeLog.txt" />
     <Content Include="ksp_dir.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -120,8 +99,13 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
-
 xcopy "$(TargetPath)" "$(SolutionDir)GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+cd "$(TargetDir)"
+"C:\Program Files (x86)\mono\bin\mono.exe" "C:\Program Files (x86)\mono\lib\mono\4.5\pdb2mdb.exe" "$(TargetFileName)"
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
 
 where /q "C:\7za\:7za.exe"
 if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
