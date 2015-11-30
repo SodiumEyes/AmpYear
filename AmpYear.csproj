@@ -111,8 +111,8 @@ where /q "C:\7za\:7za.exe"
 if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
 
 if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectName).zip"   
-c:\7za\7za a -tzip "$(SolutionDir)..\$(ProjectName).zip" "$(SolutionDir)\GameData" 
-c:\7za\7za d -r "$(SolutionDir)..\$(ProjectName).zip" "*.ddsified" "*.xcf" "*.blend" "thumbs.db"
+c:\7za\7za a -tzip "$(SolutionDir)$(ProjectName).zip" "$(SolutionDir)\GameData" 
+c:\7za\7za d -r "$(SolutionDir)$(ProjectName).zip" "*.ddsified" "*.xcf" "*.blend" "thumbs.db"
 xcopy /E /Y "$(SolutionDir)GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,4 +1,8 @@
-﻿V1.0.4.0 Added Engineers Report in Editor to Provide Information report if Vessel ElectricCharge usage is higher than production.
+﻿V1.1.0.0 Added toggle button next to each part in the PartsList that toggles whether that part is used in EC consumption/production calculations.
+    Added Dark-Side Calculations GUI. This allows you to select a Celestial Body, Input a Target Orbit height and AmpYear will calculate the dark-side period in Hours:Mins:Secs and also show you the amount of EC you would
+	require to run all vessel parts that consume EC for that period (it Does NOT include any Power Production parts in this calculation).
+V1.0.5.0 Updated for KSP 1.0.5.
+V1.0.4.0 Added Engineers Report in Editor to Provide Information report if Vessel ElectricCharge usage is higher than production.
     Re-added Dummy PartModule to all command pods so that they are considered ReservePower consumers by the Engineers report in the Editor, this will stop the Engineers report reporting that there is no consumer of ReservePower 
 	on each vessel.	
 	Power Turn feature - Now applies power turn power to ALL reaction wheels on the vessel and consumes additional power turn EC for ALL reaction wheels whilst power turn is active.
