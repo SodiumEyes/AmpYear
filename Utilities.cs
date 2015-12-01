@@ -34,21 +34,41 @@ namespace AY
     public static class Utilities
     {
         //Set the Game State mode indicator, 0 = inflight, 1 = editor, 2 on EVA or F2
+        public static bool GameModeisFlight = false;
+        public static bool GameModeisEditor = false;
+        public static bool GameModeisEVA = false;
+
         public static GameState SetModeFlag()
         {
             //Set the mode flag, 0 = inflight, 1 = editor, 2 on EVA or F2
             if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
             {
                 if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal, do nothing
+                {
+                    GameModeisEVA = true;
+                    GameModeisFlight = GameModeisEditor = false;
                     return GameState.EVA;
+                }                    
                 else
+                {
+                    GameModeisFlight = true;
+                    GameModeisEVA = GameModeisEditor = false;
                     return GameState.FLIGHT;
+                }                    
             }
             else if (EditorLogic.fetch != null) // Check if in editor
+            {
+                GameModeisEditor = true;
+                GameModeisFlight = GameModeisEVA = false;
                 return GameState.EDITOR;
+            }                
             else   // Not in flight, in editor or F2 pressed unset the mode and return
+            {
+                GameModeisEVA = true;
+                GameModeisFlight = GameModeisEditor = false;
                 return GameState.EVA;
-        }
+            }                
+        }        
 
         //Geometry and space
 
