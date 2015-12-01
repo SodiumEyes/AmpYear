@@ -185,6 +185,7 @@ namespace AY
 
         //GUI Properties
         private IButton button1;
+
         private ApplicationLauncherButton stockToolbarButton = null; // Stock Toolbar Button
         private readonly double[] RESERVE_TRANSFER_INCREMENTS = new double[3] { 0.25, 0.1, 0.01 };
         private bool[] guiSectionEnableFlag = new bool[Enum.GetValues(typeof(GUISection)).Length];
@@ -210,9 +211,9 @@ namespace AY
         private double lastUpdate;
         private float powerUpTime = 0.0f;
         public bool EmgcyShutActive = false;
-        private static bool ShowWarn = true;
-        private static bool WarnWinOn = false;
-        private static bool ShowDark = false;
+        private static bool CheckLowECWarning = true;
+        private static bool LowECWarningWindowDisplay = false;
+        private static bool ShowDarkSideWindow = false;
         private CelestialBody bodyTarget;
         private int DarkTargetSelection = -1;
         private int selectedDarkTarget = -1;
@@ -226,6 +227,7 @@ namespace AY
 
         //Constants
         public const double MANAGER_ACTIVE_DRAIN = 1.0 / 60.0;
+
         public const double RCS_DRAIN = 1.0 / 60.0;
         public const float POWER_UP_DELAY = 10f;
         public const double SAS_BASE_DRAIN = 1.0 / 60.0;
@@ -1500,11 +1502,11 @@ namespace AY
                     }
                     else //not enough main power try reserve power
                     {
-                        if (TimeWarp.CurrentRateIndex > 3)
-                        {
-                            TimeWarp.SetRate(0, false);
-                            ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Not Enough Power to run TimeWarp - Deactivated.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-                        }
+                        //if (TimeWarp.CurrentRateIndex > 3)
+                        //{
+                        //    TimeWarp.SetRate(0, false);
+                        //    ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Not Enough Power to run TimeWarp - Deactivated.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        //}
                         hasPower = totalElectricCharge >= minimum_sufficient_charge; //set hasPower
                         this.Log_Debug("drawing reserve power");
                         if (totalReservePower > minimum_sufficient_charge) // if reserve power available > minimum charge required
@@ -2614,7 +2616,7 @@ namespace AY
                             GUILayout.ExpandHeight(true), GUILayout.MinWidth(50), GUILayout.MinHeight(100));
                     }
                     CheckPowerLowWarning();
-                    if (WarnWinOn)
+                    if (LowECWarningWindowDisplay)
                     {
                         WarnWinPos = GUILayout.Window(WwindowID, WarnWinPos, stopAndWarn, "WARNING!", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                     }
@@ -2634,7 +2636,7 @@ namespace AY
                 }
             }
 
-            if (ShowDark)
+            if (ShowDarkSideWindow)
             {
                 GUI.skin = HighLogic.Skin;
                 if (!Utilities.WindowVisibile(DwindowPos)) Utilities.MakeWindowVisible(DwindowPos);
@@ -2645,20 +2647,20 @@ namespace AY
         private void CheckPowerLowWarning()
         {
             double chrgpct = ((totalElectricCharge / totalElectricChargeCapacity) * 100);
-            if (ShowWarn && !WarnWinOn) // If Warning is on check if it's triggered
+            if (CheckLowECWarning && !LowECWarningWindowDisplay) // If Warning is on check if it's triggered
             {
                 if ((TimeWarp.CurrentRate > 0) && (chrgpct < AYsettings.POWER_LOW_WARNING_AMT)) // We have hit the warning stop timewarp and show warning
                 {
                     this.Log_Debug("cutting timewarp power warning limit reached");
                     TimeWarp.SetRate(0, false);
-                    ShowWarn = false;
-                    WarnWinOn = true;
+                    CheckLowECWarning = false;
+                    LowECWarningWindowDisplay = true;
                 }
             }
-            if ((chrgpct > AYsettings.POWER_LOW_WARNING_AMT) && !ShowWarn) // Reset the Warning indicator
+            if ((chrgpct > AYsettings.POWER_LOW_WARNING_AMT) && !CheckLowECWarning) // Reset the Warning indicator
             {
                 this.Log_Debug("Reset power warning");
-                ShowWarn = true;
+                CheckLowECWarning = true;
             }
         }
 
@@ -2762,6 +2764,20 @@ namespace AY
                                 GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.000"), statusStyle);
                             else
                                 GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.000"), warningStyle);
+
+                            //Time Remaining in Main batteries
+                            double time_remain_mains = (totalElectricCharge / totalPowerDrain);
+                            if (time_remain_mains < 30)
+                                GUILayout.Label("Mains Time: " + KSPUtil.PrintTimeCompact((int)time_remain_mains, false), warningStyle);
+                            else
+                                GUILayout.Label("Mains Time: " + KSPUtil.PrintTimeCompact((int)time_remain_mains, false), statusStyle);
+
+                            //Time Remaining in Reserver Batteries
+                            double time_remain_reserve = (totalReservePower / totalPowerDrain);
+                            if (time_remain_reserve < 30)
+                                GUILayout.Label("Reserve Time: " + KSPUtil.PrintTimeCompact((int)time_remain_reserve, false), warningStyle);
+                            else
+                                GUILayout.Label("Reserve Time: " + KSPUtil.PrintTimeCompact((int)time_remain_reserve, false), statusStyle);
                         }
                     }
                     else
@@ -2814,7 +2830,7 @@ namespace AY
                     ShowParts = GUILayout.Toggle(ShowParts, "ShowParts", subsystemButtonStyle, subsystemButtonOptions);
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
-                    ShowDark = GUILayout.Toggle(ShowDark, "Dark-Side Calcs", subsystemButtonStyle, subsystemButtonOptions);
+                    ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, "Dark-Side Calcs", subsystemButtonStyle, subsystemButtonOptions);
                     GUILayout.EndHorizontal();
                 }
 
@@ -2951,7 +2967,7 @@ namespace AY
                 consumptionLabel(managerActiveDrain, true);
             GUILayout.EndHorizontal();
             ShowParts = GUILayout.Toggle(ShowParts, "ShowParts", subsystemButtonStyle, subsystemButtonOptions);
-            ShowDark = GUILayout.Toggle(ShowDark, "Dark-Side Calcs", subsystemButtonStyle, subsystemButtonOptions);
+            ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, "Dark-Side Calcs", subsystemButtonStyle, subsystemButtonOptions);
             //Power Capacity
             GUILayout.Label("Power Capacity: " + totalElectricChargeCapacity.ToString("0.00"), statusStyle);
             if (totalPowerDrain > totalPowerProduced)
@@ -2962,6 +2978,20 @@ namespace AY
                 GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.00"), statusStyle);
             else
                 GUILayout.Label("Power Prod : " + totalPowerProduced.ToString("0.00"), warningStyle);
+
+            //Time Remaining in Main batteries
+            double time_remain_mains = (totalElectricCharge / totalPowerDrain);
+            if (time_remain_mains < 30)
+                GUILayout.Label("Mains Time: " + KSPUtil.PrintTimeCompact((int)time_remain_mains, false), warningStyle);
+            else
+                GUILayout.Label("Mains Time: " + KSPUtil.PrintTimeCompact((int)time_remain_mains, false), statusStyle);
+
+            //Time Remaining in Reserver Batteries
+            double time_remain_reserve = (totalReservePower / totalPowerDrain);
+            if (time_remain_reserve < 30)
+                GUILayout.Label("Reserve Time: " + KSPUtil.PrintTimeCompact((int)time_remain_reserve, false), warningStyle);
+            else
+                GUILayout.Label("Reserve Time: " + KSPUtil.PrintTimeCompact((int)time_remain_reserve, false), statusStyle);
 
             //Reserve
             GUILayout.Label("Reserve Power", sectionTitleStyle);
@@ -3041,7 +3071,7 @@ namespace AY
             Rect closeRect = new Rect(DwindowPos.width - 17, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent))
             {
-                ShowDark = false;
+                ShowDarkSideWindow = false;
                 return;
             }
 
@@ -3085,7 +3115,7 @@ namespace AY
             }
 
             GUILayout.Space(10);
-            ShowDark = !GUILayout.Button("Close");
+            ShowDarkSideWindow = !GUILayout.Button("Close");
 
             GUILayout.EndVertical();
             GUI.DragWindow();
@@ -3140,7 +3170,7 @@ namespace AY
             if (GUILayout.Button("OK"))
             {
                 this.Log_Debug("ElectricCharge Warning Threshold Triggered Alert Msg");
-                WarnWinOn = false;
+                LowECWarningWindowDisplay = false;
             }
         }
 
