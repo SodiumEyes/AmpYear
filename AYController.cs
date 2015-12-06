@@ -1095,39 +1095,63 @@ namespace AY
                             if (module.moduleName == "ModuleScienceLab")
                             {
                                 double tmpPwr = 0;
+                                PrtActive = false;
                                 if (Utilities.GameModeisFlight)
                                 {
-                                    ModuleScienceLab tmpLab = (ModuleScienceLab)module;
-
+                                    ModuleScienceLab tmpLab = (ModuleScienceLab)module;                                   
                                     foreach (ModuleResource r in tmpLab.processResources)
                                     {
-                                        if (r.name == MAIN_POWER_NAME && tmpLab.IsOperational())
+                                        if (r.name == MAIN_POWER_NAME && tmpLab.IsOperational() && r.currentAmount > 0.0)
                                         {
                                             PrtActive = true;
-
-                                            tmpPwr += r.rate;
+                                            tmpPwr += r.currentRequest;
                                         }
                                     }
                                 }
                                 if (Utilities.GameModeisEditor)
                                 {
                                     ModuleScienceLab tmpLab = (ModuleScienceLab)module;
-
                                     PrtActive = true;
                                     foreach (ModuleResource r in tmpLab.processResources)
                                     {
                                         if (r.name == MAIN_POWER_NAME)
-                                        {
-                                            tmpPwr += r.rate;
+                                        {                                            
+                                            tmpPwr += r.amount;
                                         }
-                                    }
-
-                                    PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)tmpPwr, PrtActive);
-                                    if (Utilities.GameModeisFlight)
-                                        addPart(current_part.flightID, PartAdd, false);
-                                    else
-                                        addPart(current_part.craftID, PartAdd, false);
+                                    }                                    
                                 }
+                                PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)tmpPwr, PrtActive);
+                                if (Utilities.GameModeisFlight)
+                                    addPart(current_part.flightID, PartAdd, false);
+                                else
+                                    addPart(current_part.craftID, PartAdd, false);
+                            }
+
+                            if (module.moduleName == "ModuleScienceConverter")
+                            {
+                                double tmpPwr = 0;
+                                PrtActive = false;
+                                if (Utilities.GameModeisFlight)
+                                {
+                                    ModuleScienceConverter tmpcnv = (ModuleScienceConverter)module;
+                                    BaseConverter tmpbsecnv = (BaseConverter)module;
+                                    if (tmpbsecnv.IsActivated)
+                                    {
+                                        PrtActive = true;
+                                        tmpPwr = tmpcnv.powerRequirement;
+                                    }                                    
+                                }
+                                if (Utilities.GameModeisEditor)
+                                {
+                                    ModuleScienceConverter tmpcnv = (ModuleScienceConverter)module;
+                                    PrtActive = true;
+                                    tmpPwr = tmpcnv.powerRequirement;                                                                           
+                                }
+                                PwrPartList PartAdd = new PwrPartList(PrtName, PrtPower, (float)tmpPwr, PrtActive);
+                                if (Utilities.GameModeisFlight)
+                                    addPart(current_part.flightID, PartAdd, false);
+                                else
+                                    addPart(current_part.craftID, PartAdd, false);
                             }
 
                             if (module.moduleName == "ModuleResourceHarvester")
@@ -1182,8 +1206,7 @@ namespace AY
                                 }
                                 if (Utilities.GameModeisEditor)
                                 {
-                                    PrtActive = true;
-                                    this.Log_Debug("In VAB and editorMaxECusage is on so part active");
+                                    PrtActive = true;                                    
                                 }
 
                                 PrtPower = "";
