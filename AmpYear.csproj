@@ -65,29 +65,31 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ALWrapper.cs" />
+    <Compile Include="APIs\ALWrapper.cs" />
     <Compile Include="AmpYear.cs" />
     <Compile Include="AYEnums.cs" />
     <Compile Include="AYGameSettings.cs" />
     <Compile Include="AYSController.cs" />
     <Compile Include="EngineerReport.cs" />
-    <Compile Include="KASWrapper.cs" />
+    <Compile Include="APIs\KASWrapper.cs" />
     <Compile Include="KKClient.cs" />
-    <Compile Include="ModuleAmpYearPPTRCS.cs" />
-    <Compile Include="NFSWrapper.cs" />
-    <Compile Include="RTWrapper.cs" />
-    <Compile Include="ScanSatWrapper.cs" />
-    <Compile Include="TACLSWrapper.cs" />
-    <Compile Include="TeleWrapper.cs" />
+    <Compile Include="APIs\KSPIEWrapper.cs" />
+    <Compile Include="Parts\ModuleAmpYearPPTRCS.cs" />
+    <Compile Include="APIs\NFSWrapper.cs" />
+    <Compile Include="APIs\RTWrapper.cs" />
+    <Compile Include="APIs\ScanSatWrapper.cs" />
+    <Compile Include="APIs\TACLSWrapper.cs" />
+    <Compile Include="APIs\TeleWrapper.cs" />
+    <Compile Include="Textures.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="VesselInfo.cs" />
     <None Include="AmpYear.version" />
-    <Compile Include="AYCrewPart.cs" />
+    <Compile Include="Parts\AYCrewPart.cs" />
     <Compile Include="AYSettings.cs" />
     <Compile Include="AYController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ToolBarManager.cs" />
-    <Compile Include="ModuleAmpYearPoweredRCS.cs" />
+    <Compile Include="Parts\ModuleAmpYearPoweredRCS.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ChangeLog.txt" />

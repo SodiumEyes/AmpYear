@@ -44,6 +44,12 @@ namespace AY
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class LoadGUI : MonoBehaviour
     {
+        //Awake Event - when the DLL is loaded
+        public void Awake()
+        {            
+            Textures.loadIconAssets();
+            Utilities.Log("AmpYear LoadGUI", " Awake Complete");
+        }
     }
 
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
@@ -187,13 +193,13 @@ namespace AY
         /// Full Path of the executing Assembly
         /// </summary>
         internal static String _AssemblyLocation
-        { get { return System.Reflection.Assembly.GetExecutingAssembly().Location; } }
+        { get { return System.Reflection.Assembly.GetExecutingAssembly().Location.Replace("\\", "/"); } }
 
         /// <summary>
         /// Folder containing the executing Assembly
         /// </summary>
         internal static String _AssemblyFolder
-        { get { return System.IO.Path.GetDirectoryName(_AssemblyLocation); } }
+        { get { return System.IO.Path.GetDirectoryName(_AssemblyLocation).Replace("\\", "/"); } }
 
         #endregion Assembly/Class Information
     }

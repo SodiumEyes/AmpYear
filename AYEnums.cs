@@ -49,4 +49,11 @@ namespace AY
         EDITOR = 1,
         EVA = 2
     }
+
+    public enum IconAlertState
+    {
+        GREEN = 0,
+        YELLOW = 1,
+        RED = 2
+    }
 }

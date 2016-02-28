@@ -125,7 +125,6 @@ namespace AY
         {
             AYsettings = AmpYear.Instance.AYsettings;
             AYgameSettings = AmpYear.Instance.AYgameSettings;
-
             this.Log_Debug("AYSCController Awake complete");
         }
 
@@ -137,7 +136,8 @@ namespace AY
                 this.Log_Debug("Adding AppLauncherButton");
                 this.stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(onAppLaunchToggleOn, onAppLaunchToggleOff, DummyVoid,
                                           DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.SPACECENTER,
-                                          (Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
+                                          //(Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
+                                          (Texture)Textures.iconGreenOff);
             }
         }
 
@@ -147,14 +147,27 @@ namespace AY
 
         private void onAppLaunchToggleOn()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOn", false));
+            //this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOn", false));
+            this.stockToolbarButton.SetTexture((Texture)Textures.iconGreenOn);
             GuiVisible = true;
         }
 
         private void onAppLaunchToggleOff()
         {
-            this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
+            //this.stockToolbarButton.SetTexture((Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
+            this.stockToolbarButton.SetTexture((Texture)Textures.iconGreenOff);
             GuiVisible = false;
+        }
+
+        void OnGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
+        {            
+            if (this.stockToolbarButton != null)
+            {
+                ApplicationLauncherButton[] lstButtons = AmpYear.FindObjectsOfType<ApplicationLauncherButton>();
+                Utilities.Log("AmpYear", "AppLauncher: Destroying Button-Button Count:" + lstButtons.Length);
+                ApplicationLauncher.Instance.RemoveModApplication(this.stockToolbarButton);
+                this.stockToolbarButton = null;
+            }
         }
 
         public void OnDestroy()
@@ -174,6 +187,8 @@ namespace AY
                     this.stockToolbarButton = null;
                 }
             }
+            GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
+            GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
             if (GuiVisible) GuiVisible = !GuiVisible;
         }
 
@@ -181,15 +196,23 @@ namespace AY
         {
             //AYsettings = AmpYear.Instance.AYsettings;
             //AYgameSettings = AmpYear.Instance.AYgameSettings;
-
+            this.Log("AYSCController Adding onGUIAppLauncher callbacks");
             // create toolbar button
             if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
             {
                 button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
+                //button1.TexturePath = "REPOSoftTech/AmpYear/Icons/toolbarIcon";
+                button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOffTB";
                 button1.ToolTip = "AmpYear";
                 button1.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
-                button1.OnClick += (e) => GuiVisible = !GuiVisible;
+                button1.OnClick += (e) =>
+                {
+                    GuiVisible = !GuiVisible; 
+                    if (GuiVisible)
+                        button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOnTB";
+                    else
+                        button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOffTB";
+                };
             }
             else
             {
@@ -203,6 +226,7 @@ namespace AY
                     GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
             }
 
+            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
             this.Log_Debug("AYSCController Awake complete");
             this.Log_Debug("AYSController Start");
             KKPresent = KKClient.KKInstalled;
@@ -341,7 +365,7 @@ namespace AY
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box("Use Application Launcher", statusStyle, GUILayout.Width(300));
+            GUILayout.Box("Use Application Launcher Button (Requires Scene Change to take effect)", statusStyle, GUILayout.Width(300));
             InputAppL = GUILayout.Toggle(InputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 

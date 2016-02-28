@@ -1,4 +1,14 @@
-﻿V1.1.1.0 Fixed bug in reported EC usage for MobileProcessingLab and anything else that uses ModuleScienceLab partmodule. 
+﻿V1.2.0.0 Added EC Producer parts to Dark-Side Calculation window. Solar Panels are automatically excluded for power calculations while you have the Dark-Side Calculation window open. When you close the Dark-Side Calculation window Solar Panels are reset to their previous selection state (it remembers if you had them selected or not).
+    Added support for ToggleFuelCell mod, which is a tiny mod that changes the Fuel Cells from ModuleResourceConverter to it's own ModuleFuelCell (which is just a wrapped ModuleResourceConverter). When using this mod Fuel Cells are now handled.
+	Fixed bug with Alternators and updated to handle negative power alternators (ie. Atomic Age Rockets).
+	Changed PartsList to provide a break-up of parts that contain multiple modules that consume or produce EC.
+	Corrected EC usage for AmpYears own ION and PPT RCS parts in the editor.
+	Implemented colour coded Icons - Green will always appear in the SpaceCenter (will look to see if possible to change the colour based on any of your active vessels EC status in a future release).
+	It's fairly rudimentary for this version, happy to look at any feedback anyone has.
+	In flight colour will change for the active vessel from Green to Yellow to Red and back again based on EC status.
+	Default ReservePower on all Probes and Pods has been boosted from 50 to 80 units. 
+	If you have RealismOverhaul installed the default ReservePower on all Probes and Pods is now 2000 units (haven't fully tested game balance, so happy to change this based on feedback).
+V1.1.1.0 Fixed bug in reported EC usage for MobileProcessingLab and anything else that uses ModuleScienceLab partmodule. 
 V1.1.0.0 Added toggle button next to each part in the PartsList that toggles whether that part is used in EC consumption/production calculations.
     Added Dark-Side Calculations GUI. This allows you to select a Celestial Body, Input a Target Orbit height and AmpYear will calculate the dark-side period in Hours:Mins:Secs and also show you the amount of EC you would
 	require to run all vessel parts that consume EC for that period (it Does NOT include any Power Production parts in this calculation).
