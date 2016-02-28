@@ -8,57 +8,115 @@
     <ProjectGuid>{AACF3579-E4E6-48BB-B278-E7B664D06F65}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AmpYear</RootNamespace>
+    <RootNamespace>AY</RootNamespace>
     <AssemblyName>AmpYear</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>.\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="AYInterfaces, Version=2.0.5596.17031, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>AYInterfaces\bin\Debug\AYInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="KKInterfaces, Version=2.0.5596.17006, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\KabinKraziness\KKInterfaces\bin\Debug\KKInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine">
-      <HintPath>.\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AmpYearModule.cs" />
-    <Compile Include="AmpYearPart.cs" />
-    <Compile Include="AYGlobalSettings.cs" />
+    <Compile Include="APIs\ALWrapper.cs" />
+    <Compile Include="AmpYear.cs" />
+    <Compile Include="AYEnums.cs" />
+    <Compile Include="AYGameSettings.cs" />
+    <Compile Include="AYSController.cs" />
+    <Compile Include="EngineerReport.cs" />
+    <Compile Include="APIs\KASWrapper.cs" />
+    <Compile Include="KKClient.cs" />
+    <Compile Include="APIs\KSPIEWrapper.cs" />
+    <Compile Include="Parts\ModuleAmpYearPPTRCS.cs" />
+    <Compile Include="APIs\NFSWrapper.cs" />
+    <Compile Include="APIs\RTWrapper.cs" />
+    <Compile Include="APIs\ScanSatWrapper.cs" />
+    <Compile Include="APIs\TACLSWrapper.cs" />
+    <Compile Include="APIs\TeleWrapper.cs" />
+    <Compile Include="Textures.cs" />
+    <Compile Include="Utilities.cs" />
+    <Compile Include="VesselInfo.cs" />
+    <None Include="AmpYear.version" />
+    <Compile Include="Parts\AYCrewPart.cs" />
     <Compile Include="AYSettings.cs" />
-    <Compile Include="AYVesselSettings.cs" />
-    <Compile Include="FlightComputer.cs" />
-    <Compile Include="FlightComputerGUI.cs" />
-    <Compile Include="ModuleAmpYearPoweredRCS.cs" />
+    <Compile Include="AYController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RTUtils.cs" />
-    <Compile Include="StructsAndEnums.cs" />
+    <Compile Include="ToolBarManager.cs" />
+    <Compile Include="Parts\ModuleAmpYearPoweredRCS.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ChangeLog.txt" />
+    <Content Include="ksp_dir.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)ksp_dir.txt"
+xcopy "$(TargetPath)" "$(SolutionDir)GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+cd "$(TargetDir)"
+"C:\Program Files (x86)\mono\bin\mono.exe" "C:\Program Files (x86)\mono\lib\mono\4.5\pdb2mdb.exe" "$(TargetFileName)"
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+
+where /q "C:\7za\:7za.exe"
+if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
+
+if exist "$(SolutionDir)..\$(ProjectName).zip" del "$(SolutionDir)..\$(ProjectName).zip"   
+c:\7za\7za a -tzip "$(SolutionDir)$(ProjectName).zip" "$(SolutionDir)\GameData" 
+c:\7za\7za d -r "$(SolutionDir)$(ProjectName).zip" "*.ddsified" "*.xcf" "*.blend" "thumbs.db"
+xcopy /E /Y "$(SolutionDir)GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
