@@ -215,13 +215,25 @@ namespace AY
 
         // GUI & Window Methods
 
+        internal static int scaledScreenHeight = 1;
+        internal static int scaledScreenWidth = 1;
+        private static bool scaledScreenset = false;
+
+        internal static void setScaledScreen()
+        {
+            scaledScreenHeight = Mathf.RoundToInt(Screen.height / 1);
+            scaledScreenWidth = Mathf.RoundToInt(Screen.width / 1);
+            scaledScreenset = true;
+        }
+
         public static bool WindowVisibile(Rect winpos)
         {
+            if (!scaledScreenset) setScaledScreen();
             float minmargin = 20.0f; // 20 bytes margin for the window
             float xMin = minmargin - winpos.width;
-            float xMax = Screen.width - minmargin;
+            float xMax = scaledScreenWidth - minmargin;
             float yMin = minmargin - winpos.height;
-            float yMax = Screen.height - minmargin;
+            float yMax = scaledScreenHeight - minmargin;
             bool xRnge = (winpos.x > xMin) && (winpos.x < xMax);
             bool yRnge = (winpos.y > yMin) && (winpos.y < yMax);
             return xRnge && yRnge;
@@ -229,11 +241,12 @@ namespace AY
 
         public static Rect MakeWindowVisible(Rect winpos)
         {
+            if (!scaledScreenset) setScaledScreen();
             float minmargin = 20.0f; // 20 bytes margin for the window
             float xMin = minmargin - winpos.width;
-            float xMax = Screen.width - minmargin;
+            float xMax = scaledScreenWidth - minmargin;
             float yMin = minmargin - winpos.height;
-            float yMax = Screen.height - minmargin;
+            float yMax = scaledScreenHeight - minmargin;
 
             winpos.x = Mathf.Clamp(winpos.x, xMin, xMax);
             winpos.y = Mathf.Clamp(winpos.y, yMin, yMax);
