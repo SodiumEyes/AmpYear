@@ -36,20 +36,49 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using RSTUtils;
 using UnityEngine;
 
 namespace AY
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
-    public class LoadGUI : MonoBehaviour
+    public class LoadGlobals : MonoBehaviour
     {
+        public static LoadGlobals Instance;
         //Awake Event - when the DLL is loaded
         public void Awake()
-        {            
-            Textures.loadIconAssets();
-            Utilities.Log("AmpYear LoadGUI", " Awake Complete");
+        {
+            if (Instance != null)
+                return;
+            Instance = this;
+            Textures.LoadIconAssets();
+            AYVesselPartLists.InitDictionaries();
+            DontDestroyOnLoad(this);
+            Utilities.Log("AmpYear LoadGlobals Awake Complete");
         }
+
+        public void Start()
+        {
+            GameEvents.onGameSceneSwitchRequested.Add(onGameSceneSwitchRequested);
+        }
+
+        public void OnDestroy()
+        {
+            GameEvents.onGameSceneSwitchRequested.Remove(onGameSceneSwitchRequested);
+        }
+
+        private void onGameSceneSwitchRequested(GameEvents.FromToAction<GameScenes, GameScenes> data)
+        {
+            if (data.to == GameScenes.FLIGHT || data.to == GameScenes.EDITOR || data.to == GameScenes.TRACKSTATION)
+            {
+                AYVesselPartLists.ResetDictionaries();
+                Utilities.Log("AmpYear Reset Parts Dictionaries Completed");
+            }
+        }
+        
     }
 
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
@@ -57,30 +86,30 @@ namespace AY
     {
         private void Start()
         {
-            var Currentgame = HighLogic.CurrentGame;
-            Utilities.Log("AmpYear  AddScenarioModules", " ScenarioModules Start");
-            ProtoScenarioModule protoscenmod = Currentgame.scenarios.Find(s => s.moduleName == typeof(AmpYear).Name);
+            var currentgame = HighLogic.CurrentGame;
+            Utilities.Log("AmpYear  AddScenarioModules ScenarioModules Start");
+            ProtoScenarioModule protoscenmod = currentgame.scenarios.Find(s => s.moduleName == typeof(AmpYear).Name);
 
             if (protoscenmod == null)
             {
-                Utilities.Log("AmpYear AddScenarioModules", " Adding the scenario module.");
-                protoscenmod = Currentgame.AddProtoScenarioModule(typeof(AmpYear), GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR);
+                Utilities.Log("AmpYear  AddScenarioModules Adding the scenario module.");
+                protoscenmod = currentgame.AddProtoScenarioModule(typeof(AmpYear), GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR);
             }
             else
             {
-                if (!protoscenmod.targetScenes.Any(s => s == GameScenes.SPACECENTER))
+                if (protoscenmod.targetScenes.All(s => s != GameScenes.SPACECENTER))
                 {
-                    Utilities.Log("AmpYear  AddScenarioModules", " Adding the SpaceCenter scenario module.");
+                    Utilities.Log("AmpYear  AddScenarioModules Adding the SpaceCenter scenario module.");
                     protoscenmod.targetScenes.Add(GameScenes.SPACECENTER);
                 }
-                if (!protoscenmod.targetScenes.Any(s => s == GameScenes.FLIGHT))
+                if (protoscenmod.targetScenes.All(s => s != GameScenes.FLIGHT))
                 {
-                    Utilities.Log("AmpYear  AddScenarioModules", " Adding the flight scenario module.");
+                    Utilities.Log("AmpYear  AddScenarioModules Adding the flight scenario module.");
                     protoscenmod.targetScenes.Add(GameScenes.FLIGHT);
                 }
-                if (!protoscenmod.targetScenes.Any(s => s == GameScenes.EDITOR))
+                if (protoscenmod.targetScenes.All(s => s != GameScenes.EDITOR))
                 {
-                    Utilities.Log("AmpYear  AddScenarioModules", " Adding the Editor scenario module.");
+                    Utilities.Log("AmpYear  AddScenarioModules Adding the Editor scenario module.");
                     protoscenmod.targetScenes.Add(GameScenes.EDITOR);
                 }
             }
@@ -91,94 +120,104 @@ namespace AY
     {
         public static AmpYear Instance { get; private set; }
 
-        public AYGameSettings AYgameSettings { get; private set; }
+        public AYGameSettings AYgameSettings { get;  }
 
-        public AYSettings AYsettings { get; private set; }
+        public AYSettings AYsettings { get;  }
 
-        private readonly string globalConfigFilename;
+        private readonly string _globalConfigFilename;
 
         //private readonly string FilePath;
-        private ConfigNode globalNode = new ConfigNode();
+        private ConfigNode _globalNode = new ConfigNode();
 
-        private readonly List<Component> children = new List<Component>();
+        private readonly List<Component> _children = new List<Component>();
 
         public AmpYear()
         {
-            Utilities.Log("AmpYear", "Constructor");
+            Utilities.Log("AmpYear Constructor");
             Instance = this;
             AYsettings = new AYSettings();
             AYgameSettings = new AYGameSettings();
-            globalConfigFilename = System.IO.Path.Combine(_AssemblyFolder, "Config.cfg").Replace("\\", "/");
-            this.Log("globalConfigFilename = " + globalConfigFilename);
+            _globalConfigFilename = Path.Combine(AssemblyFolder, "Config.cfg").Replace("\\", "/");
+            Utilities.Log("globalConfigFilename = " + _globalConfigFilename);
         }
 
         public override void OnAwake()
         {
-            this.Log("OnAwake in " + HighLogic.LoadedScene);
+            Utilities.Log("OnAwake in " + HighLogic.LoadedScene);
             base.OnAwake();
 
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
-                this.Log("Adding SpaceCenterManager");
+                Utilities.Log("Adding SpaceCenterManager");
                 var child = gameObject.AddComponent<AYSCController>();
-                children.Add(child);
+                _children.Add(child);
             }
             else if (HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                this.Log("Adding FlightManager");
+                Utilities.Log("Adding FlightManager");
                 var child = gameObject.AddComponent<AYController>();
-                children.Add(child);
+                _children.Add(child);
             }
             else if (HighLogic.LoadedScene == GameScenes.EDITOR)
             {
-                this.Log("Adding EditorController");
+                Utilities.Log("Adding EditorController");
                 var child = gameObject.AddComponent<AYController>();
-                children.Add(child);
+                _children.Add(child);
             }
         }
 
         public override void OnLoad(ConfigNode gameNode)
         {
             base.OnLoad(gameNode);
-            AYgameSettings.Load(gameNode);
             // Load the global settings
-            if (System.IO.File.Exists(globalConfigFilename))
+            if (File.Exists(_globalConfigFilename))
             {
-                globalNode = ConfigNode.Load(globalConfigFilename);
-                AYsettings.Load(globalNode);
-                foreach (Savable s in children.Where(c => c is Savable))
+                _globalNode = ConfigNode.Load(_globalConfigFilename);
+                AYsettings.Load(_globalNode);
+                foreach (var component in _children.Where(c => c is ISavable))
                 {
-                    this.Log("AmpYear Child Load Call for " + s.ToString());
-                    s.Load(globalNode);
+                    var s = (ISavable) component;
+                    s.Load(_globalNode);
                 }
             }
-            this.Log("OnLoad: \n " + gameNode + "\n" + globalNode);
+            AYgameSettings.Load(gameNode);
+            if (Utilities.debuggingOn)
+                Debug.Log("OnLoad: " + gameNode + "\n" + _globalNode);
+            else
+            {
+                Debug.Log("AmpYear Scenario OnLoad completed.");
+            }
         }
 
         public override void OnSave(ConfigNode gameNode)
         {
             base.OnSave(gameNode);
             AYgameSettings.Save(gameNode);
-            foreach (Savable s in children.Where(c => c is Savable))
+            foreach (var component in _children.Where(c => c is ISavable))
             {
-                this.Log("AmpYear Child Save Call for " + s.ToString());
-                s.Save(globalNode);
+                var s = (ISavable) component;
+                s.Save(_globalNode);
             }
-            AYsettings.Save(globalNode);
-            globalNode.Save(globalConfigFilename);
+            AYsettings.Save(_globalNode);
+            _globalNode.Save(_globalConfigFilename);
 
-            this.Log("OnSave: " + gameNode + "\n" + globalNode);
+            if (Utilities.debuggingOn)
+                Debug.Log("OnLoad: " + gameNode + "\n" + _globalNode);
+            else
+            {
+                Debug.Log("AmpYear Scenario OnSave completed.");
+            }
         }
 
         private void OnDestroy()
         {
-            this.Log("OnDestroy");
-            foreach (Component child in children)
+            Utilities.Log("OnDestroy");
+            foreach (Component child in _children)
             {
-                this.Log("AmpYear Child Destroy for " + child.name);
+                Utilities.Log("AmpYear Child Destroy for " + child.name);
                 Destroy(child);
             }
-            children.Clear();
+            _children.Clear();
         }
 
         #region Assembly/Class Information
@@ -186,25 +225,25 @@ namespace AY
         /// <summary>
         /// Name of the Assembly that is running this MonoBehaviour
         /// </summary>
-        internal static String _AssemblyName
-        { get { return System.Reflection.Assembly.GetExecutingAssembly().GetName().Name; } }
+        internal static String AssemblyName
+        { get { return Assembly.GetExecutingAssembly().GetName().Name; } }
 
         /// <summary>
         /// Full Path of the executing Assembly
         /// </summary>
-        internal static String _AssemblyLocation
-        { get { return System.Reflection.Assembly.GetExecutingAssembly().Location.Replace("\\", "/"); } }
+        internal static String AssemblyLocation
+        { get { return Assembly.GetExecutingAssembly().Location.Replace("\\", "/"); } }
 
         /// <summary>
         /// Folder containing the executing Assembly
         /// </summary>
-        internal static String _AssemblyFolder
-        { get { return System.IO.Path.GetDirectoryName(_AssemblyLocation).Replace("\\", "/"); } }
+        internal static String AssemblyFolder
+        { get { return Path.GetDirectoryName(AssemblyLocation).Replace("\\", "/"); } }
 
         #endregion Assembly/Class Information
     }
 
-    internal interface Savable
+    internal interface ISavable
     {
         void Load(ConfigNode globalNode);
 

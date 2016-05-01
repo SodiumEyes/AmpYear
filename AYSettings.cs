@@ -1,58 +1,116 @@
-﻿/**
- * AYSettings.cs
- * (C) Copyright 2015, Jamie Leighton
- * AmpYear power management.
- * The original code and concept of AmpYear rights go to SodiumEyes on the Kerbal Space Program Forums, which was covered by GNU License GPL (no version stated).
- * As such this code continues to be covered by GNU GPL license.
- * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
- * project is in no way associated with nor endorsed by Squad.
- *
- *  This file is part of AmpYear.
- *
- *  AmpYear is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  AmpYear is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with AmpYear.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
+﻿
 
+using System.Collections.Generic;
+/**
+* AYSettings.cs
+* (C) Copyright 2015, Jamie Leighton
+* AmpYear power management.
+* The original code and concept of AmpYear rights go to SodiumEyes on the Kerbal Space Program Forums, which was covered by GNU License GPL (no version stated).
+* As such this code continues to be covered by GNU GPL license.
+* Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+* project is in no way associated with nor endorsed by Squad.
+*
+*  This file is part of AmpYear.
+*
+*  AmpYear is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  AmpYear is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with AmpYear.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 namespace AY
 {
+    public class ESPValues
+    {
+        public bool EmergShutDnDflt ;
+
+        public ESPPriority EmergShutPriority ;
+
+        public ESPValues(bool emergShutDnDflt, ESPPriority emergShutPriority)
+        {
+            EmergShutDnDflt = emergShutDnDflt;
+            EmergShutPriority = emergShutPriority;
+        }
+    }
+    
     public class AYSettings
     {
+
+        public static string[] ValidPartModuleEmergShutDn = new string[]
+        {
+            "Turn Booster",
+            "RCS",
+            "SAS",
+            "AYSubsystems",
+            "Climate Control",
+            "Smooth Jazz",
+            "Massage Chair",
+        //    "ModuleAmpYearPPTRCS",
+        //    "ModuleAmpYearPoweredRCS",
+            "ModuleDeployableSolarPanel",
+            "ModuleWheel",
+            "ModuleLight",
+            "ModuleDataTransmitter",
+            "ModuleReactionWheel",
+        //   "ModuleScienceLab",
+        //   "ModuleScienceConverter",
+            "ModuleResourceHarvester",
+            "ModuleResourceConverter",
+            "ModuleNavLight", //AV Lights
+            "Curved Solar Panel", //NFS
+        //   "KASModuleWinch", //KAS
+        //   "KASModuleMagnet", //KAS
+           "ModuleRTAntenna", //Remote Tech
+           "SCANsat",  //SCANsat
+           "TacGenericConverter", //TAC-LS
+           "ModuleLimitedDataTransmitter" //Antenna Range
+        };
+
         private const string configNodeName = "AYSettings";
 
-        public float FwindowPosX { get; set; }
+        public float FwindowPosX ;
 
-        public float FwindowPosY { get; set; }
+        public float FwindowPosY ;
 
-        public float EwindowPosX { get; set; }
+        public float EwindowPosX ;
 
-        public float EwindowPosY { get; set; }
+        public float EwindowPosY ;
 
-        public float SCwindowPosX { get; set; }
+        public float SCwindowPosX ;
 
-        public float SCwindowPosY { get; set; }
+        public float SCwindowPosY ;
 
-        public float EPLwindowPosX { get; set; }
+        public float EPLwindowPosX ;
 
-        public float EPLwindowPosY { get; set; }
+        public float EPLwindowPosY ;
 
-        public double RECHARGE_RESERVE_THRESHOLD { get; set; }
+        public double RECHARGE_RESERVE_THRESHOLD ;
 
-        public double POWER_LOW_WARNING_AMT { get; set; }
+        public double POWER_LOW_WARNING_AMT ;
 
-        public bool UseAppLauncher { get; set; }
+        public bool UseAppLauncher ;
 
-        public bool debugging { get; set; }
+        public bool debugging ;
+
+        public bool TooltipsOn ;
+
+        public List<KeyValuePair<string, ESPValues>> PartModuleEmergShutDnDflt  ;
+
+        public double ESPHighThreshold ;
+
+        public double ESPMediumThreshold ;
+
+        public double ESPLowThreshold ;
+
+        public double EmgcyShutOverrideCooldown;
 
         public AYSettings()
         {
@@ -68,6 +126,12 @@ namespace AY
             POWER_LOW_WARNING_AMT = 5;
             UseAppLauncher = true;
             debugging = true;
+            TooltipsOn = true;
+            PartModuleEmergShutDnDflt = new List<KeyValuePair<string, ESPValues>>();
+            ESPHighThreshold = 5;
+            ESPMediumThreshold = 10;
+            ESPLowThreshold = 20;
+            EmgcyShutOverrideCooldown = 300;
         }
 
         //Settings Functions Follow
@@ -76,20 +140,45 @@ namespace AY
         {
             if (node.HasNode(configNodeName))
             {
-                ConfigNode AYsettingsNode = node.GetNode(configNodeName);
-                FwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "FwindowPosX", FwindowPosX);
-                FwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "FwindowPosY", FwindowPosY);
-                EwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "EwindowPosX", EwindowPosX);
-                EwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "EwindowPosY", EwindowPosY);
-                SCwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "SCwindowPosX", SCwindowPosX);
-                SCwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "SCwindowPosY", SCwindowPosY);
-                EPLwindowPosX = Utilities.GetNodeValue(AYsettingsNode, "EPLwindowPosX", EPLwindowPosX);
-                EPLwindowPosY = Utilities.GetNodeValue(AYsettingsNode, "EPLwindowPosY", EPLwindowPosY);
-                RECHARGE_RESERVE_THRESHOLD = Utilities.GetNodeValue(AYsettingsNode, "RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
-                POWER_LOW_WARNING_AMT = Utilities.GetNodeValue(AYsettingsNode, "POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
-                UseAppLauncher = Utilities.GetNodeValue(AYsettingsNode, "UseAppLauncher", UseAppLauncher);
-                debugging = Utilities.GetNodeValue(AYsettingsNode, "debugging", debugging);
-                this.Log_Debug("AYSettings load complete");
+                ConfigNode AYsettingsNode = new ConfigNode();
+                if (!node.TryGetNode(configNodeName, ref AYsettingsNode)) return;
+                AYsettingsNode.TryGetValue("FwindowPosX", ref this.FwindowPosX);
+                AYsettingsNode.TryGetValue("FwindowPosY", ref FwindowPosY);
+                AYsettingsNode.TryGetValue("EwindowPosX", ref EwindowPosX);
+                AYsettingsNode.TryGetValue("EwindowPosY", ref EwindowPosY);
+                AYsettingsNode.TryGetValue("SCwindowPosX", ref SCwindowPosX);
+                AYsettingsNode.TryGetValue("SCwindowPosY", ref SCwindowPosY);
+                AYsettingsNode.TryGetValue("EPLwindowPosX", ref EPLwindowPosX);
+                AYsettingsNode.TryGetValue("EPLwindowPosY", ref EPLwindowPosY);
+                AYsettingsNode.TryGetValue("RECHARGE_RESERVE_THRESHOLD", ref RECHARGE_RESERVE_THRESHOLD);
+                AYsettingsNode.TryGetValue("POWER_LOW_WARNING_AMT", ref POWER_LOW_WARNING_AMT);
+                AYsettingsNode.TryGetValue("UseAppLauncher", ref UseAppLauncher);
+                AYsettingsNode.TryGetValue("debugging", ref debugging);
+                RSTUtils.Utilities.debuggingOn = debugging;
+                AYsettingsNode.TryGetValue("TooltipsOn", ref TooltipsOn);
+                AYsettingsNode.TryGetValue("ESPHighThreshold", ref ESPHighThreshold);
+                AYsettingsNode.TryGetValue("ESPMediumThreshold", ref ESPMediumThreshold);
+                AYsettingsNode.TryGetValue("ESPLowThreshold", ref ESPLowThreshold);
+                AYsettingsNode.TryGetValue("EmgcyShutOverrideCooldown", ref EmgcyShutOverrideCooldown);
+                foreach (string validentry in ValidPartModuleEmergShutDn)
+                {
+                    ESPValues tmpESPVals = new ESPValues(true, ESPPriority.MEDIUM);
+                    string tmpStr = "";
+                    node.TryGetValue(validentry, ref tmpStr);
+                    string[] tmpStrStrings = tmpStr.Split(',');
+                    if (tmpStrStrings.Length == 2)
+                    {
+                        bool tmpBool = false;
+                        if (bool.TryParse(tmpStrStrings[0], out tmpBool))
+                            tmpESPVals.EmergShutDnDflt = tmpBool;
+
+                        int tmpInt = 2;
+                        if (int.TryParse(tmpStrStrings[1], out tmpInt))
+                            tmpESPVals.EmergShutPriority = (ESPPriority)tmpInt;
+                    }
+                    PartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry, tmpESPVals));
+                }
+                RSTUtils.Utilities.Log_Debug("AYSettings load complete");
             }
         }
 
@@ -117,7 +206,18 @@ namespace AY
             settingsNode.AddValue("POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
-            this.Log_Debug("AYSettings save complete");
+            settingsNode.AddValue("TooltipsOn", TooltipsOn);
+            settingsNode.AddValue("ESPHighThreshold", ESPHighThreshold);
+            settingsNode.AddValue("ESPMediumThreshold", ESPMediumThreshold);
+            settingsNode.AddValue("ESPLowThreshold", ESPLowThreshold);
+            settingsNode.AddValue("EmgcyShutOverrideCooldown", EmgcyShutOverrideCooldown);
+            foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
+            {
+                string tmpString = validentry.Value.EmergShutDnDflt.ToString() + ',' +
+                                   (int)validentry.Value.EmergShutPriority;
+                settingsNode.AddValue(validentry.Key, tmpString);
+            }
+            RSTUtils.Utilities.Log_Debug("AYSettings save complete");
         }
     }
 }

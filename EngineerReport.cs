@@ -7,15 +7,15 @@ namespace AY
         // Is the Test OK ?
         public override bool TestCondition()
         {
-            this.Log_Debug("AYEngReport Test condition");
-            if (AYController.totalPowerDrain > AYController.totalPowerProduced)
+            RSTUtils.Utilities.Log_Debug("AYEngReport Test condition");
+            if (AYController.TotalPowerDrain > AYController.TotalPowerProduced)
             {
-                this.Log_Debug("AYEngReport Total Power Drain > total Power Produced");
+                RSTUtils.Utilities.Log_Debug("AYEngReport Total Power Drain > total Power Produced");
                 return false;
             }
             else
             {
-                this.Log_Debug("AYEngReport Total Power Drain <= total Power Produced");
+                RSTUtils.Utilities.Log_Debug("AYEngReport Total Power Drain <= total Power Produced");
                 return true;
             }
         }

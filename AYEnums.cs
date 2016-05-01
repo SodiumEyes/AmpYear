@@ -56,4 +56,18 @@ namespace AY
         YELLOW = 1,
         RED = 2
     }
+
+    public enum ESPPriority
+    {
+        HIGH = 1,
+        MEDIUM = 2,
+        LOW = 3
+    }
+
+    public enum PowerState
+    {
+        Increasing = 1,
+        Decreasing = 2
+    }
+
 }

@@ -33,26 +33,26 @@ namespace AY
     {
         private const string configNodeName = "AYGameSettings";
 
-        public bool Enabled { get; set; }
+        public bool Enabled;
 
-        public Dictionary<Guid, VesselInfo> knownVessels { get; private set; }
+        public Dictionary<Guid, VesselInfo> KnownVessels { get; set; }
 
         public AYGameSettings()
         {
             Enabled = true;
-            knownVessels = new Dictionary<Guid, VesselInfo>();
+            KnownVessels = new Dictionary<Guid, VesselInfo>();
         }
 
         public void Load(ConfigNode node)
         {
-            knownVessels.Clear();
+            KnownVessels.Clear();
             if (node.HasNode(configNodeName))
             {
                 ConfigNode AYsettingsNode = node.GetNode(configNodeName);
 
-                Enabled = Utilities.GetNodeValue(AYsettingsNode, "Enabled", Enabled);
+                node.TryGetValue("Enabled", ref Enabled);
 
-                knownVessels.Clear();
+                KnownVessels.Clear();
                 var vesselNodes = AYsettingsNode.GetNodes(VesselInfo.ConfigNodeName);
                 foreach (ConfigNode vesselNode in vesselNodes)
                 {
@@ -60,36 +60,28 @@ namespace AY
                     {
                         //String id = vesselNode.GetValue("Guid");
                         Guid id = new Guid(vesselNode.GetValue("Guid"));
-                        this.Log_Debug("AYGameSettings Loading Guid = " + id);
+                        RSTUtils.Utilities.Log_Debug("AYGameSettings Loading Guid = {0}" , id.ToString());
                         VesselInfo vesselInfo = VesselInfo.Load(vesselNode);
-                        knownVessels[id] = vesselInfo;
+                        KnownVessels[id] = vesselInfo;
                     }
                 }
             }
-            this.Log_Debug("AYGameSettings Loading Complete");
+            RSTUtils.Utilities.Log_Debug("AYGameSettings Loading Complete");
         }
 
         public void Save(ConfigNode node)
         {
-            ConfigNode settingsNode;
-            if (node.HasNode(configNodeName))
-            {
-                settingsNode = node.GetNode(configNodeName);
-            }
-            else
-            {
-                settingsNode = node.AddNode(configNodeName);
-            }
+            var settingsNode = node.HasNode(configNodeName) ? node.GetNode(configNodeName) : node.AddNode(configNodeName);
 
             settingsNode.AddValue("Enabled", Enabled);
 
-            foreach (var entry in knownVessels)
+            foreach (var entry in KnownVessels)
             {
                 ConfigNode vesselNode = entry.Value.Save(settingsNode);
-                this.Log_Debug("AYGameSettings Saving Guid = " + entry.Key);
+                RSTUtils.Utilities.Log_Debug("AYGameSettings Saving Guid = {0}" , entry.Key.ToString());
                 vesselNode.AddValue("Guid", entry.Key);
             }
-            this.Log_Debug("AYGameSettings Saving Complete");
+            RSTUtils.Utilities.Log_Debug("AYGameSettings Saving Complete");
         }
     }
 }
