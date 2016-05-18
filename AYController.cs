@@ -100,10 +100,10 @@ namespace AY
         }
 
         //AmpYear Properties
-        public List<Part> crewablePartList = new List<Part>();
-        public List<string> PartsToDelete = new List<string>();
-        public List<Part> ReactionWheels = new List<Part>();
-        public List<Part> PartsModuleCommand = new List<Part>(); 
+        internal List<Part> crewablePartList = new List<Part>();
+        internal List<string> PartsToDelete = new List<string>();
+        internal List<Part> ReactionWheels = new List<Part>();
+        internal List<Part> PartsModuleCommand = new List<Part>(); 
 
         public class ReactionWheelPower
         {
@@ -118,30 +118,58 @@ namespace AY
             }
         }
 
-        public Dictionary<String, ReactionWheelPower> WheelDfltRotPowerMap = new Dictionary<string, ReactionWheelPower>();
-        public List<ProtoCrewMember> VslRstr = new List<ProtoCrewMember>();
-        public static float SasAdditionalRotPower = 0.0f;
-        public static double TurningFactor = 0.0;
-        public static double TotalElectricCharge = 0.0;
-        public static double TotalElectricChargeFlowOff = 0.0;
-        public static double TotalElectricChargeCapacity = 0.0;
-        public static double TotalReservePower = 0.0;
-        public static double TotalReservePowerFlowOff = 0.0;
-        public static double TotalReservePowerCapacity = 0.0;
-        public static double TotalPowerDrain = 0.0;
-        public static double TotalPowerProduced = 0.0;
-        public bool hasPower = true;
-        public bool HasReservePower = true;
-        public bool HasRcs = false;
-        public float currentRCSThrust = 0.0f;
-        public float currentPoweredRCSDrain = 0.0f;
-        private double _sasPwrDrain = 0;
-        public static Guid Currentvesselid;
-        public int TotalClimateParts = 0;
-        public int MaxCrew = 0;
+        internal Dictionary<String, ReactionWheelPower> WheelDfltRotPowerMap = new Dictionary<string, ReactionWheelPower>();
+        internal List<ProtoCrewMember> VslRstr = new List<ProtoCrewMember>();
+        internal float SasAdditionalRotPower = 0.0f;
+        internal double TurningFactor = 0.0;
+        internal double TotalElectricCharge = 0.0;
+        internal double TotalElectricChargeFlowOff = 0.0;
+        internal double TotalElectricChargeCapacity = 0.0;
+        internal double TotalReservePower = 0.0;
+        internal double TotalReservePowerFlowOff = 0.0;
+        internal double TotalReservePowerCapacity = 0.0;
+        internal double TotalPowerDrain = 0.0;
+        internal double TotalPowerProduced = 0.0;
+        internal bool hasPower = true;
+        internal bool HasReservePower = true;
+        internal bool HasRcs = false;
+        private float currentRCSThrust = 0.0f;
+        internal float currentPoweredRCSDrain = 0.0f;
+        internal double _sasPwrDrain = 0;
+        internal Guid Currentvesselid;
+        internal int TotalClimateParts = 0;
+        internal int MaxCrew = 0;
         private uint rootPartID;
-        private bool RT2UnderControl = true;
-        
+        internal bool RT2UnderControl = true;
+        private ReactionWheelPower defaultRotPower = new ReactionWheelPower(0, 0, 0);
+        private bool outhasAlternator = false;
+        private bool outcurrentEngActive = false;
+        private double outaltRate = 0f;
+        private bool wasStockModule = false;
+        private double altRate = 0f;
+        private bool currentEngActive = false;
+        private bool hasAlternator = false;
+        private Vessel currentVessel;
+        private bool powerTurnOn;
+        private double manager_drain, subsystem_drain, total_manager_drain;
+
+        private double deltaTime,
+            desiredElectricity,
+            desiredElectricity2,
+            minimumSufficientCharge,
+            totalElecreceived,
+            totalElecreceived2;
+        private string prtName, prtPower;
+        private bool prtActive;
+        private float tmpPower;
+        private ModuleReactionWheel reactWheelModule;
+        private List<Part> vesselparts = new List<Part>();
+        private double currentTime, checkVesselUpdateTime;
+        private List<Vessel> allVessels = new List<Vessel>();
+        private List<Guid> vesselsToDelete = new List<Guid>();
+        private VesselInfo currvesselInfo;
+
+
         private bool _reenableRcs = false;  //When RCS is disabled by ESP this flag is set to true once it is ok to re-activate.
         private bool _reenableSas = false;  //When SAS is disabled by ESP this flag is set to true once it is ok to re-activate.
 
@@ -208,7 +236,6 @@ namespace AY
             _wwindowId = _ewindowId + 1;
             _swindowId = _wwindowId + 1;
             _dwindowId = _swindowId + 1;
-            _SOIwindowId = _dwindowId + 1;
             _eplPartName = Mathf.Round((_epLwindowPos.width - 28f) * .3f);
             _eplPartModuleName = Mathf.Round((_epLwindowPos.width - 28f) * .4f);
             _eplec = Mathf.Round((_epLwindowPos.width - 28f) * .17f);
@@ -445,9 +472,12 @@ namespace AY
                 }
             }
 
+            
+
             //check if inflight and active vessel set currentvesselid and load config settings for this vessel
             if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
             {
+                currvesselInfo = new VesselInfo(FlightGlobals.ActiveVessel.vesselName, currentTime);
                 Currentvesselid = FlightGlobals.ActiveVessel.id;
                 OnVesselLoad(FlightGlobals.ActiveVessel);
             }
@@ -460,7 +490,7 @@ namespace AY
             }
 
             //Set the default SolarPanel SOI Target and DarkSide Target to HomeBody Index (can be changed in the GUI by the user)
-            _selectedDarkTarget = _selectedSolarSOITarget = FlightGlobals.GetHomeBodyIndex();
+            _selectedDarkTarget = FlightGlobals.GetHomeBodyIndex();
             _bodyTarget = FlightGlobals.Bodies[_selectedDarkTarget];
 
             // add callbacks for vessel load and change
@@ -472,7 +502,7 @@ namespace AY
             GameEvents.onHideUI.Add(onHideUI);
             GameEvents.onShowUI.Add(onShowUI);
             GameEvents.onGUIEngineersReportReady.Add(AddTests);
-
+            
             Utilities.Log_Debug("AYController Start complete"); 
         }
 
@@ -546,7 +576,7 @@ namespace AY
             _hideUI = false;
         }
 
-        private void FixedUpdate()
+        public void FixedUpdate()
         {
             if (Time.timeSinceLevelLoad < 3.0f) // Check not loading level
             {
@@ -557,6 +587,8 @@ namespace AY
             
             if ((FlightGlobals.ready && FlightGlobals.ActiveVessel != null) || HighLogic.LoadedSceneIsEditor)
             {
+                currentTime = Planetarium.GetUniversalTime();
+
                 //Timing for KabinKraziness must be here not in Start.
                 if (KKPresent && !KKWrapper.APIReady)
                 {
@@ -584,15 +616,16 @@ namespace AY
                     }
                 }
                 //get current vessel parts list
-                List<Part> parts = new List<Part> { };
+                //List<Part> vesselparts = new List<Part> { };
+                //vesselparts.Clear();
                 if (Utilities.GameModeisFlight)
                 {
                     try
                     {
-                        parts = FlightGlobals.ActiveVessel.Parts;
+                        vesselparts = FlightGlobals.ActiveVessel.Parts;
                         rootPartID = 1111;
                         rootPartID = FlightGlobals.ActiveVessel.rootPart.craftID;
-                        if (parts == null)
+                        if (vesselparts == null)
                         {
                             Utilities.Log("In Flight but couldn't get parts list");
                             return;
@@ -610,17 +643,22 @@ namespace AY
                         }
                         return;
                     }
-                    CheckVslUpdate();
+                    if (currentTime - checkVesselUpdateTime > 10)
+                    {
+                        CheckVslUpdate();
+                        checkVesselUpdateTime = currentTime;
+                    }
                 }
                 else
+                {
                     try
                     {
                         //parts = EditorLogic.SortedShipList;
-                        parts = EditorLogic.fetch.ship.parts;
+                        vesselparts = EditorLogic.fetch.ship.parts;
                         rootPartID = 1111;
                         if (EditorLogic.RootPart != null)
                             rootPartID = EditorLogic.RootPart.craftID;
-                        if (parts == null)
+                        if (vesselparts == null)
                         {
                             Utilities.Log_Debug("In Editor but couldn't get parts list");
                             return;
@@ -638,6 +676,7 @@ namespace AY
                         }
                         return;
                     }
+                }
                 //Compile information about the vessel and its parts
                 // zero accumulators
                 SasAdditionalRotPower = 0.0f;
@@ -685,28 +724,32 @@ namespace AY
                         VslRstr = FlightGlobals.ActiveVessel.GetVesselCrew();
 
                     //loop through all parts in the parts list of the vessel
-                    foreach (Part currentPart in parts)
+                    for (int i = 0; i < vesselparts.Count; i++)
                     {
-                        if (currentPart.CrewCapacity > 0)
+                        //foreach (Part currentPart in parts)
+                        //{
+                        if (vesselparts[i].CrewCapacity > 0)
                         {
-                            crewablePartList.Add(currentPart);
-                            MaxCrew += currentPart.CrewCapacity;
+                            crewablePartList.Add(vesselparts[i]);
+                            MaxCrew += vesselparts[i].CrewCapacity;
                         }
-                        bool hasAlternator = false;
-                        bool currentEngActive = false;
-                        double altRate = 0f;
+                        hasAlternator = false;
+                        currentEngActive = false;
+                        altRate = 0f;
 
                         //loop through all the modules in the current part
-                        foreach (PartModule module in currentPart.Modules)
+                        for (int j = 0; j < vesselparts[i].Modules.Count; j++)
                         {
+                            //foreach (PartModule module in parts[i].Modules)
+                            //{
                             //Check if the current module is a stock part module and process it.
                             //Returned values : Bool true if it was a stock module or false if it was not.
                             // hasAlternator is true if the module had an Alternator.
-                            bool outhasAlternator = false;
-                            bool outcurrentEngActive = false;
-                            double outaltRate = 0f;
+                            outhasAlternator = false;
+                            outcurrentEngActive = false;
+                            outaltRate = 0f;
 
-                            bool wasStockModule = ProcessStockPartModule(currentPart, module, hasAlternator, currentEngActive, altRate,
+                            wasStockModule = ProcessStockPartModule(vesselparts[i], vesselparts[i].Modules[j], hasAlternator, currentEngActive, altRate,
                                 out outhasAlternator, out outcurrentEngActive, out outaltRate);
 
                             hasAlternator = outhasAlternator;
@@ -716,38 +759,40 @@ namespace AY
                             //If it wasn't a stock part module, process the currently supported mod partmodules.
                             if (!wasStockModule)
                             {
-                                ProcessModPartModule(currentPart, module);
+                                ProcessModPartModule(vesselparts[i], vesselparts[i].Modules[j]);
                             }
                         } // end modules loop
 
                         //Sum up the power resources
                         if (!hasAlternator) //Ignore parts with alternators in power-capacity calculate because they don't actually store power
                         {
-                            foreach (PartResource resource in currentPart.Resources)
+                            for (int k = 0; k < vesselparts[i].Resources.Count; k++)
                             {
-                                if (resource.resourceName == MAIN_POWER_NAME)
+                                //foreach (PartResource resource in parts[i].Resources)
+                                //{
+                                if (vesselparts[i].Resources[k].resourceName == MAIN_POWER_NAME)
                                 {
-                                    if (resource.flowState)
+                                    if (vesselparts[i].Resources[k].flowState)
                                     {
-                                        TotalElectricCharge += resource.amount;
+                                        TotalElectricCharge += vesselparts[i].Resources[k].amount;
                                     }
                                     else
                                     {
-                                        TotalElectricChargeFlowOff += resource.amount;
+                                        TotalElectricChargeFlowOff += vesselparts[i].Resources[k].amount;
                                     }
-                                    TotalElectricChargeCapacity += resource.maxAmount;
+                                    TotalElectricChargeCapacity += vesselparts[i].Resources[k].maxAmount;
                                 }
-                                else if (resource.resourceName == RESERVE_POWER_NAME)
+                                else if (vesselparts[i].Resources[k].resourceName == RESERVE_POWER_NAME)
                                 {
-                                    if (resource.flowState)
+                                    if (vesselparts[i].Resources[k].flowState)
                                     {
-                                        TotalReservePower += resource.amount;
+                                        TotalReservePower += vesselparts[i].Resources[k].amount;
                                     }
                                     else
                                     {
-                                        TotalReservePowerFlowOff += resource.amount;
+                                        TotalReservePowerFlowOff += vesselparts[i].Resources[k].amount;
                                     }
-                                    TotalReservePowerCapacity += resource.maxAmount;
+                                    TotalReservePowerCapacity += vesselparts[i].Resources[k].maxAmount;
                                 }
                             }
                         }
@@ -804,15 +849,17 @@ namespace AY
                 }
 
                 //Remove parts that aren't currently attached to the current vessel.
-                foreach (string part in PartsToDelete)
+                for (int i = 0; i < PartsToDelete.Count; i++)
                 {
-                    if (AYVesselPartLists.VesselProdPartsList.ContainsKey(part))
+                    //foreach (string part in PartsToDelete)
+                    //{
+                    if (AYVesselPartLists.VesselProdPartsList.ContainsKey(PartsToDelete[i]))
                     {
-                        AYVesselPartLists.VesselProdPartsList.Remove(part);
+                        AYVesselPartLists.VesselProdPartsList.Remove(PartsToDelete[i]);
                     }
-                    if (AYVesselPartLists.VesselConsPartsList.ContainsKey(part))
+                    if (AYVesselPartLists.VesselConsPartsList.ContainsKey(PartsToDelete[i]))
                     {
-                        AYVesselPartLists.VesselConsPartsList.Remove(part);
+                        AYVesselPartLists.VesselConsPartsList.Remove(PartsToDelete[i]);
                     }
                 }
             } // end if active vessel not null
@@ -823,27 +870,27 @@ namespace AY
             //This is the Logic that Executes in Flight
             if (HighLogic.LoadedSceneIsFlight)
             {
-                Vessel cv = FlightGlobals.ActiveVessel;
+                currentVessel = FlightGlobals.ActiveVessel;
 
-                if (cv.ActionGroups[KSPActionGroup.RCS] && !SubsystemPowered(Subsystem.RCS))
+                if (currentVessel.ActionGroups[KSPActionGroup.RCS] && !SubsystemPowered(Subsystem.RCS))
                 {
                     Utilities.Log("RCS - disabled.");
                     //Disable RCS when the subsystem isn't powered
-                    cv.ActionGroups.SetGroup(KSPActionGroup.RCS, false);
+                    currentVessel.ActionGroups.SetGroup(KSPActionGroup.RCS, false);
                     _reenableRcs = true;
                 }
 
                 if (KKPresent)
                 {
-                    KKAutopilotChk(cv);
+                    KKAutopilotChk(currentVessel);
                 }
                 else
                 {
-                    if (cv.ActionGroups[KSPActionGroup.SAS] && !SubsystemPowered(Subsystem.SAS))
+                    if (currentVessel.ActionGroups[KSPActionGroup.SAS] && !SubsystemPowered(Subsystem.SAS))
                     {
                         Utilities.Log("SAS - disabled.");
                         //Disable SAS when the subsystem isn't powered
-                        cv.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
+                        currentVessel.ActionGroups.SetGroup(KSPActionGroup.SAS, false);
                         _reenableSas = true;
                     }
                 }
@@ -874,13 +921,15 @@ namespace AY
                 }
 
                 //Update command pod rot powers
-                bool powerTurnOn = SubsystemPowered(Subsystem.POWER_TURN);
+                powerTurnOn = SubsystemPowered(Subsystem.POWER_TURN);
 
-                foreach (Part reactWheel in ReactionWheels)
+                for (int i = 0; i < ReactionWheels.Count; i++)
                 {
-                    ModuleReactionWheel reactWheelModule = reactWheel.FindModuleImplementing<ModuleReactionWheel>();
-                    ReactionWheelPower defaultRotPower = new ReactionWheelPower(0, 0, 0);
-                    WheelDfltRotPowerMap.TryGetValue(reactWheel.name, out defaultRotPower);
+                    //foreach (Part reactWheel in ReactionWheels)
+                    //{
+                    reactWheelModule = ReactionWheels[i].FindModuleImplementing<ModuleReactionWheel>();
+                    //ReactionWheelPower defaultRotPower = new ReactionWheelPower(0, 0, 0);
+                    WheelDfltRotPowerMap.TryGetValue(ReactionWheels[i].name, out defaultRotPower);
 
                     if (powerTurnOn)
                     {
@@ -898,17 +947,17 @@ namespace AY
                 }
 
                 //Calculate total drain from subsystems
-                double subsystem_drain = 0.0;
+                subsystem_drain = 0.0;
                 _subsystemDrain[(int)Subsystem.RCS] -= currentPoweredRCSDrain;
-                foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache)// Enum.GetValues(typeof(Subsystem)))
                 {
                     _subsystemDrain[(int)subsystem] = SubsystemCurrentDrain(subsystem);
                     subsystem_drain += _subsystemDrain[(int)subsystem];
                 }
 
-                double manager_drain = ManagerCurrentDrain; 
+                manager_drain = ManagerCurrentDrain; 
 
-                double total_manager_drain = subsystem_drain + manager_drain;
+                total_manager_drain = subsystem_drain + manager_drain;
                 //TotalPowerDrain += total_manager_drain;
 
                 //Recharge reserve power if main power is above a certain threshold
@@ -917,39 +966,30 @@ namespace AY
                     TransferMainToReserve(RECHARGE_RESERVE_RATE * TimeWarp.fixedDeltaTime);
 
                 //Store the AmpYear Manager and Subsystems into the parts list
-                string prtName = "AmpYear SubSystems";
-                string prtPower = "";
+                prtName = "AmpYear SubSystems";
                 uint partId = CalcAmpYearMgrPartID();
-                int index = 2;
-                foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
                 {
                     if (!KKPresent && (subsystem == Subsystem.CLIMATE || subsystem == Subsystem.MASSAGE || subsystem == Subsystem.MUSIC))
                         continue;
-                    prtPower = _subsystemDrain[(int)subsystem].ToString("###0.##");
-                    PwrPartList PartAdd = new PwrPartList(prtName, SubsystemName(subsystem), true, prtPower, (float)_subsystemDrain[(int)subsystem], SubsystemEnabled(subsystem), false);
-                    AYVesselPartLists.AddPart(partId, PartAdd, false, false);
-                    index++;
+                    AYVesselPartLists.AddPart(partId, prtName, SubsystemName(subsystem), true, SubsystemEnabled(subsystem), (float)_subsystemDrain[(int)subsystem], false, false);
                 }
-
                 prtName = "AmpYear Manager";
-                prtPower = manager_drain.ToString("####0.###");
-                PwrPartList PartAdd2 = new PwrPartList(prtName, prtName, true, prtPower, (float)manager_drain, _managerEnabled, false);
-                AYVesselPartLists.AddPart(partId, PartAdd2, false, false);
+                AYVesselPartLists.AddPart(partId, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
 
                 //Drain main power
-                Part cvp = FlightGlobals.ActiveVessel.rootPart;
-                double currentTime = Planetarium.GetUniversalTime();
-                double timestepDrain = total_manager_drain * TimeWarp.fixedDeltaTime;
-                double minimumSufficientCharge = managerActiveDrain + 4;
-                double deltaTime = Math.Min(currentTime - _timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
-                double desiredElectricity = total_manager_drain * deltaTime;
+                //double currentTime = Planetarium.GetUniversalTime();
+                //double timestepDrain = total_manager_drain * TimeWarp.fixedDeltaTime;
+                minimumSufficientCharge = managerActiveDrain + 4;
+                deltaTime = Math.Min(currentTime - _timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
+                desiredElectricity = total_manager_drain * deltaTime;
                 
                 if (desiredElectricity > 0.0 && TimewarpIsValid) // if power required > 0 and time warp is valid
                 {
                     if (TotalElectricCharge >= desiredElectricity) // if main power >= power required
                     {
                         Utilities.Log_Debug("drawing main power");
-                        double totalElecreceived = Utilities.RequestResource(cvp, MAIN_POWER_NAME, desiredElectricity);  //get power
+                        totalElecreceived = Utilities.RequestResource(FlightGlobals.ActiveVessel.rootPart, MAIN_POWER_NAME, desiredElectricity);  //get power
                         _timeLastElectricity = currentTime - (desiredElectricity - totalElecreceived) / total_manager_drain; //set time last power received
                         hasPower = (UnityEngine.Time.realtimeSinceStartup > _powerUpTime)
                         && (desiredElectricity <= 0.0 || totalElecreceived >= desiredElectricity * 0.99); //set hasPower > power up delay and we received power requested
@@ -961,10 +1001,10 @@ namespace AY
                         if (TotalReservePower > minimumSufficientCharge && !_lockReservePower) // if reserve power available > minimum charge required
                         {
                             //If main power is insufficient, drain reserve power for manager
-                            double managerTimestepDrain = manager_drain * TimeWarp.fixedDeltaTime; //we only drain manager function
-                            double deltaTime2 = Math.Min(currentTime - _timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
-                            double desiredElectricity2 = manager_drain * deltaTime;
-                            double totalElecreceived2 = Utilities.RequestResource(cvp, RESERVE_POWER_NAME, desiredElectricity2); // get power
+                            //double managerTimestepDrain = manager_drain * TimeWarp.fixedDeltaTime; //we only drain manager function
+                            //double deltaTime2 = Math.Min(currentTime - _timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
+                            desiredElectricity2 = manager_drain * deltaTime;
+                            totalElecreceived2 = Utilities.RequestResource(FlightGlobals.ActiveVessel.rootPart, RESERVE_POWER_NAME, desiredElectricity2); // get power
                             _timeLastElectricity = currentTime - (desiredElectricity2 - totalElecreceived2) / manager_drain; // set time last power received
                             HasReservePower = (UnityEngine.Time.realtimeSinceStartup > _powerUpTime)
                             && (desiredElectricity2 <= 0.0 || totalElecreceived2 >= desiredElectricity2 * 0.99); // set hasReservePower > power up delay and we received power
@@ -997,12 +1037,12 @@ namespace AY
                     {
                         Utilities.Log_Debug("reset power up delay");
                         _powerUpTime = UnityEngine.Time.realtimeSinceStartup + POWER_UP_DELAY;
-                        Utilities.Log_Debug("powerup time = " + _powerUpTime.ToString());
+                        Utilities.Log_Debug("powerup time = " + _powerUpTime);
                     }
                     HasReservePower = TotalReservePower > minimumSufficientCharge; //set hasReservePower
                     hasPower = TotalElectricCharge >= minimumSufficientCharge; //set hasPower
-                    Utilities.Log_Debug("hasReservePower = " + HasReservePower.ToString());
-                    Utilities.Log_Debug("hasPower = " + hasPower.ToString());
+                    Utilities.Log_Debug("hasReservePower = " + HasReservePower);
+                    Utilities.Log_Debug("hasPower = " + hasPower);
                 }
                 _lastUpdate = currentTime;
             }
@@ -1011,29 +1051,23 @@ namespace AY
             if (HighLogic.LoadedSceneIsEditor)
             {
                 //Calculate total drain from subsystems
-                double subsystem_drain = 0.0;
-                double manager_drain = 0.0;
-                string prtName = "AmpYear SubSystems-Max";
-                string prtPower = "";
+                subsystem_drain = 0.0;
+                manager_drain = 0.0;
+                prtName = "AmpYear SubSystems-Max";
+                prtPower = "";
                 uint partId = CalcAmpYearMgrPartID();
-                int index = 2;
-                foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
                 {
                     _subsystemDrain[(int)subsystem] = SubsystemActiveDrain(subsystem);
                     subsystem_drain += _subsystemDrain[(int)subsystem];
                     if (!KKPresent && (subsystem == Subsystem.CLIMATE || subsystem == Subsystem.MASSAGE || subsystem == Subsystem.MUSIC))
                         continue;
-                    prtPower = _subsystemDrain[(int) subsystem].ToString("###0.##");
-                    PwrPartList PartAdd = new PwrPartList(prtName, SubsystemName(subsystem), true, prtPower, (float)_subsystemDrain[(int)subsystem], true, false);
-                    AYVesselPartLists.AddPart(partId, PartAdd, false, false);
-                    index++;
+                    AYVesselPartLists.AddPart(partId, prtName, SubsystemName(subsystem), true, SubsystemEnabled(subsystem), (float)_subsystemDrain[(int)subsystem], false, false);
+                    
                 }
                 manager_drain = ManagerCurrentDrain;
-                
                 prtName = "AmpYear Manager";
-                //string PrtPower = "";
-                PwrPartList PartAdd2 = new PwrPartList(prtName, prtName, true, prtPower, (float)manager_drain, true, false);
-                AYVesselPartLists.AddPart(partId, PartAdd2, false, false);
+                AYVesselPartLists.AddPart(partId, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
                 hasPower = true;
                 HasReservePower = true;
             }
@@ -1048,9 +1082,9 @@ namespace AY
             // Called every fixed update from fixedupdate - Check for vessels that have been deleted and remove from Dictionary
             // also updates current active vessel details/settings
             // adds new vessel if current active vessel is not known and updates it's details/settings
-            double currentTime = Planetarium.GetUniversalTime();
-            List<Vessel> allVessels = FlightGlobals.Vessels;
-            var vesselsToDelete = new List<Guid>();
+            //double currentTime = Planetarium.GetUniversalTime();
+            allVessels = FlightGlobals.Vessels;
+            vesselsToDelete.Clear();
             //* Delete vessels that do not exist any more or have no crew
             foreach (var entry in AYgameSettings.KnownVessels)
             {
@@ -1067,7 +1101,7 @@ namespace AY
                 }
                 if (vessel.loaded)
                 {
-                    int crewCapacity = UpdateVesselCounts(vesselInfo, vessel);
+                    UpdateVesselCounts(vesselInfo, vessel);
                     if (vesselInfo.NumCrew == 0)
                     {
                         Utilities.Log_Debug("Deleting vessel " + vesselInfo.VesselName + " - no crew parts anymore");
@@ -1078,32 +1112,37 @@ namespace AY
             }
             vesselsToDelete.ForEach(id => AYgameSettings.KnownVessels.Remove(id));
 
+            /*
             //* Add all new vessels
-            foreach (Vessel vessel in allVessels.Where(v => v.loaded))
+            foreach (Vessel vessel in allVessels) //.Where(v => v.loaded))
             {
-                Guid vesselId = vessel.id;
-                if (!AYgameSettings.KnownVessels.ContainsKey(vesselId) && Utilities.ValidVslType(vessel))
+                if (vessel.loaded)
                 {
-                    if (vessel.FindPartModulesImplementing<ModuleCommand>().FirstOrDefault() != null)
+                    Guid vesselId = vessel.id;
+                    if (!AYgameSettings.KnownVessels.ContainsKey(vesselId) && Utilities.ValidVslType(vessel))
                     {
-                        Utilities.Log_Debug("New vessel: " + vessel.vesselName + " (" + vessel.id + ")");
-                        VesselInfo vesselInfo = new VesselInfo(vessel.vesselName, currentTime);
-                        vesselInfo.VesselType = vessel.vesselType;
-                        UpdateVesselInfo(vesselInfo);
-                        int crewCapacity = UpdateVesselCounts(vesselInfo, vessel);
-                        AYgameSettings.KnownVessels.Add(vesselId, vesselInfo);
+                        if (vessel.FindPartModulesImplementing<ModuleCommand>().FirstOrDefault() != null)
+                        {
+                            Utilities.Log_Debug("New vessel: " + vessel.vesselName + " (" + vessel.id + ")");
+                            VesselInfo vesselInfo = new VesselInfo(vessel.vesselName, currentTime);
+                            vesselInfo.VesselType = vessel.vesselType;
+                            UpdateVesselInfo(vesselInfo);
+                            UpdateVesselCounts(vesselInfo, vessel);
+                            AYgameSettings.KnownVessels.Add(vesselId, vesselInfo);
+                        }
                     }
                 }
-            }
+            }*/
 
             //*Update the current vessel
-            VesselInfo currvesselInfo = new VesselInfo(FlightGlobals.ActiveVessel.vesselName, currentTime);
+            //if (currvesselInfo == null)
+            //    currvesselInfo = new VesselInfo(FlightGlobals.ActiveVessel.vesselName, currentTime);
             if (AYgameSettings.KnownVessels.TryGetValue(Currentvesselid, out currvesselInfo))
             {
                 UpdateVesselInfo(currvesselInfo);
-                int crewCapacity = UpdateVesselCounts(currvesselInfo, FlightGlobals.ActiveVessel);
+                UpdateVesselCounts(currvesselInfo, FlightGlobals.ActiveVessel);
                 currvesselInfo.VesselType = FlightGlobals.ActiveVessel.vesselType;
-                AYgameSettings.KnownVessels[Currentvesselid] = currvesselInfo;
+                //AYgameSettings.KnownVessels[Currentvesselid] = currvesselInfo;
             }
         }
 
@@ -1115,12 +1154,12 @@ namespace AY
             vesselInfo.ShowParts = _showParts;
             vesselInfo.TimeLastElectricity = _timeLastElectricity;
             vesselInfo.LastUpdate = _lastUpdate;
-            for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+            for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
             {
                 vesselInfo.SubsystemToggle[i] = _subsystemToggle[i];
                 vesselInfo.SubsystemDrain[i] = _subsystemDrain[i];
             }
-            for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+            for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
                 vesselInfo.GuiSectionEnableFlag[i] = _guiSectionEnableFlag[i];
             vesselInfo.EmgcyShutActive = EmgcyShutActive;
             if (KKPresent)
@@ -1150,21 +1189,18 @@ namespace AY
             vesselInfo.ReenableSas = _reenableSas;
         }
 
-        private int UpdateVesselCounts(VesselInfo vesselInfo, Vessel vessel)
+        private void UpdateVesselCounts(VesselInfo vesselInfo, Vessel vessel)
         {
             // save current toggles to current vesselinfo
-            int crewCapacity = 0;
             vesselInfo.ClearAmounts(); // numCrew = 0; numOccupiedParts = 0;
             foreach (Part part in vessel.parts)
             {
-                crewCapacity += part.CrewCapacity;
                 if (part.protoModuleCrew.Count > 0)
                 {
                     vesselInfo.NumCrew += part.protoModuleCrew.Count;
                     ++vesselInfo.NumOccupiedParts;
                 }
             }
-            return crewCapacity;
         }
 
         private void OnVesselLoad(Vessel newvessel)
@@ -1187,18 +1223,18 @@ namespace AY
             Utilities.Log_Debug("AYController active vessel " + FlightGlobals.ActiveVessel.id);
             if (Currentvesselid == newvessel.id) // which would be the case if it's an EVA kerbal re-joining ship
                 return;
-            double currentTime = Planetarium.GetUniversalTime();
+            //double currentTime = Planetarium.GetUniversalTime();
             if (KKPresent)
             {
                 KKonVslChng();
             }
 
             // Update Old Vessel settings into Dictionary
-            VesselInfo oldvslinfo = new VesselInfo(newvessel.name, currentTime);
-            if (AYgameSettings.KnownVessels.TryGetValue(Currentvesselid, out oldvslinfo))
+            //VesselInfo oldvslinfo = new VesselInfo(newvessel.name, currentTime);
+            if (AYgameSettings.KnownVessels.TryGetValue(Currentvesselid, out currvesselInfo))
             {
-                UpdateVesselInfo(oldvslinfo);
-                AYgameSettings.KnownVessels[Currentvesselid] = oldvslinfo;
+                UpdateVesselInfo(currvesselInfo);
+                //AYgameSettings.KnownVessels[Currentvesselid] = oldvslinfo;
                 Utilities.Log_Debug("Updated old vessel {0} ({1})" , AYgameSettings.KnownVessels[Currentvesselid].VesselName , Currentvesselid);
             }
             // load the settings for the newvessel
@@ -1216,40 +1252,40 @@ namespace AY
 
         private void LoadVesselSettings(Vessel newvessel)
         {
-            double currentTime = Planetarium.GetUniversalTime();
-            VesselInfo info = new VesselInfo(newvessel.name, currentTime);
+            //double currentTime = Planetarium.GetUniversalTime();
+            //VesselInfo info = new VesselInfo(newvessel.name, currentTime);
             // Load New Vessel settings from Dictionary
-            if (AYgameSettings.KnownVessels.TryGetValue(newvessel.id, out info))
+            if (AYgameSettings.KnownVessels.TryGetValue(newvessel.id, out currvesselInfo))
             {
                 Utilities.Log_Debug("AYController Vessel Loading Settings: {0} ({1})" , newvessel.name , newvessel.id);
-                for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
                 {
-                    _subsystemToggle[i] = info.SubsystemToggle[i];
-                    _subsystemDrain[i] = info.SubsystemDrain[i];
+                    _subsystemToggle[i] = currvesselInfo.SubsystemToggle[i];
+                    _subsystemDrain[i] = currvesselInfo.SubsystemDrain[i];
                 }
-                for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
-                    _guiSectionEnableFlag[i] = info.GuiSectionEnableFlag[i];
-                _managerEnabled = info.ManagerEnabled;
-                _showCrew = info.ShowCrew;
-                EmgcyShutActive = info.EmgcyShutActive;
-                _timeLastElectricity = info.TimeLastElectricity;
-                _lastUpdate = info.LastUpdate;
+                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
+                    _guiSectionEnableFlag[i] = currvesselInfo.GuiSectionEnableFlag[i];
+                _managerEnabled = currvesselInfo.ManagerEnabled;
+                _showCrew = currvesselInfo.ShowCrew;
+                EmgcyShutActive = currvesselInfo.EmgcyShutActive;
+                _timeLastElectricity = currvesselInfo.TimeLastElectricity;
+                _lastUpdate = currvesselInfo.LastUpdate;
 
                 if (KKPresent)
                 {
-                    KKLoadVesselSettings(info, false);
+                    KKLoadVesselSettings(currvesselInfo, false);
                 }
-                EmgcyShutOverride = info.EmgcyShutOverride;
-                EmgcyShutOverrideStarted = info.EmgcyShutOverrideStarted;
-                Emergencypowerdownactivated = info.Emergencypowerdownactivated;
-                Emergencypowerdownreset = info.Emergencypowerdownreset;
-                Emergencypowerdownprevactivated = info.Emergencypowerdownprevactivated;
-                ESPPriorityHighProcessed = info.ESPPriorityHighProcessed;
-                ESPPriorityMediumProcessed = info.ESPPriorityMediumProcessed;
-                ESPPriorityLowProcessed = info.ESPPriorityLowProcessed;
-                _espPriority = info.EspPriority;
-                _reenableRcs = info.ReenableRcs;
-                _reenableSas = info.ReenableSas;
+                EmgcyShutOverride = currvesselInfo.EmgcyShutOverride;
+                EmgcyShutOverrideStarted = currvesselInfo.EmgcyShutOverrideStarted;
+                Emergencypowerdownactivated = currvesselInfo.Emergencypowerdownactivated;
+                Emergencypowerdownreset = currvesselInfo.Emergencypowerdownreset;
+                Emergencypowerdownprevactivated = currvesselInfo.Emergencypowerdownprevactivated;
+                ESPPriorityHighProcessed = currvesselInfo.ESPPriorityHighProcessed;
+                ESPPriorityMediumProcessed = currvesselInfo.ESPPriorityMediumProcessed;
+                ESPPriorityLowProcessed = currvesselInfo.ESPPriorityLowProcessed;
+                _espPriority = currvesselInfo.EspPriority;
+                _reenableRcs = currvesselInfo.ReenableRcs;
+                _reenableSas = currvesselInfo.ReenableSas;
                 //DbgListVesselInfo(info);
             }
             else //New Vessel not found in Dictionary so set default
@@ -1259,14 +1295,16 @@ namespace AY
                     Utilities.Log("Not a vessel type AmpYear is interested in");
                     return;
                 }
+                VesselInfo newvesselinfo = new VesselInfo(newvessel.name, currentTime);
+                AYgameSettings.KnownVessels.Add(newvessel.id, newvesselinfo);
                 Utilities.Log_Debug("AYController Vessel Setting Default Settings");
-                for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
                 {
                     _subsystemToggle[i] = false;
                     _subsystemDrain[i] = 0.0;
                 }
 
-                for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
                     _guiSectionEnableFlag[i] = false;
                 _managerEnabled = true;
                 _showCrew = false;
@@ -1274,7 +1312,7 @@ namespace AY
                 _timeLastElectricity = 0f;
                 if (KKPresent)
                 {
-                    KKLoadVesselSettings(info, true);
+                    KKLoadVesselSettings(newvesselinfo, true);
                 }
             }
             if (!KKPresent) //KabinKraziness not present turn off settings for KabinKraziness on vessel

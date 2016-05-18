@@ -8,7 +8,7 @@ namespace AY
         public override bool TestCondition()
         {
             RSTUtils.Utilities.Log_Debug("AYEngReport Test condition");
-            if (AYController.TotalPowerDrain > AYController.TotalPowerProduced)
+            if (AYController.Instance.TotalPowerDrain > AYController.Instance.TotalPowerProduced)
             {
                 RSTUtils.Utilities.Log_Debug("AYEngReport Total Power Drain > total Power Produced");
                 return false;

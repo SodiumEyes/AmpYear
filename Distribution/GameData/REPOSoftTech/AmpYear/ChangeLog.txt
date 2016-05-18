@@ -1,4 +1,8 @@
-﻿V1.3.0.0 "KSP 1.1.1+ Mega Edition"
+﻿V1.3.1.0 "Post-Mega Update Tweaks & Fixes"
+	Merged Dark-Side and Solar SOI windows into a single window.
+	Mega efficiency code clean-up. Reduce Garbage generation and CPU overhead.
+
+V1.3.0.0 "KSP 1.1.1+ Mega Edition"
 	ION RCS and PPT RCS parts have been split off to their own separate Mod distributable and are no longer part of this mod, this mod will support them if installed separately.
 	Added Stored EC and ReservePower to Dark-Side calculation window. (can be toggled on and off).
 	Added Support for Remote Tech - If you have RemoteTech installed AmpYear functions will be disabled automatically if you have no connection or local control and restored when you do.

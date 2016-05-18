@@ -1,16 +1,18 @@
-﻿/**
- * REPOSoftTech KSP Utilities
- * (C) Copyright 2015, Jamie Leighton
- *
- * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
- * project is in no way associated with nor endorsed by Squad.
- * 
- *
- * Licensed under the Attribution-NonCommercial-ShareAlike (CC BY-NC-SA 4.0) creative commons license. 
- * See <https://creativecommons.org/licenses/by-nc-sa/4.0/> for full details (except where else specified in this file).
- *
- */
+﻿
 
+using HighlightingSystem;
+/**
+* REPOSoftTech KSP Utilities
+* (C) Copyright 2015, Jamie Leighton
+*
+* Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+* project is in no way associated with nor endorsed by Squad.
+* 
+*
+* Licensed under the Attribution-NonCommercial-ShareAlike (CC BY-NC-SA 4.0) creative commons license. 
+* See <https://creativecommons.org/licenses/by-nc-sa/4.0/> for full details (except where else specified in this file).
+*
+*/
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,7 +31,7 @@ namespace RSTUtils
 		EDITOR = 1,
 		EVA = 2,
 		SPACECENTER = 3,
-        OTHER = 4
+		OTHER = 4
 	}
 
 	internal static class Utilities
@@ -50,7 +52,7 @@ namespace RSTUtils
 			{
 				GameState state = SetModeFlag();
 				if (state == GameState.FLIGHT) return true;
-			    return false;
+				return false;
 			}
 		}
 
@@ -60,7 +62,7 @@ namespace RSTUtils
 			{
 				GameState state = SetModeFlag();
 				if (state == GameState.EDITOR) return true;
-			    return false;
+				return false;
 			}
 		}
 
@@ -70,7 +72,7 @@ namespace RSTUtils
 			{
 				GameState state = SetModeFlag();
 				if (state == GameState.EVA) return true;
-			    return false;
+				return false;
 			}
 		}
 
@@ -80,7 +82,7 @@ namespace RSTUtils
 			{
 				GameState state = SetModeFlag();
 				if (state == GameState.SPACECENTER) return true;
-			    return false;
+				return false;
 			}
 		}
 
@@ -100,15 +102,18 @@ namespace RSTUtils
 				return GameState.SPACECENTER;
 			}
 			//if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
-            if (HighLogic.LoadedSceneIsFlight)
+			if (HighLogic.LoadedSceneIsFlight)
 			{
-			    if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
+			    if (FlightGlobals.fetch != null)
 			    {
-                    if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal
-                    {
-                        return GameState.EVA;
-                    }
-                }
+			        if (FlightGlobals.ActiveVessel != null)
+			        {
+			            if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal
+			            {
+			                return GameState.EVA;
+			            }
+			        }
+			    }
 				return GameState.FLIGHT;
 			}
 			if (EditorLogic.fetch != null) // Check if in editor
@@ -133,43 +138,43 @@ namespace RSTUtils
 			return DstFrmHome;
 		}
 
-	    public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
-	    {
-	        // bodies traced against
-	        CelestialBody sun = FlightGlobals.Bodies[0];
-	        if (cb == sun) //If we have passed in the sun as the cb we default to a distance of 700000Km
-	        {
-                sun_dir = Vector3d.forward;
-                sun_dist = sun.Radius + 700000000;
-                sun_dir /= sun_dist;
-                return true;
-	        }
-	        sun_dir = sun.position - cb.position;
-	        sun_dist = sun_dir.magnitude;
-	        sun_dir /= sun_dist;
-	        sun_dist -= sun.Radius;
-	        return true;
-	    }
+		public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
+		{
+			// bodies traced against
+			CelestialBody sun = FlightGlobals.Bodies[0];
+			if (cb == sun) //If we have passed in the sun as the cb we default to a distance of 700000Km
+			{
+				sun_dir = Vector3d.forward;
+				sun_dist = sun.Radius + 700000000;
+				sun_dir /= sun_dist;
+				return true;
+			}
+			sun_dir = sun.position - cb.position;
+			sun_dist = sun_dir.magnitude;
+			sun_dir /= sun_dist;
+			sun_dist -= sun.Radius;
+			return true;
+		}
 
-        // return sun luminosity
-        public static double SolarLuminosity
-        {
-            get
-            {
-                // note: it is 0 before loading first vessel in a game session, we compute it in that case
-                if (PhysicsGlobals.SolarLuminosity <= double.Epsilon)
-                {
-                    double A = FlightGlobals.GetHomeBody().orbit.semiMajorAxis;
-                    return A * A * 12.566370614359172 * PhysicsGlobals.SolarLuminosityAtHome;
-                }
-                return PhysicsGlobals.SolarLuminosity;
-            }
-        }
+		// return sun luminosity
+		public static double SolarLuminosity
+		{
+			get
+			{
+				// note: it is 0 before loading first vessel in a game session, we compute it in that case
+				if (PhysicsGlobals.SolarLuminosity <= double.Epsilon)
+				{
+					double A = FlightGlobals.GetHomeBody().orbit.semiMajorAxis;
+					return A * A * 12.566370614359172 * PhysicsGlobals.SolarLuminosityAtHome;
+				}
+				return PhysicsGlobals.SolarLuminosity;
+			}
+		}
 
-        #endregion GeometryandSpace  
+		#endregion GeometryandSpace  
 
-        #region ObjectsandTransforms
-        public static void PrintTransform(Transform t, string title = "")
+		#region ObjectsandTransforms
+		public static void PrintTransform(Transform t, string title = "")
 		{
 			Log_Debug("------" + title + "------");
 			Log_Debug("Position: " + t.localPosition);
@@ -367,47 +372,47 @@ namespace RSTUtils
 		{
 			return Camera.allCameras.FirstOrDefault(cam => cam.name == camera);
 		}
-        /// <summary>
-        /// Returns True if the Stock Overlay Camera Mode is on, otherwise will return false.
-        /// </summary>
-        public static bool StockOverlayCamIsOn
-        {
-            get
-            {
-                Camera StockOverlayCamera = findCameraByName("InternalSpaceOverlay Host");
-                if (StockOverlayCamera != null) return true;
-                return false;
-            }
-        }
+		/// <summary>
+		/// Returns True if the Stock Overlay Camera Mode is on, otherwise will return false.
+		/// </summary>
+		public static bool StockOverlayCamIsOn
+		{
+			get
+			{
+				Camera StockOverlayCamera = findCameraByName("InternalSpaceOverlay Host");
+				if (StockOverlayCamera != null) return true;
+				return false;
+			}
+		}
 
-        private static Shader DepthMaskShader;
-        private static string DepthMaskShaderName = "DepthMask";
-        /// <summary>
-        /// Will search for and change the Mesh (and all it's children) supplied in MeshName Field on the part supplied to Enabled or NotEnabled based on the SetVisible parm.
-        /// </summary>
-        /// <param name="part">The part to look for the mesh on</param>
-        /// <param name="SetVisible">True will Enable the mesh, False will disable the mesh</param>
-        /// <param name="MeshName">String containing the Mesh name to look for on the part</param>
-        internal static void SetInternalDepthMask(Part part, bool SetVisible, string MeshName = "")
-        {
-            if (DepthMaskShader == null) DepthMaskShader = Shader.Find(DepthMaskShaderName);
-            if (part.internalModel != null)
-            {
-                if (MeshName != "")
-                {
-                    Transform parentTransform = FindInChildren(part.internalModel.transform, MeshName);
-                    if (parentTransform != null)
-                    {
-                        parentTransform.gameObject.SetActive(SetVisible);
-                    }
-                }
-            }
-        }
+		private static Shader DepthMaskShader;
+		private static string DepthMaskShaderName = "DepthMask";
+		/// <summary>
+		/// Will search for and change the Mesh (and all it's children) supplied in MeshName Field on the part supplied to Enabled or NotEnabled based on the SetVisible parm.
+		/// </summary>
+		/// <param name="part">The part to look for the mesh on</param>
+		/// <param name="SetVisible">True will Enable the mesh, False will disable the mesh</param>
+		/// <param name="MeshName">String containing the Mesh name to look for on the part</param>
+		internal static void SetInternalDepthMask(Part part, bool SetVisible, string MeshName = "")
+		{
+			if (DepthMaskShader == null) DepthMaskShader = Shader.Find(DepthMaskShaderName);
+			if (part.internalModel != null)
+			{
+				if (MeshName != "")
+				{
+					Transform parentTransform = FindInChildren(part.internalModel.transform, MeshName);
+					if (parentTransform != null)
+					{
+						parentTransform.gameObject.SetActive(SetVisible);
+					}
+				}
+			}
+		}
 
-        #endregion Cameras
+		#endregion Cameras
 
-        #region Animations
-        public static IEnumerator WaitForAnimation(Animation animation, string name)
+		#region Animations
+		public static IEnumerator WaitForAnimation(Animation animation, string name)
 		{
 			do
 			{
@@ -547,22 +552,22 @@ namespace RSTUtils
 		// Sets the kerbal layers to make them visible (Thawed) or not (Frozen), setVisible = true sets layers to visible, false turns them off.
 		internal static void setFrznKerbalLayer(Part part, ProtoCrewMember kerbal, bool setVisible)
 		{
-		    if (!setVisible)
-		    {
-                kerbal.KerbalRef.SetVisibleInPortrait(setVisible);
-		        kerbal.KerbalRef.InPart = null;
-		    }
-                
-            kerbal.KerbalRef.gameObject.SetActive(setVisible);
-		    if (setVisible)
-		    {
-                kerbal.KerbalRef.SetVisibleInPortrait(setVisible);
-		        kerbal.KerbalRef.InPart = part;
-		    }
-                
-        }
+			if (!setVisible)
+			{
+				kerbal.KerbalRef.SetVisibleInPortrait(setVisible);
+				kerbal.KerbalRef.InPart = null;
+			}
+				
+			kerbal.KerbalRef.gameObject.SetActive(setVisible);
+			if (setVisible)
+			{
+				kerbal.KerbalRef.SetVisibleInPortrait(setVisible);
+				kerbal.KerbalRef.InPart = part;
+			}
+				
+		}
 
-        internal static RuntimeAnimatorController kerbalIVAController;
+		internal static RuntimeAnimatorController kerbalIVAController;
 
 		internal static void subdueIVAKerbalAnimations(Kerbal kerbal)
 		{
@@ -617,99 +622,99 @@ namespace RSTUtils
 			}
 		}
 
-        #endregion Kerbals
+		#endregion Kerbals
 
-        #region Vessels
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        /// <summary>
-        /// Returns True if thatVessel is the activevessel and the camera is in IVA mode, otherwise returns false.
-        /// </summary>
-        /// <param name="thatVessel"></param>
-        /// <returns></returns>
-        internal static bool VesselIsInIVA(Vessel thatVessel)
+		#region Vessels
+		// The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+		/// <summary>
+		/// Returns True if thatVessel is the activevessel and the camera is in IVA mode, otherwise returns false.
+		/// </summary>
+		/// <param name="thatVessel"></param>
+		/// <returns></returns>
+		internal static bool VesselIsInIVA(Vessel thatVessel)
 		{
 			// Inactive IVAs are renderer.enabled = false, this can and should be used...
 			// ... but now it can't because we're doing transparent pods, so we need a more complicated way to find which pod the player is in.
 			return HighLogic.LoadedSceneIsFlight && IsActiveVessel(thatVessel) && IsInIVA;
 		}
 
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        /// <summary>
-        /// Returns True if thatVessel is the ActiveVessel, otherwise returns false.
-        /// </summary>
-        /// <param name="thatVessel"></param>
-        /// <returns></returns>
-        internal static bool IsActiveVessel(Vessel thatVessel)
+		// The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+		/// <summary>
+		/// Returns True if thatVessel is the ActiveVessel, otherwise returns false.
+		/// </summary>
+		/// <param name="thatVessel"></param>
+		/// <returns></returns>
+		internal static bool IsActiveVessel(Vessel thatVessel)
 		{
 			return HighLogic.LoadedSceneIsFlight && thatVessel != null && thatVessel.isActiveVessel;
 		}
-        
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static bool UserIsInPod(Part thisPart)
-        {
-
-            // Just in case, check for whether we're not in flight.
-            if (!HighLogic.LoadedSceneIsFlight)
-                return false;
-
-            // If we're not in IVA, or the part does not have an instantiated IVA, the user can't be in it.
-            if (!VesselIsInIVA(thisPart.vessel) || thisPart.internalModel == null)
-                return false;
-
-            // Now that we got that out of the way, we know that the user is in SOME pod on our ship. We just don't know which.
-            // Let's see if he's controlling a kerbal in our pod.
-            if (ActiveKerbalIsLocal(thisPart))
-                return true;
-
-            // There still remains an option of InternalCamera which we will now sort out.
-            if (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal)
-            {
-                // So we're watching through an InternalCamera. Which doesn't record which pod we're in anywhere, like with kerbals.
-                // But we know that if the camera's transform parent is somewhere in our pod, it's us.
-                // InternalCamera.Instance.transform.parent is the transform the camera is attached to that is on either a prop or the internal itself.
-                // The problem is figuring out if it's in our pod, or in an identical other pod.
-                // Unfortunately I don't have anything smarter right now than get a list of all transforms in the internal and cycle through it.
-                // This is a more annoying computation than looking through every kerbal in a pod (there's only a few of those,
-                // but potentially hundreds of transforms) and might not even be working as I expect. It needs testing.
-                return thisPart.internalModel.GetComponentsInChildren<Transform>().Any(thisTransform => thisTransform == InternalCamera.Instance.transform.parent);
-            }
-
-            return false;
-        }
-
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static bool ActiveKerbalIsLocal(this Part thisPart)
-        {
-            return FindCurrentKerbal(thisPart) != null;
-        }
-
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        public static Kerbal FindCurrentKerbal(this Part thisPart)
-        {
-            if (thisPart.internalModel == null || !VesselIsInIVA(thisPart.vessel))
-                return null;
-            // InternalCamera instance does not contain a reference to the kerbal it's looking from.
-            // So we have to search through all of them...
-            return (from thatSeat in thisPart.internalModel.seats
-                    where thatSeat.kerbalRef != null
-                    where thatSeat.kerbalRef.eyeTransform == InternalCamera.Instance.transform.parent
-                    select thatSeat.kerbalRef).FirstOrDefault();
-        }
-
-        // The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-        /// <summary>
-        /// True if Camera is in IVA mode, otherwise false.
-        /// </summary>
-        internal static bool IsInIVA
+		
+		// The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+		public static bool UserIsInPod(Part thisPart)
 		{
-		    get { return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA; }
+
+			// Just in case, check for whether we're not in flight.
+			if (!HighLogic.LoadedSceneIsFlight)
+				return false;
+
+			// If we're not in IVA, or the part does not have an instantiated IVA, the user can't be in it.
+			if (!VesselIsInIVA(thisPart.vessel) || thisPart.internalModel == null)
+				return false;
+
+			// Now that we got that out of the way, we know that the user is in SOME pod on our ship. We just don't know which.
+			// Let's see if he's controlling a kerbal in our pod.
+			if (ActiveKerbalIsLocal(thisPart))
+				return true;
+
+			// There still remains an option of InternalCamera which we will now sort out.
+			if (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal)
+			{
+				// So we're watching through an InternalCamera. Which doesn't record which pod we're in anywhere, like with kerbals.
+				// But we know that if the camera's transform parent is somewhere in our pod, it's us.
+				// InternalCamera.Instance.transform.parent is the transform the camera is attached to that is on either a prop or the internal itself.
+				// The problem is figuring out if it's in our pod, or in an identical other pod.
+				// Unfortunately I don't have anything smarter right now than get a list of all transforms in the internal and cycle through it.
+				// This is a more annoying computation than looking through every kerbal in a pod (there's only a few of those,
+				// but potentially hundreds of transforms) and might not even be working as I expect. It needs testing.
+				return thisPart.internalModel.GetComponentsInChildren<Transform>().Any(thisTransform => thisTransform == InternalCamera.Instance.transform.parent);
+			}
+
+			return false;
 		}
-        /// <summary>
-        /// True if Camera is in Internal mode, otherwise false.
-        /// </summary>
+
+		// The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+		public static bool ActiveKerbalIsLocal(this Part thisPart)
+		{
+			return FindCurrentKerbal(thisPart) != null;
+		}
+
+		// The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+		public static Kerbal FindCurrentKerbal(this Part thisPart)
+		{
+			if (thisPart.internalModel == null || !VesselIsInIVA(thisPart.vessel))
+				return null;
+			// InternalCamera instance does not contain a reference to the kerbal it's looking from.
+			// So we have to search through all of them...
+			return (from thatSeat in thisPart.internalModel.seats
+					where thatSeat.kerbalRef != null
+					where thatSeat.kerbalRef.eyeTransform == InternalCamera.Instance.transform.parent
+					select thatSeat.kerbalRef).FirstOrDefault();
+		}
+
+		// The following method is taken from RasterPropMonitor as-is. Which is covered by GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+		/// <summary>
+		/// True if Camera is in IVA mode, otherwise false.
+		/// </summary>
+		internal static bool IsInIVA
+		{
+			get { return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA; }
+		}
+		/// <summary>
+		/// True if Camera is in Internal mode, otherwise false.
+		/// </summary>
 		internal static bool IsInInternal
 		{
-		    get { return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal; }
+			get { return CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal; }
 		}
 
 		internal static bool ValidVslType(Vessel v)
@@ -743,41 +748,67 @@ namespace RSTUtils
 			return -1;
 		}
 
-	    /// <summary>
-	    /// Will Spawn the Internal Model for a part, we do this for DeepFreeze Mod because it doesn't work if the crew capacity is zero, which may be
-	    /// the case sometimes for DeepFreeze parts.
-	    /// </summary>
-	    /// <param name="part">The Part to spawn the internal model for</param>
-	    /// <returns>True if successful or False if not</returns>
-	    internal static bool spawnInternal(Part part)
-	    {
-	        try
-	        {
-                if (part.internalModel != null) return true;
-                part.CreateInternalModel();
-	            if (part.internalModel != null)
-	            {
-	                part.internalModel.Initialize(part);
-                    part.internalModel.SpawnCrew();
-	            }
-	            else
-	            {
-	                return false;
-	            }
+		/// <summary>
+		/// Will Spawn the Internal Model for a part, we do this for DeepFreeze Mod because it doesn't work if the crew capacity is zero, which may be
+		/// the case sometimes for DeepFreeze parts.
+		/// </summary>
+		/// <param name="part">The Part to spawn the internal model for</param>
+		/// <returns>True if successful or False if not</returns>
+		internal static bool spawnInternal(Part part)
+		{
+			try
+			{
+				if (part.internalModel != null) return true;
+				part.CreateInternalModel();
+				if (part.internalModel != null)
+				{
+					part.internalModel.Initialize(part);
+					part.internalModel.SpawnCrew();
+				}
+				else
+				{
+					return false;
+				}
 
-                return true;
-            }
-	        catch (Exception)
-	        {
-	            return false;
-	        }
-	    }
+				return true;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+		}
 
-        #endregion Vessels
 
-        #region Temperature
-        //Temperature
-        internal static float KelvintoCelsius(float kelvin)
+		public static void PartHighlight(Part part, bool on)
+		{
+			if (on)
+			{
+				if (part.highlighter == null)
+				{
+					var color = XKCDColors.Yellow;
+					var model = part.FindModelTransform("model");
+					part.highlighter = model.gameObject.AddComponent<Highlighter>();
+					part.highlighter.ConstantOn(color);
+					part.SetHighlightColor(color);
+					part.SetHighlight(true, false);
+				}
+			}
+			else
+			{
+				if (part.highlighter != null)
+				{
+					part.SetHighlightDefault();
+					part.highlighter.gameObject.DestroyGameObjectImmediate();
+					part.highlighter = null;
+				}
+			}
+		}
+
+		#endregion Vessels
+
+		#region Temperature
+		//Temperature
+		internal static float KelvintoCelsius(float kelvin)
 		{
 			return kelvin - 273.15f;
 		}
@@ -891,7 +922,7 @@ namespace RSTUtils
 		internal static Rect rectToolTipPosition;
 		internal static Int32 intTooltipVertOffset = 12;
 		internal static Int32 intTooltipMaxWidth = 250;
-		//timer so it only displays for a preriod of time
+		//timer so it only displays for a period of time
 		internal static float fltTooltipTime;
 		internal static float fltMaxToolTipTime = 15f;
 		internal static GUIStyle _TooltipStyle;
@@ -1051,7 +1082,7 @@ namespace RSTUtils
 					break;
 			}
 			//Loop through all the mesages we found.
-		    List<ScreenMessage> activemessagelist = ScreenMessages.Instance.ActiveMessages;
+			List<ScreenMessage> activemessagelist = ScreenMessages.Instance.ActiveMessages;
 			foreach (var msgtext in messagetexts)
 			{
 				//If the user specified text to search for only delete messages that contain that text.
@@ -1283,7 +1314,7 @@ namespace RSTUtils
 				{
 					return true;
 				}
-			    return false;
+				return false;
 			}
 		}
 

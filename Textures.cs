@@ -40,8 +40,6 @@ namespace AY
         internal static Texture2D BtnPriority3 = new Texture2D(18, 18, TextureFormat.ARGB32, false);
         internal static Texture2D BtnIncInCalcs = new Texture2D(18, 18, TextureFormat.ARGB32, false);
         internal static Texture2D BtnEspInc = new Texture2D(18, 18, TextureFormat.ARGB32, false);
-        internal static Texture2D BtnUnselected = new Texture2D(18, 18, TextureFormat.ARGB32, false);
-        internal static Texture2D BtnSelected = new Texture2D(18, 18, TextureFormat.ARGB32, false);
         internal static Texture2D TooltipBox = new Texture2D(10, 10, TextureFormat.ARGB32, false);
         internal static Texture2D BtnRedCross = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResize = new Texture2D(16, 16, TextureFormat.ARGB32, false);
@@ -75,8 +73,6 @@ namespace AY
                 LoadImageFromFile(ref BtnPriority3, "AYbtnPriority3.png", PathIconsPath);
                 LoadImageFromFile(ref BtnIncInCalcs, "AYbtnIncInCalcs.png", PathIconsPath);
                 LoadImageFromFile(ref BtnEspInc, "AYbtnESPInc.png", PathIconsPath);
-                LoadImageFromFile(ref BtnUnselected, "AYbtnUnselected.png", PathIconsPath);
-                LoadImageFromFile(ref BtnSelected, "AYbtnSelected.png", PathIconsPath);
                 LoadImageFromFile(ref TooltipBox, "AYToolTipBox.png", PathIconsPath);
                 LoadImageFromFile(ref BtnRedCross, "AYbtnRedCross.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResize, "AYbtnResize.png", PathIconsPath);

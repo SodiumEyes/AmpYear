@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RSTUtils;
 
 namespace AY
 {
     internal static class AYVesselPartLists
     {
-        internal static SortedDictionary<string, PwrPartList> VesselProdPartsList { get; set; }
-        internal static SortedDictionary<string, PwrPartList> VesselConsPartsList { get; set; }
+        internal static Dictionary<string, PwrPartList> VesselProdPartsList { get; set; }
+        internal static Dictionary<string, PwrPartList> VesselConsPartsList { get; set; }
         
         internal static void InitDictionaries()
         {
-            VesselProdPartsList = new SortedDictionary<string, PwrPartList>();
-            VesselConsPartsList = new SortedDictionary<string, PwrPartList>();
+            VesselProdPartsList = new Dictionary<string, PwrPartList>();
+            VesselConsPartsList = new Dictionary<string, PwrPartList>();
         }
 
         internal static void ResetDictionaries()
@@ -32,122 +33,134 @@ namespace AY
         }
 
         //Current Vessel Parts list maintenance - used primarily in editor for parts list, also used for emergency shutdown procedure
+        internal static PwrPartList partFnd;
+        internal static KeyValuePair<string, ESPValues> tmpESPDfltValue;
 
-        internal static void AddPart(uint pkey, PwrPartList partAdd, bool prodPrt, bool partSolar)
+        /// <summary>
+        /// Add or Amend part in the VesselProdPartsList or VesselConsPartsList
+        /// </summary>
+        /// <param name="pkey">the CraftID</param>
+        /// <param name="prtName">the part Name</param>
+        /// <param name="prtModuleName">the partmodule Module Name</param>
+        /// <param name="prtSubsystem">True if it is an AmpYear Subsystem, otherwise False</param>
+        /// <param name="prtActive">True if part is Active, otherwise False</param>
+        /// <param name="prtPowerF">The Amount of EC being drawn (float)</param>
+        /// <param name="prodPrt">True if it is producing Power, otherwise False</param>
+        /// <param name="partSolar">True if the part is Solar dependant, otherwise False</param>
+        internal static void AddPart(uint pkey, string prtName, string prtModuleName, bool prtSubsystem, bool prtActive, float prtPowerF, bool prodPrt, bool partSolar)
         {
-            PwrPartList partFnd;
-
-            string keyValue = CreatePartKey(pkey, partAdd.PrtModuleName);
+            string keyValue = CreatePartKey(pkey, prtModuleName);
 
             if (prodPrt) // Producer part list
             {
                 if (VesselProdPartsList.TryGetValue(keyValue, out partFnd))   //Try to get entry with index = 1 for key. If found, find the next available index
                 {
-                    partAdd.PrtEditorInclude = VesselProdPartsList[keyValue].PrtEditorInclude;
-                    partAdd.PrtUserEditorInclude = VesselProdPartsList[keyValue].PrtUserEditorInclude;
-                    partAdd.PrtEmergShutDnPriority = VesselProdPartsList[keyValue].PrtEmergShutDnPriority;
-                    partAdd.PrtEmergShutDnInclude = VesselProdPartsList[keyValue].PrtEmergShutDnInclude;
+                    partFnd.PrtActive = prtActive;
+                    partFnd.PrtName = prtName;
+                    partFnd.PrtSubsystem = prtSubsystem;
                     if (!AYController.Emergencypowerdownactivated && !AYController.Emergencypowerdownreset 
                         && !AYController.EmgcyShutOverrideStarted)
-                        partAdd.PrtPreEmergShutDnStateActive = partAdd.PrtActive;
+                        //VesselProdPartsList[keyValue].PrtPreEmergShutDnStateActive = prtActive;
+                        partFnd.PrtPreEmergShutDnStateActive = prtActive;
                     if (AYController.ShowDarkSideWindow && partSolar)
-                        partAdd.PrtEditorInclude = false;
-                    if (partAdd.PrtModuleName != "ModuleResourceConverter" || partFnd.PrtPowerF == 0.0)
+                        partFnd.PrtEditorInclude = false;
+                    if (prtModuleName != "ModuleResourceConverter" || partFnd.PrtPowerF == 0.0)
                     {
-                        if (partAdd.PrtEditorInclude && partAdd.PrtActive)
-                            AYController.TotalPowerProduced += partAdd.PrtPowerF;
-                        partAdd.PrtPowerF += partFnd.PrtPowerF;
-                        partAdd.PrtPower = partAdd.PrtPowerF.ToString("####0.##");
+                        if (partFnd.PrtEditorInclude && prtActive)
+                            AYController.Instance.TotalPowerProduced += prtPowerF;
+                        partFnd.PrtPowerF += prtPowerF;
+                        partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.##");
                     }
-                    partAdd.PrtSolarDependant = partSolar;
-                    var tmpEntry =
-                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == partAdd.PrtModuleName);
-                    if (tmpEntry.Key != null)
-                        partAdd.ValidprtEmergShutDn = tmpEntry.Value.EmergShutDnDflt;
+                    partFnd.PrtSolarDependant = partSolar;
+                    tmpESPDfltValue =
+                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == prtModuleName);
+                    if (tmpESPDfltValue.Key != null)
+                        partFnd.ValidprtEmergShutDn = tmpESPDfltValue.Value.EmergShutDnDflt;
                     else
                     {
-                        partAdd.ValidprtEmergShutDn = false;
+                        partFnd.ValidprtEmergShutDn = false;
                     }
-                    VesselProdPartsList[keyValue] = partAdd;
                 }
                 else
                 {
+                    PwrPartList newProdPart = new PwrPartList(prtName, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
                     if (AYController.ShowDarkSideWindow && partSolar)
                     {
-                        partAdd.PrtEditorInclude = false;
-                        partAdd.PrtUserEditorInclude = true;
+                        newProdPart.PrtEditorInclude = false;
+                        newProdPart.PrtUserEditorInclude = true;
                     }
                     else
                     {
-                        partAdd.PrtEditorInclude = true;
-                        partAdd.PrtUserEditorInclude = true;
+                        newProdPart.PrtEditorInclude = true;
+                        newProdPart.PrtUserEditorInclude = true;
                     }
-                    if (partAdd.PrtEditorInclude && partAdd.PrtActive)
-                        AYController.TotalPowerProduced += partAdd.PrtPowerF;
-                    partAdd.PrtPower = partAdd.PrtPowerF.ToString("####0.##");
-                    partAdd.PrtSolarDependant = partSolar;
-                    var tmpEntry =
-                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == partAdd.PrtModuleName);
-                    if (tmpEntry.Key != null)
+                    if (newProdPart.PrtEditorInclude && prtActive)
+                        AYController.Instance.TotalPowerProduced += prtPowerF;
+                    newProdPart.PrtPower = newProdPart.PrtPowerF.ToString("####0.##");
+                    newProdPart.PrtSolarDependant = partSolar;
+                    tmpESPDfltValue =
+                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == prtModuleName);
+                    if (tmpESPDfltValue.Key != null)
                     {
-                        partAdd.ValidprtEmergShutDn = tmpEntry.Value.EmergShutDnDflt;
-                        partAdd.PrtEmergShutDnPriority = tmpEntry.Value.EmergShutPriority;
+                        newProdPart.ValidprtEmergShutDn = tmpESPDfltValue.Value.EmergShutDnDflt;
+                        newProdPart.PrtEmergShutDnPriority = tmpESPDfltValue.Value.EmergShutPriority;
                     }
                     else
                     {
-                        partAdd.ValidprtEmergShutDn = false;
-                        partAdd.PrtEmergShutDnPriority = ESPPriority.MEDIUM;
+                        newProdPart.ValidprtEmergShutDn = false;
+                        newProdPart.PrtEmergShutDnPriority = ESPPriority.MEDIUM;
                     }
-                    VesselProdPartsList.Add(keyValue, partAdd);
+                    VesselProdPartsList.Add(keyValue, newProdPart);
                 }
             }
             else // consumer part list
             {
                 if (VesselConsPartsList.TryGetValue(keyValue, out partFnd))
                 {
-                    partAdd.PrtEditorInclude = VesselConsPartsList[keyValue].PrtEditorInclude;
-                    partAdd.PrtEmergShutDnPriority = VesselConsPartsList[keyValue].PrtEmergShutDnPriority;
-                    partAdd.PrtEmergShutDnInclude = VesselConsPartsList[keyValue].PrtEmergShutDnInclude;
+                    partFnd.PrtActive = prtActive;
+                    partFnd.PrtName = prtName;
+                    partFnd.PrtSubsystem = prtSubsystem;
                     if (!AYController.Emergencypowerdownactivated && !AYController.Emergencypowerdownreset 
                         && !AYController.EmgcyShutOverrideStarted)
-                        partAdd.PrtPreEmergShutDnStateActive = partAdd.PrtActive;
-                    if (partAdd.PrtModuleName != "ModuleResourceConverter" || partFnd.PrtPowerF == 0.0)
+                        partFnd.PrtPreEmergShutDnStateActive = prtActive;
+                    if (prtModuleName != "ModuleResourceConverter" || partFnd.PrtPowerF == 0.0)
                     {
-                        if (partAdd.PrtEditorInclude && partAdd.PrtActive)
-                            AYController.TotalPowerDrain += partAdd.PrtPowerF;
-                        partAdd.PrtPowerF += partFnd.PrtPowerF;
-                        partAdd.PrtPower = partAdd.PrtPowerF.ToString("####0.##");
+                        if (partFnd.PrtEditorInclude && prtActive)
+                            AYController.Instance.TotalPowerDrain += prtPowerF;
+                        partFnd.PrtPowerF += prtPowerF;
+                        partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.##");
                     }
-                    partAdd.PrtSolarDependant = partSolar;
-                    var tmpEntry =
-                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == partAdd.PrtModuleName);
-                    if (tmpEntry.Key != null)
-                        partAdd.ValidprtEmergShutDn = tmpEntry.Value.EmergShutDnDflt;
+                    partFnd.PrtSolarDependant = partSolar;
+                    tmpESPDfltValue =
+                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == prtModuleName);
+                    if (tmpESPDfltValue.Key != null)
+                        partFnd.ValidprtEmergShutDn = tmpESPDfltValue.Value.EmergShutDnDflt;
                     else
                     {
-                        partAdd.ValidprtEmergShutDn = false;
+                        partFnd.ValidprtEmergShutDn = false;
                     }
-                    VesselConsPartsList[keyValue] = partAdd;
                 }
                 else
                 {
-                    if (partAdd.PrtActive)
-                        AYController.TotalPowerDrain += partAdd.PrtPowerF;
-                    partAdd.PrtPower = partAdd.PrtPowerF.ToString("####0.##");
-                    partAdd.PrtSolarDependant = partSolar;
-                    var tmpEntry =
-                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == partAdd.PrtModuleName);
-                    if (tmpEntry.Key != null)
+                    PwrPartList newConsPart = new PwrPartList(prtName, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
+                    if (prtActive)
+                        AYController.Instance.TotalPowerDrain += prtPowerF;
+                    newConsPart.PrtPowerF = prtPowerF;
+                    newConsPart.PrtPower = newConsPart.PrtPowerF.ToString("####0.##");
+                    newConsPart.PrtSolarDependant = partSolar;
+                    tmpESPDfltValue =
+                        AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == prtModuleName);
+                    if (tmpESPDfltValue.Key != null)
                     {
-                        partAdd.ValidprtEmergShutDn = tmpEntry.Value.EmergShutDnDflt;
-                        partAdd.PrtEmergShutDnPriority = tmpEntry.Value.EmergShutPriority;
+                        newConsPart.ValidprtEmergShutDn = tmpESPDfltValue.Value.EmergShutDnDflt;
+                        newConsPart.PrtEmergShutDnPriority = tmpESPDfltValue.Value.EmergShutPriority;
                     }
                     else
                     {
-                        partAdd.ValidprtEmergShutDn = false;
-                        partAdd.PrtEmergShutDnPriority = ESPPriority.MEDIUM;
+                        newConsPart.ValidprtEmergShutDn = false;
+                        newConsPart.PrtEmergShutDnPriority = ESPPriority.MEDIUM;
                     }
-                    VesselConsPartsList.Add(keyValue, partAdd);
+                    VesselConsPartsList.Add(keyValue, newConsPart);
                 }
             }
             if (AYController.Instance.PartsToDelete.Contains(keyValue))
@@ -156,10 +169,14 @@ namespace AY
             }
         }
 
+        internal static StringBuilder TempKey = new StringBuilder();
         internal static string CreatePartKey(uint partId, string partModuleName)
         {
-            string returnval = partId + "," + partModuleName;
-            return returnval;
+            TempKey.Length = 0;
+            TempKey.Append(partId);
+            TempKey.Append(',');
+            TempKey.Append(partModuleName);
+            return TempKey.ToString();
         }
 
         internal static uint GetPartKeyVals(string inputKeyString, out string partModuleName)

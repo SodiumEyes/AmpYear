@@ -30,9 +30,9 @@ namespace AY
         public VesselType VesselType = VesselType.Unknown;
         public int NumCrew;
         public int NumOccupiedParts;
-        public bool[] SubsystemToggle = new bool[Enum.GetValues(typeof(Subsystem)).Length];
-        public double[] SubsystemDrain = new double[Enum.GetValues(typeof(Subsystem)).Length];
-        public bool[] GuiSectionEnableFlag = new bool[Enum.GetValues(typeof(GUISection)).Length];
+        public bool[] SubsystemToggle = new bool[LoadGlobals.SubsystemArrayCache.Length]; //Enum.GetValues(typeof(Subsystem)).Length];
+        public double[] SubsystemDrain = new double[LoadGlobals.SubsystemArrayCache.Length]; //Enum.GetValues(typeof(Subsystem)).Length];
+        public bool[] GuiSectionEnableFlag = new bool[LoadGlobals.GuiSectionArrayCache.Length]; //Enum.GetValues(typeof(GUISection)).Length];
         public bool ManagerEnabled = true;
         public bool ShowCrew = false;
         public bool ShowParts = false;
@@ -81,13 +81,13 @@ namespace AY
             info.VesselType = Utilities.GetNodeValue(node, "vesselType", VesselType.Unknown);
             node.TryGetValue("numCrew", ref info.NumCrew);
             node.TryGetValue("numOccupiedParts", ref info.NumOccupiedParts);
-            for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+            for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
             {
                 string nme = ((Subsystem)i).ToString();
                 node.TryGetValue(nme + "Toggle", ref info.SubsystemToggle[i]);
                 node.TryGetValue(nme + "Drain", ref info.SubsystemDrain[i]);
             }
-            for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+            for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
             {
                 string nme = ((GUISection)i).ToString();
                 node.TryGetValue(nme + "Flag", ref info.GuiSectionEnableFlag[i]);
@@ -130,13 +130,13 @@ namespace AY
             node.AddValue("numCrew", NumCrew);
             node.AddValue("numOccupiedParts", NumOccupiedParts);
 
-            for (int i = 0; i < Enum.GetValues(typeof(Subsystem)).Length; i++)
+            for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
             {
                 string nme = ((Subsystem)i).ToString();
                 node.AddValue(nme + "Toggle", SubsystemToggle[i]);
                 node.AddValue(nme + "Drain", SubsystemDrain[i]);
             }
-            for (int i = 0; i < Enum.GetValues(typeof(GUISection)).Length; i++)
+            for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
             {
                 string nme = ((GUISection)i).ToString();
                 node.AddValue(nme + "Flag", GuiSectionEnableFlag[i]);

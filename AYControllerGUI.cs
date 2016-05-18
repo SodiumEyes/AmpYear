@@ -37,7 +37,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using KSP.UI.Screens;
 using UnityEngine;
 using RSTUtils;
@@ -52,7 +51,8 @@ namespace AY
 
         private ApplicationLauncherButton _stockToolbarButton = null; // Stock Toolbar Button
         private readonly double[] _reserveTransferIncrements = new double[3] { 0.25, 0.1, 0.01 };
-        private bool[] _guiSectionEnableFlag = new bool[Enum.GetValues(typeof(GUISection)).Length];
+        private String[] incrementPercentString = new String[3];
+        private bool[] _guiSectionEnableFlag = new bool[LoadGlobals.GuiSectionArrayCache.Length];
         private const float FWINDOW_WIDTH = 220;
         private const float EWINDOW_WIDTH = 220;
         private const float WINDOW_BASE_HEIGHT = 140;
@@ -65,9 +65,8 @@ namespace AY
         private static int _dwindowId;
         private static int _wwindowId;
         private static int _swindowId;
-        private static int _SOIwindowId;
-        private bool[] _subsystemToggle = new bool[Enum.GetValues(typeof(Subsystem)).Length];
-        private double[] _subsystemDrain = new double[Enum.GetValues(typeof(Subsystem)).Length];
+        private bool[] _subsystemToggle = new bool[LoadGlobals.SubsystemArrayCache.Length]; // Enum.GetValues(typeof(Subsystem)).Length];
+        private double[] _subsystemDrain = new double[LoadGlobals.SubsystemArrayCache.Length]; //Enum.GetValues(typeof(Subsystem)).Length];
         private bool _managerEnabled = true;
         private bool _showCrew = false;
         private bool _showParts = false;
@@ -81,20 +80,15 @@ namespace AY
         private static bool _checkLowEcWarning = true;
         private static bool _lowEcWarningWindowDisplay = false;
         internal static bool ShowDarkSideWindow = false;
-        internal static bool ShowSOIWindow = false;
         private CelestialBody _bodyTarget;
-        private CelestialBody _solarSOITarget;
         private int _darkTargetSelection = -1;
-        private int _solarSOISelection = -1;
         private int _selectedDarkTarget = -1;
-        private int _selectedSolarSOITarget = -1;
+        private string _selectedHighlitePart = "";
         private int _showDarkOrbit = 100;
         private List<CelestialBody> _darkBodies = new List<CelestialBody>();
         private Rect _fwindowPos = new Rect(40, Screen.height / 2 - 100, FWINDOW_WIDTH, 200); // Flight Window position and size
         private Rect _ewindowPos = new Rect(40, Screen.height / 2 - 100, EWINDOW_WIDTH, 200); // Editor Window position and size
         private Rect _dwindowPos = new Rect(40, Screen.height / 2 - 100, 320, 200); // DarkSide Window position and size
-        private Rect _SOIwindowPos = new Rect(40, Screen.height / 2 - 100, 320, 200); // Solar Panel SOI Window position and size
-        //private Rect _warnWinPos = new Rect(Screen.width / 2 - 250, Screen.height / 4, 700, 150);  // Warp warning window position and size
         private Rect _epLwindowPos = new Rect(270, Screen.height / 2 - 100, 600, 600); //Extended Parts List Window position and size
         private float _eplPartName, _eplPartModuleName, _eplec, _eplProdListHeight, _eplConsListHeight;
         private Rect _eplHeaders2, _eplProdlistbox, _eplConslistbox;
@@ -105,7 +99,31 @@ namespace AY
         private bool PrtProdESPIncludeAll = true;
         private bool PrtConsEditorIncludeAll = true;
         private bool PrtConsESPIncludeAll = true;
-        
+        private double timeRemainReserve;
+        private double timeRemainMains;
+        private double powerPercent;
+        private double reservePercent;
+        private string ststext = "";
+        private bool tmpShowDarkSideWindow;
+        private float _totalProdPower = 0f;
+        private string partModuleName = string.Empty;
+        private int Orbit;
+        private string strOrbit;
+        private int tmpESPPriority;
+        private bool tmpPrtConsEditorIncludeAll, tmpPrtConsEmergShutDnIncludeAll, tmpPrtConsOneAll, tmpPrtConsThreeAll, tmpPrtConsTwoAll;
+
+        private bool tmpPrtEditorInclude,
+            tmpPrtEmergShutDnInclude,
+            tmpPrtProdEditorIncludeAll,
+            tmpPrtProdEmergShutDnIncludeAll;
+
+        private bool tmpPrtProdOneAll, tmpPrtProdThreeAll, tmpPrtProdTwoAll;
+        private float _totalConsPower;
+        private Vector3d sun_dir;
+        private double sun_dist;
+        private double darkTime, eCdifference, ECprodfordarkTime, ECreqdfordarkTime, powerSupply;
+        private uint tmpPartKey;
+
         #region GUIFunctions
 
 
@@ -149,7 +167,6 @@ namespace AY
                     CheckPowerLowWarning();
                     if (_lowEcWarningWindowDisplay)
                     {
-                        //_warnWinPos = GUILayout.Window(_wwindowId, _warnWinPos, StopAndWarn, "WARNING!", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                         PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "AmpYear Warning!",
                             "Ship Electric charge has dropped below the Warp Warning Percentage.\n This will not trigger again until Electric charge > Warning Percentage again.", "OK", false, HighLogic.UISkin);
                         _lowEcWarningWindowDisplay = false;
@@ -186,7 +203,7 @@ namespace AY
                 try
                 {
                     if (!Utilities.WindowVisibile(_dwindowPos)) Utilities.MakeWindowVisible(_dwindowPos);
-                    _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, "AmpYear Dark-Side", GUILayout.MinWidth(330), GUILayout.MinHeight(320));
+                    _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, "AmpYear Dark-Side & Solar SOI", GUILayout.MinWidth(330), GUILayout.MinHeight(320));
                 }
                 catch (Exception ex)
                 {
@@ -194,21 +211,7 @@ namespace AY
                     Utilities.Log("Exception: {0}", ex);
                 }
             }
-
-            if (ShowSOIWindow)
-            {
-                try
-                {
-                    if (!Utilities.WindowVisibile(_SOIwindowPos)) Utilities.MakeWindowVisible(_SOIwindowPos);
-                    _SOIwindowPos = GUILayout.Window(_SOIwindowId, _SOIwindowPos, WindowSOI, "AmpYear Solar Panel SOI", GUILayout.MinWidth(330), GUILayout.MinHeight(320));
-                }
-                catch (Exception ex)
-                {
-                    Utilities.Log("Unable to draw solar Panel SOI GUI");
-                    Utilities.Log("Exception: {0}", ex);
-                }
-            }
-
+            
             if (AYsettings.TooltipsOn)
                 Utilities.DrawToolTip();
         }
@@ -246,7 +249,7 @@ namespace AY
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            foreach (GUISection section in Enum.GetValues(typeof(GUISection)))
+            foreach (GUISection section in LoadGlobals.GuiSectionArrayCache) // Enum.GetValues(typeof(GUISection)))
             {
                 if (section == GUISection.LUXURY)
                 {
@@ -295,7 +298,7 @@ namespace AY
                     {
                         if (TotalElectricChargeCapacity > 0.0)
                         {
-                            double powerPercent = TotalElectricCharge / TotalElectricChargeCapacity * 100.0;
+                            powerPercent = TotalElectricCharge / TotalElectricChargeCapacity * 100.0;
                             if (powerPercent < 20.00)
                             {
                                 GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.AlertStyle);
@@ -331,7 +334,7 @@ namespace AY
 
 
                             //Time Remaining in Main batteries
-                            double timeRemainMains = TotalElectricCharge / TotalPowerDrain;
+                            timeRemainMains = TotalElectricCharge / TotalPowerDrain;
                             if (timeRemainMains < 300) //5 mins
                             {
                                 GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.AlertStyle);
@@ -349,7 +352,7 @@ namespace AY
                             }
 
                             //Time Remaining in Reserver Batteries
-                            double timeRemainReserve = TotalReservePower / TotalPowerDrain;
+                            timeRemainReserve = TotalReservePower / TotalPowerDrain;
                             GUILayout.Label(
                                     new GUIContent(
                                         "Reserve Time: " + KSPUtil.PrintTimeCompact((int) timeRemainReserve, false),
@@ -420,7 +423,7 @@ namespace AY
             if (ManagerIsActive && GuiSectionEnabled(GUISection.SUBSYSTEM))
             {
                 GUILayout.Label("Subsystems", Textures.SectionTitleStyle);
-                foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
                 {
                     if (!SubsystemIsLuxury(subsystem) && SubsystemVisible(subsystem))
                     {
@@ -443,7 +446,7 @@ namespace AY
                 GUILayout.EndHorizontal();
                 if (Emergencypowerdownactivated || Emergencypowerdownreset)  //Do a status if Auto ESP is processing
                 {
-                    string ststext = "";
+                    ststext = "";
                     if (Emergencypowerdownactivated)
                     {
                         ststext = "PwrDown ";
@@ -509,8 +512,8 @@ namespace AY
                 _showParts = GUILayout.Toggle(_showParts, new GUIContent("ShowParts", "Show all the Parts and PartModules list in the current vessel"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
-                bool tmpShowDarkSideWindow = ShowDarkSideWindow;
-                ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent("Dark-Side Calcs", "Open the Dark-Side Calculator"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                tmpShowDarkSideWindow = ShowDarkSideWindow;
+                ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent("Dark-Side & Solar Calcs", "Open the Dark-Side and Solar Panel SOI Calculator"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
                 if (tmpShowDarkSideWindow != ShowDarkSideWindow)
                 {
                     AYVesselPartLists.ResetSolarPartToggles();
@@ -523,7 +526,7 @@ namespace AY
             {
                 GUILayout.Label("Luxury", Textures.SectionTitleStyle);
                 if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
-                foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
                 {
                     if (SubsystemIsLuxury(subsystem) && SubsystemVisible(subsystem))
                     {
@@ -546,7 +549,7 @@ namespace AY
                 {
                     if (HasReservePower)
                     {
-                        double reservePercent = TotalReservePower / TotalReservePowerCapacity * 100.0;
+                        reservePercent = TotalReservePower / TotalReservePowerCapacity * 100.0;
                         if (reservePercent < 20.0)
                             GUILayout.Label(new GUIContent("Reserve Power: " + reservePercent.ToString("0.00") + '%', "Percentage of Reserve Power Available"), Textures.AlertStyle);
                         else
@@ -564,7 +567,7 @@ namespace AY
                     GUILayout.Label("Reserve Power not Found!", Textures.AlertStyle);
 
                 //Reserve transfer
-                String[] incrementPercentString = new String[_reserveTransferIncrements.Length];
+                //String[] incrementPercentString = new String[_reserveTransferIncrements.Length];
                 if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent("XFer Reserve to Main", "Transfer a percentage of Reserve Power to Mains Power"));
@@ -639,13 +642,13 @@ namespace AY
                 ConsumptionLabel(managerActiveDrain, true);
             GUILayout.EndHorizontal();
             _showParts = GUILayout.Toggle(_showParts, new GUIContent("ShowParts", "Show all the Parts and PartModules list in the current vessel"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
-            bool tmpShowDarkSideWindow = ShowDarkSideWindow;
-            ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent("Dark-Side Calcs", "Open the Dark-Side Calculator"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+            tmpShowDarkSideWindow = ShowDarkSideWindow;
+            ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent("Dark-Side & Solar Calcs", "Open the Dark-Side and Solar Panel SOI Calculator"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
             if (tmpShowDarkSideWindow != ShowDarkSideWindow)
             {
                 AYVesselPartLists.ResetSolarPartToggles();
             }
-            ShowSOIWindow = GUILayout.Toggle(ShowSOIWindow, new GUIContent("Select Solar Panel SOI", "Open the Solar Panel SOI Selector"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+            //ShowSOIWindow = GUILayout.Toggle(ShowSOIWindow, new GUIContent("Select Solar Panel SOI", "Open the Solar Panel SOI Selector"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
             //Power Capacity
             GUILayout.Label(new GUIContent("Power Capacity: " + TotalElectricChargeCapacity.ToString("0.00"), "Total Power Capacity of this vessel"), Textures.StatusStyle);
             if (TotalPowerDrain > TotalPowerProduced)
@@ -727,11 +730,11 @@ namespace AY
             // Put something inside the ScrollView
             if (AYVesselPartLists.VesselProdPartsList.Count == 0)
                 GUILayout.Label("No Power Producing Parts", Textures.PartListPartStyle);
-            float _totalProdPower = 0f;
+            _totalProdPower = 0f;
             foreach (var entry in AYVesselPartLists.VesselProdPartsList)
             {
-                string partModuleName = string.Empty;
-                uint key = AYVesselPartLists.GetPartKeyVals(entry.Key, out partModuleName);
+                partModuleName = string.Empty;
+                tmpPartKey = AYVesselPartLists.GetPartKeyVals(entry.Key, out partModuleName);
                 partModuleName = Utilities.RemoveSubStr(partModuleName, "Module");
                 _totalProdPower += entry.Value.PrtPowerF;
                 if (ShowDarkSideWindow && entry.Value.PrtSolarDependant)
@@ -766,12 +769,12 @@ namespace AY
                 else
                 {
                     GUILayout.BeginHorizontal();
-                    bool tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
+                    tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
                         new GUIContent(Textures.BtnIncInCalcs, "Include this PartModule in AmpYear Calcs"), Textures.PartListbtnStyle, GUILayout.Width(20));
                     entry.Value.PrtEditorInclude = tmpPrtEditorInclude;
                     if (!entry.Value.ValidprtEmergShutDn)
                         GUI.enabled = false;
-                    bool tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
+                    tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
                         new GUIContent(Textures.BtnEspInc, GUI.enabled ? "Include this PartModule in Emergency Shutdown Procedures" : "Part not Supported by Emergency Shutdown Procedure"), Textures.PartListbtnStyle, GUILayout.Width(20));
                     entry.Value.PrtEmergShutDnInclude = tmpPrtEmergShutDnInclude;
                     List<GUIContent> tmpList = new List<GUIContent>();
@@ -784,7 +787,7 @@ namespace AY
                     tmpStylesList.Add(Textures.PartListbtnStyle);
                     tmpStylesList.Add(Textures.PartListbtnStyle);
                     GUIStyle[] tmpStylesToggles = tmpStylesList.ToArray();
-                    int tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
+                    tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
                     entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                     GUI.enabled = true;
                     GUILayout.Label(entry.Value.PrtName, Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
@@ -799,7 +802,7 @@ namespace AY
             if (AYVesselPartLists.VesselProdPartsList.Count > 0) //This is very clunky but we get there in the end... and KSP 1.1 will probably mean have to re-do this anyway
             {
                 GUILayout.BeginHorizontal();
-                bool tmpPrtProdEditorIncludeAll = false;
+                tmpPrtProdEditorIncludeAll = false;
                 tmpPrtProdEditorIncludeAll = GUILayout.Toggle(PrtProdEditorIncludeAll,
                     new GUIContent(Textures.BtnIncInCalcs, "Toggle Include in AmpYear Calcs for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtProdEditorIncludeAll != PrtProdEditorIncludeAll)
@@ -810,7 +813,7 @@ namespace AY
                         entry.Value.PrtEditorInclude = PrtProdEditorIncludeAll;
                     }
                 }
-                bool tmpPrtProdEmergShutDnIncludeAll = false;
+                tmpPrtProdEmergShutDnIncludeAll = false;
                 tmpPrtProdEmergShutDnIncludeAll = GUILayout.Toggle(PrtProdESPIncludeAll,
                     new GUIContent(Textures.BtnEspInc, "Toggle Include in Emergency Shutdown Procedures for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtProdEmergShutDnIncludeAll != PrtProdESPIncludeAll)
@@ -822,7 +825,7 @@ namespace AY
                             entry.Value.PrtEmergShutDnInclude = PrtProdESPIncludeAll;
                     }
                 }
-                bool tmpPrtProdOneAll = false;
+                tmpPrtProdOneAll = false;
                 tmpPrtProdOneAll = GUILayout.Toggle(tmpPrtProdOneAll,
                     new GUIContent(Textures.BtnPriority1, "Emergency Shutdown Procedures - Set all parts to Priority One"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtProdOneAll)
@@ -833,7 +836,7 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.HIGH;
                     }
                 }
-                bool tmpPrtProdTwoAll = false;
+                tmpPrtProdTwoAll = false;
                 tmpPrtProdTwoAll = GUILayout.Toggle(tmpPrtProdTwoAll,
                     new GUIContent(Textures.BtnPriority2, "Emergency Shutdown Procedures - Set all parts to Priority Two"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtProdTwoAll)
@@ -844,7 +847,7 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.MEDIUM;
                     }
                 }
-                bool tmpPrtProdThreeAll = false;
+                tmpPrtProdThreeAll = false;
                 tmpPrtProdThreeAll = GUILayout.Toggle(tmpPrtProdThreeAll,
                     new GUIContent(Textures.BtnPriority3, "Emergency Shutdown Procedures - Set all parts to Priority Three"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtProdThreeAll)
@@ -890,20 +893,20 @@ namespace AY
             // Put something inside the ScrollView
             if (AYVesselPartLists.VesselConsPartsList.Count == 0)
                 GUILayout.Label("No Power Consuming Parts", Textures.PartListPartStyle);
-            float _totalConsPower = 0f;
+            _totalConsPower = 0f;
             foreach (var entry in AYVesselPartLists.VesselConsPartsList)
             {
-                string partModuleName = string.Empty;
-                uint key = AYVesselPartLists.GetPartKeyVals(entry.Key,out partModuleName);
+                partModuleName = string.Empty;
+                tmpPartKey = AYVesselPartLists.GetPartKeyVals(entry.Key,out partModuleName);
                 partModuleName = Utilities.RemoveSubStr(partModuleName, "Module");
                 _totalConsPower += entry.Value.PrtPowerF;
                 GUILayout.BeginHorizontal();
-                bool tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
+                tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
                     new GUIContent(Textures.BtnIncInCalcs, "Include this PartModule in AmpYear Calcs"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 entry.Value.PrtEditorInclude = tmpPrtEditorInclude;
                 if (!entry.Value.ValidprtEmergShutDn)
                     GUI.enabled = false;
-                bool tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
+                tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
                     new GUIContent(Textures.BtnEspInc, GUI.enabled ? "Include this PartModule in Emergency Shutdown Procedures" : "Part not Supported by Emergency Shutdown Procedure"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 entry.Value.PrtEmergShutDnInclude = tmpPrtEmergShutDnInclude;
                 List<GUIContent> tmpList = new List<GUIContent>();
@@ -916,7 +919,7 @@ namespace AY
                 tmpStylesList.Add(Textures.PartListbtnStyle);
                 tmpStylesList.Add(Textures.PartListbtnStyle);
                 GUIStyle[] tmpStylesToggles = tmpStylesList.ToArray();
-                int tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
+                tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
                 entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                 GUI.enabled = true;
                 GUILayout.Label(entry.Value.PrtName, Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
@@ -927,7 +930,7 @@ namespace AY
             if (AYVesselPartLists.VesselConsPartsList.Count > 0) //This is very clunky but we get there in the end... and KSP 1.1 will probably mean have to re-do this anyway
             {
                 GUILayout.BeginHorizontal();
-                bool tmpPrtConsEditorIncludeAll = false;
+                tmpPrtConsEditorIncludeAll = false;
                 tmpPrtConsEditorIncludeAll = GUILayout.Toggle(PrtConsEditorIncludeAll,
                     new GUIContent(Textures.BtnIncInCalcs, "Toggle Include in AmpYear Calcs for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtConsEditorIncludeAll != PrtConsEditorIncludeAll)
@@ -938,7 +941,7 @@ namespace AY
                         entry.Value.PrtEditorInclude = PrtConsEditorIncludeAll;
                     }
                 }
-                bool tmpPrtConsEmergShutDnIncludeAll = false;
+                tmpPrtConsEmergShutDnIncludeAll = false;
                 tmpPrtConsEmergShutDnIncludeAll = GUILayout.Toggle(PrtConsESPIncludeAll,
                     new GUIContent(Textures.BtnEspInc, "Toggle Include in Emergency Shutdown Procedures for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtConsEmergShutDnIncludeAll != PrtConsESPIncludeAll)
@@ -950,7 +953,7 @@ namespace AY
                             entry.Value.PrtEmergShutDnInclude = PrtConsESPIncludeAll;
                     }
                 }
-                bool tmpPrtConsOneAll = false;
+                tmpPrtConsOneAll = false;
                 tmpPrtConsOneAll = GUILayout.Toggle(tmpPrtConsOneAll,
                     new GUIContent(Textures.BtnPriority1, "Emergency Shutdown Procedures - Set all parts to Priority One"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtConsOneAll)
@@ -961,7 +964,7 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.HIGH;
                     }
                 }
-                bool tmpPrtConsTwoAll = false;
+                tmpPrtConsTwoAll = false;
                 tmpPrtConsTwoAll = GUILayout.Toggle(tmpPrtConsTwoAll,
                     new GUIContent(Textures.BtnPriority2, "Emergency Shutdown Procedures - Set all parts to Priority Two"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtConsTwoAll)
@@ -972,7 +975,7 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.MEDIUM;
                     }
                 }
-                bool tmpPrtConsThreeAll = false;
+                tmpPrtConsThreeAll = false;
                 tmpPrtConsThreeAll = GUILayout.Toggle(tmpPrtConsThreeAll,
                     new GUIContent(Textures.BtnPriority3, "Emergency Shutdown Procedures - Set all parts to Priority Three"), Textures.PartListbtnStyle, GUILayout.Width(20));
                 if (tmpPrtConsThreeAll)
@@ -1022,7 +1025,7 @@ namespace AY
             }
 
             GUILayout.BeginVertical();
-            GUILayout.Label(new GUIContent("Select Body", "Select the body for darkside period and EC calculations"), Textures.SectionTitleStyle, GUILayout.Width(280));
+            GUILayout.Label(new GUIContent("Select Body", "Select the body for darkside period and Solar Panel usage EC calculations"), Textures.SectionTitleStyle, GUILayout.Width(280));
             _dSscrollViewVector = GUILayout.BeginScrollView(_dSscrollViewVector, GUILayout.Height(300), GUILayout.Width(320));
             string[] darkBodiesBtnNames = new string[_darkBodies.Count];
             for (int i = 0; i < _darkBodies.Count; i++)
@@ -1035,15 +1038,15 @@ namespace AY
             if (_darkTargetSelection != _selectedDarkTarget)
             {
                 _selectedDarkTarget = _darkTargetSelection;
-                _selectedSolarSOITarget = _selectedDarkTarget;
+                //_selectedSolarSOITarget = _selectedDarkTarget;
                 _bodyTarget = FlightGlobals.Bodies[_selectedDarkTarget];
             }
             GUILayout.Space(10);
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(new GUIContent("Enter Orbit height: ", "The orbit height to use in Kilometers"), Textures.StatusStyleLeft, GUILayout.Width(140));
-            string strOrbit = _showDarkOrbit.ToString();
-            int Orbit = _showDarkOrbit;
+            strOrbit = _showDarkOrbit.ToString();
+            Orbit = _showDarkOrbit;
             strOrbit = GUILayout.TextField(strOrbit, GUILayout.Width(40));
             GUILayout.Label("(Km)", GUILayout.Width(30));
             GUILayout.EndHorizontal();
@@ -1052,12 +1055,17 @@ namespace AY
 
             if (_bodyTarget != null)
             {
-                double darkTime = CalculatePeriod(_bodyTarget, Orbit);
+                GUILayout.Label(new GUIContent("Selected Body:" + _darkBodies[_selectedDarkTarget].theName, "Currently selected body for Dark-Side and Solar Panel EC production calculations"), Textures.PartListPartStyle, GUILayout.Width(280));
+                //Get the distance and direction to Sun from the currently selected target body
+                Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedDarkTarget], out sun_dir, out sun_dist);
+                GUILayout.Label(new GUIContent("Sun Distance:" + sun_dist.ToString("###,###,###,###,###,##0"), _selectedDarkTarget == 0 ? "Assumes you are in orbit at 700,000km from the Sun" : "The Distance to the sun from the selected body"), Textures.PartListPartStyle, GUILayout.Width(280));
+
+                darkTime = CalculatePeriod(_bodyTarget, Orbit);
                 GUILayout.Label(new GUIContent("Dark-Side Transit Period: " + KSPUtil.PrintTimeCompact((int)darkTime, true), "The time it will take to transit the Darkside"), Textures.StatusStyleLeft, GUILayout.Width(300));
                 if (TotalPowerDrain > 0)
                 {
-                    double ECreqdfordarkTime = 0;
-                    double ECprodfordarkTime = 0;
+                    ECreqdfordarkTime = 0;
+                    ECprodfordarkTime = 0;
                     ECreqdfordarkTime = TotalPowerDrain * darkTime;
                     ECprodfordarkTime = TotalPowerProduced * darkTime;
                     GUILayout.Label(new GUIContent("EC required for Dark-Side Transit: " + ECreqdfordarkTime.ToString("##########0"), "EC required during darkside period based on current EC usage"), Textures.WarningStyleLeft, GUILayout.Width(300));
@@ -1070,8 +1078,8 @@ namespace AY
                     _includeSoredRp = GUILayout.Toggle(_includeSoredRp, new GUIContent(" ", "Toggle to include Stored ReservePower in Dark-Side Calculation"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
                     GUILayout.Label(new GUIContent("Total Stored ReservePower: " + TotalReservePower.ToString("##########0"), "Total Stored ReservePower on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
                     GUILayout.EndHorizontal();
-                    double powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTime;
-                    double eCdifference = 0;
+                    powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTime;
+                    eCdifference = 0;
                     if (ECreqdfordarkTime > powerSupply)
                     {
                         eCdifference = ECreqdfordarkTime - powerSupply;
@@ -1086,7 +1094,7 @@ namespace AY
             }
 
             GUILayout.Space(10);
-            bool tmpShowDarkSideWindow = ShowDarkSideWindow;
+            tmpShowDarkSideWindow = ShowDarkSideWindow;
             ShowDarkSideWindow = !GUILayout.Button("Close");
             if (tmpShowDarkSideWindow != ShowDarkSideWindow)
             {
@@ -1098,50 +1106,7 @@ namespace AY
                 Utilities.SetTooltipText();
             GUI.DragWindow();
         }
-
-        private void WindowSOI(int windowId)
-        {
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
-            Rect closeRect = new Rect(_SOIwindowPos.width - 21, 4, 16, 16);
-            if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
-            {
-                ShowSOIWindow = false;
-                return;
-            }
-
-            GUILayout.BeginVertical();
-            GUILayout.Label(new GUIContent("Select Body", "Select the body for SOI Solar Panel EC calculations"), Textures.SectionTitleStyle, GUILayout.Width(280));
-            _dSscrollViewVector = GUILayout.BeginScrollView(_dSscrollViewVector, GUILayout.Height(300), GUILayout.Width(320));
-            string[] solarsoiBtnNames = new string[_darkBodies.Count];
-            for (int i = 0; i < _darkBodies.Count; i++)
-            {
-                solarsoiBtnNames[i] = _darkBodies[i].theName;
-            }
-            _solarSOISelection = _selectedSolarSOITarget;
-            _solarSOISelection = GUILayout.SelectionGrid(_solarSOISelection, solarsoiBtnNames, 1);
-            GUILayout.EndScrollView();
-            if (_solarSOISelection != _selectedSolarSOITarget)
-            {
-                _selectedSolarSOITarget = _solarSOISelection;
-                _selectedDarkTarget = _selectedSolarSOITarget;
-                _solarSOITarget = FlightGlobals.Bodies[_selectedSolarSOITarget];
-            }
-            GUILayout.Label(new GUIContent("Selected Body:" + _darkBodies[_selectedSolarSOITarget].theName, "Currently selected body for Solar Panel EC production calculations"), Textures.PartListPartStyle, GUILayout.Width(280));
-            Vector3d sun_dir;
-            double sun_dist;
-            //Get the distance and direction to Sun from the currently selected target body
-            Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedSolarSOITarget], out sun_dir, out sun_dist);
-            GUILayout.Label(new GUIContent("Sun Distance:" + sun_dist.ToString("###,###,###,###,###,##0"), _selectedSolarSOITarget == 0 ? "Assumes you are in orbit at 700,000km from the Sun" : "The Distance to the sun from the selected body"), Textures.PartListPartStyle, GUILayout.Width(280));
-
-            GUILayout.Space(10);
-            ShowSOIWindow = !GUILayout.Button("Close");
-            
-            GUILayout.EndVertical();
-            if (AYsettings.TooltipsOn)
-                Utilities.SetTooltipText();
-            GUI.DragWindow();
-        }
-
+        
         //Set the iconAlertstate - DOES NOT PROCESS state = GREEN. If state = Yellow will only change to yellow if state is not already RED.
         //If state = red then it will be changed to RED.
         private void SetIconalertstate(IconAlertState state)
@@ -1342,29 +1307,7 @@ namespace AY
                 }
             }
         }
-
-        private void StopAndWarn(int id)
-        {
-            GUIStyle warnStyle = new GUIStyle(GUI.skin.label);
-            warnStyle.fontStyle = FontStyle.Bold;
-            warnStyle.alignment = TextAnchor.UpperLeft;
-            warnStyle.normal.textColor = Color.white;
-
-            GUILayout.BeginVertical();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Ship Electric charge has dropped below the Warp Warning Percentage.", warnStyle);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("This will not trigger again until Electric charge > Warning Percentage again.", warnStyle);
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
-            if (GUILayout.Button("OK"))
-            {
-                Utilities.Log_Debug("ElectricCharge Warning Threshold Triggered Alert Msg");
-                _lowEcWarningWindowDisplay = false;
-            }
-        }
-
+        
         private void SubsystemButton(Subsystem subsystem)
         {
             SetSubsystemEnabled(
