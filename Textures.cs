@@ -122,7 +122,7 @@ namespace AY
         }
 
         internal static GUIStyle SectionTitleStyle, SubsystemButtonStyle, SubsystemConsumptionStyle, StatusStyle, WarningStyle,
-            AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListPartRightStyle,
+            AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListPartRightStyle, PartListPartGrayStyle, PartListPartRightGrayStyle,
             ResizeStyle, StatusStyleLeft, WarningStyleLeft, AlertStyleLeft, PartListbtnStyle, PrioritybtnStyle;
 
         internal static bool StylesSet = false;
@@ -253,6 +253,20 @@ namespace AY
                 alignment = TextAnchor.MiddleRight,
                 stretchWidth = true,
                 normal = { textColor = Color.white }
+            };
+
+            PartListPartGrayStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                stretchWidth = true,
+                normal = { textColor = Color.black }
+            };
+
+            PartListPartRightGrayStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleRight,
+                stretchWidth = true,
+                normal = { textColor = Color.black }
             };
 
             PartListbtnStyle = new GUIStyle(GUI.skin.button)

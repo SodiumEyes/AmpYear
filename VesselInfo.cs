@@ -56,6 +56,7 @@ namespace AY
         public bool ESPPriorityHighResetProcessed = false;
         public bool ESPPriorityMediumResetProcessed = false;
         public bool ESPPriorityLowResetProcessed = false;
+        public bool IsolateReservePower = false;
 
 
         public bool ReenableRcs = false;
@@ -118,6 +119,7 @@ namespace AY
             info.EspPriority = (ESPPriority)tmpEspPriority;
             node.TryGetValue("ReenableRcs", ref info.ReenableRcs);
             node.TryGetValue("ReenableSas", ref info.ReenableSas);
+            node.TryGetValue("IsolateReservePower", ref info.IsolateReservePower);
             
             return info;
         }
@@ -167,6 +169,7 @@ namespace AY
             node.AddValue("EspPriority", (int)EspPriority);
             node.AddValue("ReenableRcs", ReenableRcs);
             node.AddValue("ReenableSas", ReenableSas);
+            node.AddValue("IsolateReservePower", IsolateReservePower);
             
             return node;
         }

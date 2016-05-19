@@ -89,7 +89,7 @@ namespace AY
         private Rect _fwindowPos = new Rect(40, Screen.height / 2 - 100, FWINDOW_WIDTH, 200); // Flight Window position and size
         private Rect _ewindowPos = new Rect(40, Screen.height / 2 - 100, EWINDOW_WIDTH, 200); // Editor Window position and size
         private Rect _dwindowPos = new Rect(40, Screen.height / 2 - 100, 320, 200); // DarkSide Window position and size
-        private Rect _epLwindowPos = new Rect(270, Screen.height / 2 - 100, 600, 600); //Extended Parts List Window position and size
+        private Rect _epLwindowPos = new Rect(270, Screen.height / 2 - 100, 650, 600); //Extended Parts List Window position and size
         private float _eplPartName, _eplPartModuleName, _eplec, _eplProdListHeight, _eplConsListHeight;
         private Rect _eplHeaders2, _eplProdlistbox, _eplConslistbox;
         private bool _includeStoredEc = true;
@@ -157,12 +157,12 @@ namespace AY
             {
                 try
                 {
-                    if (!Utilities.WindowVisibile(_fwindowPos)) Utilities.MakeWindowVisible(_fwindowPos);
+                    if (!Utilities.WindowVisibile(_fwindowPos)) _fwindowPos = Utilities.MakeWindowVisible(_fwindowPos);
                     _fwindowPos = GUILayout.Window(_fwindowId, _fwindowPos, WindowF, "AmpYear Power Manager", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
-                        if (!Utilities.WindowVisibile(_epLwindowPos)) Utilities.MakeWindowVisible(_epLwindowPos);
-                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.MinWidth(150), GUILayout.MinHeight(150));
+                        if (!Utilities.WindowVisibile(_epLwindowPos)) _epLwindowPos = Utilities.MakeWindowVisible(_epLwindowPos);
+                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
                     }
                     CheckPowerLowWarning();
                     if (_lowEcWarningWindowDisplay)
@@ -183,12 +183,12 @@ namespace AY
             {
                 try
                 {
-                    if (!Utilities.WindowVisibile(_ewindowPos)) Utilities.MakeWindowVisible(_ewindowPos);
+                    if (!Utilities.WindowVisibile(_ewindowPos)) _ewindowPos = Utilities.MakeWindowVisible(_ewindowPos);
                     _ewindowPos = GUILayout.Window(_ewindowId, _ewindowPos, WindowE, "AmpYear Power Manager", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
-                        if (!Utilities.WindowVisibile(_epLwindowPos)) Utilities.MakeWindowVisible(_epLwindowPos);
-                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height));
+                        if (!Utilities.WindowVisibile(_epLwindowPos)) _epLwindowPos = Utilities.MakeWindowVisible(_epLwindowPos);
+                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
                     }
                 }
                 catch (Exception ex)
@@ -202,7 +202,7 @@ namespace AY
             {
                 try
                 {
-                    if (!Utilities.WindowVisibile(_dwindowPos)) Utilities.MakeWindowVisible(_dwindowPos);
+                    if (!Utilities.WindowVisibile(_dwindowPos)) _dwindowPos = Utilities.MakeWindowVisible(_dwindowPos);
                     _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, "AmpYear Dark-Side & Solar SOI", GUILayout.MinWidth(330), GUILayout.MinHeight(320));
                 }
                 catch (Exception ex)
@@ -721,7 +721,7 @@ namespace AY
             GUILayout.Label(new GUIContent("Calc", "If on, this PartModule will be Included in AmpYear Power Calculations"), Textures.PartListpartHeadingStyle, GUILayout.Width(28));
             GUILayout.Label(new GUIContent("ESP", "If on, this PartModule will be Included in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(24));
             GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(70));
-            GUILayout.Label(new GUIContent("PartName", "The name of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
+            GUILayout.Label(new GUIContent("PartTitle", "The Title of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
             GUILayout.Label(new GUIContent("Module", "The name of the PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));
             GUILayout.Label(new GUIContent("EC", "Electric Charge produced by this PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
             GUILayout.EndHorizontal();
@@ -736,7 +736,8 @@ namespace AY
                 partModuleName = string.Empty;
                 tmpPartKey = AYVesselPartLists.GetPartKeyVals(entry.Key, out partModuleName);
                 partModuleName = Utilities.RemoveSubStr(partModuleName, "Module");
-                _totalProdPower += entry.Value.PrtPowerF;
+                if (entry.Value.PrtEditorInclude)
+                    _totalProdPower += entry.Value.PrtPowerF;
                 if (ShowDarkSideWindow && entry.Value.PrtSolarDependant)
                 {
                     GUI.enabled = false;
@@ -760,9 +761,9 @@ namespace AY
                     GUIStyle[] tmpStylesToggles = tmpStylesList.ToArray();
                     int tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
                     entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
-                    GUILayout.Label(entry.Value.PrtName, Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                    GUILayout.Label(partModuleName, Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                    GUILayout.Label(entry.Value.PrtPower, Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                    GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
+                    GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
+                    GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
                     GUILayout.EndHorizontal();
                     GUI.enabled = true;
                 }
@@ -790,9 +791,9 @@ namespace AY
                     tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
                     entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                     GUI.enabled = true;
-                    GUILayout.Label(entry.Value.PrtName, Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                    GUILayout.Label(partModuleName, Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                    GUILayout.Label(entry.Value.PrtPower, Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                    GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
+                    GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
+                    GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
                     GUILayout.EndHorizontal();
                     entry.Value.PrtUserEditorInclude = entry.Value.PrtEditorInclude;
                     entry.Value.PrtEmergShutDnInclude = entry.Value.PrtEmergShutDnInclude;
@@ -881,7 +882,7 @@ namespace AY
             GUILayout.Label(new GUIContent("Calc", "If on, this PartModule will be Included in AmpYear Power Calculations"), Textures.PartListpartHeadingStyle, GUILayout.Width(28));
             GUILayout.Label(new GUIContent("ESP", "If on, this PartModule will be Included in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(24));
             GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(70));
-            GUILayout.Label(new GUIContent("PartName", "The name of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
+            GUILayout.Label(new GUIContent("PartTitle", "The Title of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
             GUILayout.Label(new GUIContent("Module", "The name of the PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));
             GUILayout.Label(new GUIContent("EC", "Electric Charge Used by this PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
             GUILayout.EndHorizontal();
@@ -899,7 +900,8 @@ namespace AY
                 partModuleName = string.Empty;
                 tmpPartKey = AYVesselPartLists.GetPartKeyVals(entry.Key,out partModuleName);
                 partModuleName = Utilities.RemoveSubStr(partModuleName, "Module");
-                _totalConsPower += entry.Value.PrtPowerF;
+                if (entry.Value.PrtEditorInclude)
+                    _totalConsPower += entry.Value.PrtPowerF;
                 GUILayout.BeginHorizontal();
                 tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
                     new GUIContent(Textures.BtnIncInCalcs, "Include this PartModule in AmpYear Calcs"), Textures.PartListbtnStyle, GUILayout.Width(20));
@@ -922,9 +924,9 @@ namespace AY
                 tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
                 entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                 GUI.enabled = true;
-                GUILayout.Label(entry.Value.PrtName, Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                GUILayout.Label(partModuleName, Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                GUILayout.Label(entry.Value.PrtPower, Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
+                GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
+                GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
                 GUILayout.EndHorizontal();
             }
             if (AYVesselPartLists.VesselConsPartsList.Count > 0) //This is very clunky but we get there in the end... and KSP 1.1 will probably mean have to re-do this anyway

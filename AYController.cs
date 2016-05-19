@@ -804,36 +804,39 @@ namespace AY
                     Utilities.Log("Exception: {0}", ex);
                 }
 
-                //Here we check if ESP is running and if it is we set the Processing flags so we only do it once per priority until a EC %age 
-                // is crossed again.
-                if (Emergencypowerdownactivated)
+                if (Utilities.GameModeisFlight)
                 {
-                    switch (_espPriority)
+                    //Here we check if ESP is running and if it is we set the Processing flags so we only do it once per priority until a EC %age 
+                    // is crossed again.
+                    if (Emergencypowerdownactivated)
                     {
-                        case ESPPriority.HIGH:
-                            ESPPriorityHighProcessed = true;
-                            break;
-                        case ESPPriority.MEDIUM:
-                            ESPPriorityMediumProcessed = true;
-                            break;
-                        case ESPPriority.LOW:
-                            ESPPriorityLowProcessed = true;
-                            break;
+                        switch (_espPriority)
+                        {
+                            case ESPPriority.HIGH:
+                                ESPPriorityHighProcessed = true;
+                                break;
+                            case ESPPriority.MEDIUM:
+                                ESPPriorityMediumProcessed = true;
+                                break;
+                            case ESPPriority.LOW:
+                                ESPPriorityLowProcessed = true;
+                                break;
+                        }
                     }
-                }
-                if (Emergencypowerdownreset)
-                {
-                    switch (_espPriority)
+                    if (Emergencypowerdownreset)
                     {
-                        case ESPPriority.HIGH:
-                            ESPPriorityHighResetProcessed = true;
-                            break;
-                        case ESPPriority.MEDIUM:
-                            ESPPriorityMediumResetProcessed = true;
-                            break;
-                        case ESPPriority.LOW:
-                            ESPPriorityLowResetProcessed = true;
-                            break;
+                        switch (_espPriority)
+                        {
+                            case ESPPriority.HIGH:
+                                ESPPriorityHighResetProcessed = true;
+                                break;
+                            case ESPPriority.MEDIUM:
+                                ESPPriorityMediumResetProcessed = true;
+                                break;
+                            case ESPPriority.LOW:
+                                ESPPriorityLowResetProcessed = true;
+                                break;
+                        }
                     }
                 }
 
@@ -972,10 +975,10 @@ namespace AY
                 {
                     if (!KKPresent && (subsystem == Subsystem.CLIMATE || subsystem == Subsystem.MASSAGE || subsystem == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, SubsystemName(subsystem), true, SubsystemEnabled(subsystem), (float)_subsystemDrain[(int)subsystem], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(subsystem), true, SubsystemEnabled(subsystem), (float)_subsystemDrain[(int)subsystem], false, false);
                 }
                 prtName = "AmpYear Manager";
-                AYVesselPartLists.AddPart(partId, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
+                AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
 
                 //Drain main power
                 //double currentTime = Planetarium.GetUniversalTime();
@@ -1062,12 +1065,12 @@ namespace AY
                     subsystem_drain += _subsystemDrain[(int)subsystem];
                     if (!KKPresent && (subsystem == Subsystem.CLIMATE || subsystem == Subsystem.MASSAGE || subsystem == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, SubsystemName(subsystem), true, SubsystemEnabled(subsystem), (float)_subsystemDrain[(int)subsystem], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(subsystem), true, true, (float)_subsystemDrain[(int)subsystem], false, false);
                     
                 }
                 manager_drain = ManagerCurrentDrain;
                 prtName = "AmpYear Manager";
-                AYVesselPartLists.AddPart(partId, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
+                AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
                 hasPower = true;
                 HasReservePower = true;
             }
@@ -1187,6 +1190,7 @@ namespace AY
             vesselInfo.EspPriority = _espPriority;
             vesselInfo.ReenableRcs = _reenableRcs;
             vesselInfo.ReenableSas = _reenableSas;
+            vesselInfo.IsolateReservePower = _lockReservePower;
         }
 
         private void UpdateVesselCounts(VesselInfo vesselInfo, Vessel vessel)
@@ -1286,6 +1290,7 @@ namespace AY
                 _espPriority = currvesselInfo.EspPriority;
                 _reenableRcs = currvesselInfo.ReenableRcs;
                 _reenableSas = currvesselInfo.ReenableSas;
+                _lockReservePower = currvesselInfo.IsolateReservePower;
                 //DbgListVesselInfo(info);
             }
             else //New Vessel not found in Dictionary so set default
@@ -1340,6 +1345,7 @@ namespace AY
             _espPriority = ESPPriority.LOW;
             _reenableRcs = false;
             _reenableSas = false;
+            _lockReservePower = false;
         }
         
         #endregion VesselFunctions

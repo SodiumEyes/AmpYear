@@ -27,6 +27,7 @@ namespace AY
         public const string ConfigNodeName = "AYPwrPartList";
 
         public string PrtName { get; set; }
+        public string PrtTitle { get; set; }
         public string PrtModuleName { get; set; }
         public bool PrtSubsystem { get; set; }
         public string PrtPower { get; set; }
@@ -88,10 +89,11 @@ namespace AY
             set { _prtEmergShutDnPriority = value; }
         }
 
-        public PwrPartList(string prtName, string prtModuleName, bool prtSubsystem, string prtPower, float prtPowerF, bool prtActive,
+        public PwrPartList(string prtName, string prtTitle, string prtModuleName, bool prtSubsystem, string prtPower, float prtPowerF, bool prtActive,
             bool prtSolarDependant)
         {
             PrtName = prtName;
+            PrtTitle = prtTitle;
             PrtModuleName = prtModuleName;
             PrtSubsystem = prtSubsystem;
             PrtPower = prtPower;
@@ -111,17 +113,18 @@ namespace AY
 
         public static PwrPartList Load(ConfigNode node)
         {
-            string prtName = "", prtModuleName = "", prtPower = "";
+            string prtName = "", prtTitle = "", prtModuleName = "", prtPower = "";
             bool prtSubsystem = false, prtActive = false, prtSolarDependant = false;
             float prtPowerF = 0f;
             node.TryGetValue("PrtName", ref prtName);
+            node.TryGetValue("PrtTitle", ref prtTitle);
             node.TryGetValue("PrtModuleName", ref prtModuleName);
             node.TryGetValue("PrtPower", ref prtPower);
             node.TryGetValue("PrtPowerF", ref prtPowerF);
             node.TryGetValue("PrtActive", ref prtActive);
             node.TryGetValue("PrtSolarDependant", ref prtSolarDependant);
             
-            PwrPartList info = new PwrPartList(prtName, prtModuleName, prtSubsystem, prtPower, prtPowerF, prtActive, prtSolarDependant);
+            PwrPartList info = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, prtPower, prtPowerF, prtActive, prtSolarDependant);
 
             node.TryGetValue("PrtEditorInclude", ref info._prtEditorInclude);
             node.TryGetValue("PrtUserEditorInclude", ref info._prtUserEditorInclude);
@@ -140,6 +143,7 @@ namespace AY
         {
             ConfigNode node = config.AddNode(ConfigNodeName);
             node.AddValue("PrtName", PrtName);
+            node.AddValue("PrtTitle", PrtTitle);
             node.AddValue("PrtModuleName", PrtModuleName);
             node.AddValue("PrtSubsystem", PrtSubsystem);
             node.AddValue("PrtPower", PrtPower);

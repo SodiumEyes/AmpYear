@@ -47,7 +47,7 @@ namespace AY
         /// <param name="prtPowerF">The Amount of EC being drawn (float)</param>
         /// <param name="prodPrt">True if it is producing Power, otherwise False</param>
         /// <param name="partSolar">True if the part is Solar dependant, otherwise False</param>
-        internal static void AddPart(uint pkey, string prtName, string prtModuleName, bool prtSubsystem, bool prtActive, float prtPowerF, bool prodPrt, bool partSolar)
+        internal static void AddPart(uint pkey, string prtName, string prtTitle, string prtModuleName, bool prtSubsystem, bool prtActive, float prtPowerF, bool prodPrt, bool partSolar)
         {
             string keyValue = CreatePartKey(pkey, prtModuleName);
 
@@ -57,6 +57,7 @@ namespace AY
                 {
                     partFnd.PrtActive = prtActive;
                     partFnd.PrtName = prtName;
+                    partFnd.PrtTitle = prtTitle;
                     partFnd.PrtSubsystem = prtSubsystem;
                     if (!AYController.Emergencypowerdownactivated && !AYController.Emergencypowerdownreset 
                         && !AYController.EmgcyShutOverrideStarted)
@@ -83,7 +84,7 @@ namespace AY
                 }
                 else
                 {
-                    PwrPartList newProdPart = new PwrPartList(prtName, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
+                    PwrPartList newProdPart = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
                     if (AYController.ShowDarkSideWindow && partSolar)
                     {
                         newProdPart.PrtEditorInclude = false;
@@ -119,6 +120,7 @@ namespace AY
                 {
                     partFnd.PrtActive = prtActive;
                     partFnd.PrtName = prtName;
+                    partFnd.PrtTitle = prtTitle;
                     partFnd.PrtSubsystem = prtSubsystem;
                     if (!AYController.Emergencypowerdownactivated && !AYController.Emergencypowerdownreset 
                         && !AYController.EmgcyShutOverrideStarted)
@@ -142,7 +144,7 @@ namespace AY
                 }
                 else
                 {
-                    PwrPartList newConsPart = new PwrPartList(prtName, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
+                    PwrPartList newConsPart = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
                     if (prtActive)
                         AYController.Instance.TotalPowerDrain += prtPowerF;
                     newConsPart.PrtPowerF = prtPowerF;
