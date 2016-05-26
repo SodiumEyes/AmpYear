@@ -210,21 +210,10 @@ namespace AY
         internal AYGameSettings AYgameSettings;
 
         //GuiVisibility
-        private bool _visible = false;
         private bool _mouseDownResize;
         private bool _mouseDownHorizScl1;
         private bool _mouseDownHorizScl2;
-        private bool _gamePaused = false;
-        private bool _hideUI = false;
-
-        public Boolean GuiVisible
-        {
-            get { return _visible; }
-            set
-            {
-                _visible = value;      //Set the private variable
-            }
-        }
+        
 
         public void Awake()
         {
@@ -242,82 +231,32 @@ namespace AY
             _eplProdListHeight = _eplConsListHeight = Mathf.Round((_epLwindowPos.height - 170) * .5f);
             GameEvents.OnVesselRollout.Add(OnVesselRollout);
             GameEvents.onVesselCreate.Add(OnVesselCreate);
+            AYMenuAppLToolBar = new AppLauncherToolBar("AmpYear", "AmpYear",
+                Textures.PathToolbarIconsPath + "/AYGreenOffTB",
+                ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW,
+                (Texture)Textures.IconGreenOn, (Texture)Textures.IconGreenOff,
+                GameScenes.FLIGHT, GameScenes.EDITOR);
             Utilities.Log_Debug("AYController Awake complete");
         }
-
-        private void OnGuiAppLauncherReady()
-        {
-            Utilities.Log_Debug("OnGUIAppLauncherReady");
-            if (ApplicationLauncher.Ready && _stockToolbarButton == null)
-            {
-                Utilities.Log_Debug("Adding AppLauncherButton");
-                _stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(OnAppLaunchToggle, OnAppLaunchToggle, DummyVoid,
-                                          DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH |
-                                          ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW,
-                                          Textures.IconGreenOff);
-            }
-        }
-
-        private void DummyVoid()
-        {
-        }
-
-        public void OnAppLaunchToggle()
-        {
-            GuiVisible = !GuiVisible;
-            if (AYsettings.UseAppLauncher == true)
-                _stockToolbarButton.SetTexture(GuiVisible ? Textures.IconGreenOn : Textures.IconGreenOff);
-        }
-
-        public void OnGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
-        {
-            if (_stockToolbarButton != null)
-            {
-                ApplicationLauncherButton[] lstButtons = FindObjectsOfType<ApplicationLauncherButton>();
-                Utilities.Log_Debug("AmpYear AppLauncher: Destroying Button-Button Count:" + lstButtons.Length);
-                ApplicationLauncher.Instance.RemoveModApplication(_stockToolbarButton);
-                _stockToolbarButton = null;
-            }
-        }
-
+        
         public void Start()
         {
             Utilities.Log_Debug("AYController Start");
-            Utilities.Log_Debug("AYcontroller ToolbarAvailable=" + ToolbarManager.ToolbarAvailable + ",UseAppLauncher=" + AYsettings.UseAppLauncher);
-            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
+            //If Settings wants to use ToolBar mod, check it is installed and available. If not set the Setting to use Stock.
+            if (!ToolbarManager.ToolbarAvailable && !AYsettings.UseAppLauncher)
             {
-                _button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                _button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOffTB";
-                _button1.ToolTip = "AmpYear";
-                _button1.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.EDITOR);
-                _button1.OnClick += (e) =>
-                {
-                    GuiVisible = !GuiVisible;
-                    if (GuiVisible)
-                        _button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOnTB";
-                    else
-                        _button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOffTB";
-                };
-            }
-            else
-            {
-                // Set up the stock toolbar
-                Utilities.Log_Debug("Adding onGUIAppLauncher callbacks");
-                if (ApplicationLauncher.Ready)
-                {
-                    OnGuiAppLauncherReady();
-                }
-                else
-                    GameEvents.onGUIApplicationLauncherReady.Add(OnGuiAppLauncherReady);
+                AYsettings.UseAppLauncher = true;
             }
 
-            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
+            AYMenuAppLToolBar.Start(AYsettings.UseAppLauncher);
+
             Utilities.setScaledScreen();
 
             // Find out which mods are present
             ALPresent = Utilities.IsModInstalled("AviationLights");
             NFEPresent = Utilities.IsModInstalled("NearFutureElectrical");  
             NFSPresent = Utilities.IsModInstalled("NearFutureSolar"); 
+            NFPPresent = Utilities.IsModInstalled("NearFuturePropulsion");
             KASPresent = Utilities.IsModInstalled("KAS"); 
             _rt2Present = Utilities.IsModInstalled("RemoteTech"); 
             ScSPresent = Utilities.IsModInstalled("SCANsat"); 
@@ -331,6 +270,7 @@ namespace AY
             KPBSPresent = Utilities.IsModInstalled("PlanetarySurfaceStructures");
             USILSPresent = Utilities.IsModInstalled("USILifeSupport");
             IONRCSPresent = Utilities.IsModInstalled("IONRCS");
+            KERBALISMPresent = Utilities.IsModInstalled("Kerbalism");
             Utilities.Log_Debug(KKPresent ? "KabinKraziness present" : "KabinKraziness NOT present");
             //if (KKPresent)  //Moved to FixedUpdate
             //{
@@ -372,6 +312,16 @@ namespace AY
                 {
                     NFSPresent = false;
                     Utilities.Log("Ampyear - Near Future Electric Interface Failed");
+                }
+            }
+            if (NFPPresent)
+            {
+                Utilities.Log_Debug("Near Future Propulsion present");
+                NFPWrapper.InitNFPWrapper();
+                if (!NFPWrapper.APIReady)
+                {
+                    NFPPresent = false;
+                    Utilities.Log("Ampyear - Near Future Propulsion Interface Failed");
                 }
             }
 
@@ -497,10 +447,6 @@ namespace AY
             GameEvents.onVesselChange.Add(OnVesselChange);
             GameEvents.onVesselLoaded.Add(OnVesselLoad);
             GameEvents.onCrewBoardVessel.Add(OnCrewBoardVessel);
-            GameEvents.onGamePause.Add(GamePaused);
-            GameEvents.onGameUnpause.Add(GameUnPaused);
-            GameEvents.onHideUI.Add(onHideUI);
-            GameEvents.onShowUI.Add(onShowUI);
             GameEvents.onGUIEngineersReportReady.Add(AddTests);
             
             Utilities.Log_Debug("AYController Start complete"); 
@@ -515,35 +461,14 @@ namespace AY
 
         public void OnDestroy()
         {
-            Utilities.Log_Debug("AYcontroller ToolbarAvailable=" + ToolbarManager.ToolbarAvailable.ToString() + ",UseAppLauncher=" + AYsettings.UseAppLauncher.ToString());
-            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
-            {
-                _button1.Destroy();
-            }
-            else
-            {
-                // Set up the stock toolbar
-                Utilities.Log_Debug("Removing onGUIAppLauncher callbacks");
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnGuiAppLauncherReady);
-                if (_stockToolbarButton != null)
-                {
-                    ApplicationLauncher.Instance.RemoveModApplication(_stockToolbarButton);
-                    _stockToolbarButton = null;
-                }
-            }
-            if (GuiVisible) GuiVisible = !GuiVisible;
-            GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
-            GameEvents.onGUIApplicationLauncherReady.Remove(OnGuiAppLauncherReady);
+            AYMenuAppLToolBar.Destroy();
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onVesselLoaded.Remove(OnVesselLoad);
             GameEvents.onCrewBoardVessel.Remove(OnCrewBoardVessel);
-            GameEvents.onGamePause.Remove(GamePaused);
-            GameEvents.onGameUnpause.Remove(GameUnPaused);
-            GameEvents.onHideUI.Remove(onHideUI);
-            GameEvents.onShowUI.Remove(onShowUI);
             GameEvents.onGUIEngineersReportReady.Remove(AddTests);
             GameEvents.OnVesselRollout.Remove(OnVesselRollout);
             GameEvents.onVesselCreate.Remove(OnVesselCreate);
+            InputLock = false;
         }
 
         private void OnVesselRollout(ShipConstruct Ship)
@@ -555,27 +480,7 @@ namespace AY
         {
             Utilities.Log("OnVesselCreate");
         }
-
-        private void GamePaused()
-        {
-            _gamePaused = true;
-        }
-
-        private void GameUnPaused()
-        {
-            _gamePaused = false;
-        }
-
-        private void onHideUI()
-        {
-            _hideUI = true;
-        }
-
-        private void onShowUI()
-        {
-            _hideUI = false;
-        }
-
+        
         public void FixedUpdate()
         {
             if (Time.timeSinceLevelLoad < 3.0f) // Check not loading level

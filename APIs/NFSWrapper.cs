@@ -1,17 +1,13 @@
 ﻿/**
- * DeepFreeze Continued...
+ * AmpYear power management.
+ * (C) Copyright 2015, Jamie Leighton
+ * The original code and concept of AmpYear rights go to SodiumEyes on the Kerbal Space Program Forums, which was covered by GNU License GPL (no version stated).
+ * As such this code continues to be covered by GNU GPL license.
  * (C) Copyright 2015, Jamie Leighton
  *
  * Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
  * project is in no way associated with nor endorsed by Squad.
  *
- *  This file is part of JPLRepo's DeepFreeze (continued...) - a Fork of DeepFreeze. Original Author of DeepFreeze is 'scottpaladin' on the KSP Forums.
- *  This File was not part of the original Deepfreeze but was written by Jamie Leighton based of code and concepts from the Kerbal Alarm Clock Mod. Which was licensed under the MIT license.
- *  (C) Copyright 2015, Jamie Leighton
- *
- * Continues to be licensed under the Attribution-NonCommercial-ShareAlike 3.0 (CC BY-NC-SA 4.0)
- * creative commons license. See <https://creativecommons.org/licenses/by-nc-sa/4.0/>
- * for full details.
  *
  */
 

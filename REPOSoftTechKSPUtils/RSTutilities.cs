@@ -104,16 +104,16 @@ namespace RSTUtils
 			//if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)  // Check if in flight
 			if (HighLogic.LoadedSceneIsFlight)
 			{
-			    if (FlightGlobals.fetch != null)
-			    {
-			        if (FlightGlobals.ActiveVessel != null)
-			        {
-			            if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal
-			            {
-			                return GameState.EVA;
-			            }
-			        }
-			    }
+				if (FlightGlobals.fetch != null)
+				{
+					if (FlightGlobals.ActiveVessel != null)
+					{
+						if (FlightGlobals.ActiveVessel.isEVA) // EVA kerbal
+						{
+							return GameState.EVA;
+						}
+					}
+				}
 				return GameState.FLIGHT;
 			}
 			if (EditorLogic.fetch != null) // Check if in editor
@@ -870,35 +870,7 @@ namespace RSTUtils
 			scaledScreenWidth = Mathf.RoundToInt(Screen.width / 1);
 			scaledScreenset = true;
 		}
-
-		internal static bool WindowVisibile(Rect winpos)
-		{
-			if (!scaledScreenset) setScaledScreen();
-			float minmargin = 20.0f; // 20 bytes margin for the window
-			float xMin = minmargin - winpos.width;
-			float xMax = scaledScreenWidth - minmargin;
-			float yMin = minmargin - winpos.height;
-			float yMax = scaledScreenHeight - minmargin;
-			bool xRnge = (winpos.x > xMin) && (winpos.x < xMax);
-			bool yRnge = (winpos.y > yMin) && (winpos.y < yMax);
-			return xRnge && yRnge;
-		}
-
-		internal static Rect MakeWindowVisible(Rect winpos)
-		{
-			if (!scaledScreenset) setScaledScreen();
-			float minmargin = 20.0f; // 20 bytes margin for the window
-			float xMin = minmargin - winpos.width;
-			float xMax = scaledScreenWidth - minmargin;
-			float yMin = minmargin - winpos.height;
-			float yMax = scaledScreenHeight - minmargin;
-
-			winpos.x = Mathf.Clamp(winpos.x, xMin, xMax);
-			winpos.y = Mathf.Clamp(winpos.y, yMin, yMax);
-
-			return winpos;
-		}
-
+		
 		internal static RectOffset SetRectOffset(RectOffset tmpRectOffset, int intValue)
 		{
 			return SetRectOffset(tmpRectOffset, intValue, intValue, intValue, intValue);
@@ -1302,6 +1274,14 @@ namespace RSTUtils
 			get
 			{
 				return IsModInstalled("ResearchBodies");
+			}
+		}
+
+		internal static bool IsTSTInstalled
+		{
+			get
+			{
+				return IsModInstalled("TarsierSpaceTech");
 			}
 		}
 

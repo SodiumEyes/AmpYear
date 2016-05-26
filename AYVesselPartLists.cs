@@ -70,7 +70,7 @@ namespace AY
                         if (partFnd.PrtEditorInclude && prtActive)
                             AYController.Instance.TotalPowerProduced += prtPowerF;
                         partFnd.PrtPowerF += prtPowerF;
-                        partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.##");
+                        partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.###");
                     }
                     partFnd.PrtSolarDependant = partSolar;
                     tmpESPDfltValue =
@@ -97,7 +97,7 @@ namespace AY
                     }
                     if (newProdPart.PrtEditorInclude && prtActive)
                         AYController.Instance.TotalPowerProduced += prtPowerF;
-                    newProdPart.PrtPower = newProdPart.PrtPowerF.ToString("####0.##");
+                    newProdPart.PrtPower = newProdPart.PrtPowerF.ToString("####0.###");
                     newProdPart.PrtSolarDependant = partSolar;
                     tmpESPDfltValue =
                         AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == prtModuleName);
@@ -130,7 +130,7 @@ namespace AY
                         if (partFnd.PrtEditorInclude && prtActive)
                             AYController.Instance.TotalPowerDrain += prtPowerF;
                         partFnd.PrtPowerF += prtPowerF;
-                        partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.##");
+                        partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.###");
                     }
                     partFnd.PrtSolarDependant = partSolar;
                     tmpESPDfltValue =
@@ -148,7 +148,7 @@ namespace AY
                     if (prtActive)
                         AYController.Instance.TotalPowerDrain += prtPowerF;
                     newConsPart.PrtPowerF = prtPowerF;
-                    newConsPart.PrtPower = newConsPart.PrtPowerF.ToString("####0.##");
+                    newConsPart.PrtPower = newConsPart.PrtPowerF.ToString("####0.###");
                     newConsPart.PrtSolarDependant = partSolar;
                     tmpESPDfltValue =
                         AYController.Instance.AYsettings.PartModuleEmergShutDnDflt.FirstOrDefault(a => a.Key == prtModuleName);

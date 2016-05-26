@@ -142,7 +142,7 @@ namespace AY
             Instance = this;
             AYsettings = new AYSettings();
             AYgameSettings = new AYGameSettings();
-            _globalConfigFilename = Path.Combine(AssemblyFolder, "Config.cfg").Replace("\\", "/");
+            _globalConfigFilename = Path.Combine(AssemblyFolder, "PluginData/Config.cfg").Replace("\\", "/");
             Utilities.Log("globalConfigFilename = " + _globalConfigFilename);
         }
 
@@ -207,7 +207,7 @@ namespace AY
             _globalNode.Save(_globalConfigFilename);
 
             if (Utilities.debuggingOn)
-                Debug.Log("OnLoad: " + gameNode + "\n" + _globalNode);
+                Debug.Log("OnSave: " + gameNode + "\n" + _globalNode);
             else
             {
                 Debug.Log("AmpYear Scenario OnSave completed.");

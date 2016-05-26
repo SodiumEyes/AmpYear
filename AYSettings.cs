@@ -53,8 +53,8 @@ namespace AY
             "Climate Control",
             "Smooth Jazz",
             "Massage Chair",
-        //    "ModuleAmpYearPPTRCS",
-        //    "ModuleAmpYearPoweredRCS",
+            "ModuleIONPoweredRCS",
+            "ModulePPTPoweredRCS",
             "ModuleDeployableSolarPanel",
             "ModuleWheel",
             "ModuleLight",
@@ -71,7 +71,10 @@ namespace AY
            "ModuleRTAntenna", //Remote Tech
            "SCANsat",  //SCANsat
            "TacGenericConverter", //TAC-LS
-           "ModuleLimitedDataTransmitter" //Antenna Range
+           "ModuleLimitedDataTransmitter", //Antenna Range
+           "Scrubber",  //Kerbalism
+           "Greenhouse", //Kerbalism
+           "GravityRing" //Kerbalism
         };
 
         private const string configNodeName = "AYSettings";
@@ -164,17 +167,19 @@ namespace AY
                 {
                     ESPValues tmpESPVals = new ESPValues(true, ESPPriority.MEDIUM);
                     string tmpStr = "";
-                    node.TryGetValue(validentry, ref tmpStr);
-                    string[] tmpStrStrings = tmpStr.Split(',');
-                    if (tmpStrStrings.Length == 2)
+                    if (AYsettingsNode.TryGetValue(validentry, ref tmpStr))
                     {
-                        bool tmpBool = false;
-                        if (bool.TryParse(tmpStrStrings[0], out tmpBool))
-                            tmpESPVals.EmergShutDnDflt = tmpBool;
+                        string[] tmpStrStrings = tmpStr.Split(',');
+                        if (tmpStrStrings.Length == 2)
+                        {
+                            bool tmpBool = false;
+                            if (bool.TryParse(tmpStrStrings[0], out tmpBool))
+                                tmpESPVals.EmergShutDnDflt = tmpBool;
 
-                        int tmpInt = 2;
-                        if (int.TryParse(tmpStrStrings[1], out tmpInt))
-                            tmpESPVals.EmergShutPriority = (ESPPriority)tmpInt;
+                            int tmpInt = 2;
+                            if (int.TryParse(tmpStrStrings[1], out tmpInt))
+                                tmpESPVals.EmergShutPriority = (ESPPriority)tmpInt;
+                        }
                     }
                     PartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry, tmpESPVals));
                 }
