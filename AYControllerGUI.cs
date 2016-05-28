@@ -40,16 +40,17 @@ using System.Collections.Generic;
 using KSP.UI.Screens;
 using UnityEngine;
 using RSTUtils;
+using RSTUtils.Extensions;
 
 namespace AY
 {
     public partial class AYController : MonoBehaviour
     {
         //GUI Properties
-        private IButton _button1;
+        //private IButton _button1;
         private IconAlertState _iconAlertState = IconAlertState.GREEN;
-
-        private ApplicationLauncherButton _stockToolbarButton = null; // Stock Toolbar Button
+        private AppLauncherToolBar AYMenuAppLToolBar;
+        //private ApplicationLauncherButton _stockToolbarButton = null; // Stock Toolbar Button
         private readonly double[] _reserveTransferIncrements = new double[3] { 0.25, 0.1, 0.01 };
         private String[] incrementPercentString = new String[3];
         private bool[] _guiSectionEnableFlag = new bool[LoadGlobals.GuiSectionArrayCache.Length];
@@ -65,6 +66,7 @@ namespace AY
         private static int _dwindowId;
         private static int _wwindowId;
         private static int _swindowId;
+        private static string LOCK_ID = "AmpYear_KeyBinder";
         private bool[] _subsystemToggle = new bool[LoadGlobals.SubsystemArrayCache.Length]; // Enum.GetValues(typeof(Subsystem)).Length];
         private double[] _subsystemDrain = new double[LoadGlobals.SubsystemArrayCache.Length]; //Enum.GetValues(typeof(Subsystem)).Length];
         private bool _managerEnabled = true;
@@ -94,7 +96,7 @@ namespace AY
         private Rect _eplHeaders2, _eplProdlistbox, _eplConslistbox;
         private bool _includeStoredEc = true;
         private bool _includeSoredRp = true;
-        private bool _lockReservePower = false;  //Blocks usage of ReservePower automatically
+        private bool _lockReservePower;  //Blocks usage of ReservePower automatically
         private bool PrtProdEditorIncludeAll = true;
         private bool PrtProdESPIncludeAll = true;
         private bool PrtConsEditorIncludeAll = true;
@@ -125,7 +127,33 @@ namespace AY
         private uint tmpPartKey;
 
         #region GUIFunctions
+        
+        private ControlTypes EditorLocks = ControlTypes.EDITOR_ICON_HOVER | ControlTypes.EDITOR_ICON_PICK | ControlTypes.EDITOR_TAB_SWITCH | ControlTypes.EDITOR_PAD_PICK_PLACE | 
+            ControlTypes.EDITOR_PAD_PICK_COPY | ControlTypes.EDITOR_GIZMO_TOOLS | ControlTypes.EDITOR_ROOT_REFLOW | ControlTypes.EDITOR_SYM_SNAP_UI | ControlTypes.EDITOR_EDIT_STAGES | 
+            ControlTypes.EDITOR_UNDO_REDO | ControlTypes.EDITOR_MODE_SWITCH | ControlTypes.EDITOR_UI;
 
+        //Lifted this more or less directly from the Kerbal Engineer source. Thanks cybutek!
+        /// <summary>
+        ///     Gets and sets the input lock state.
+        /// </summary>
+        public bool InputLock
+        {
+            get
+            {
+                return InputLockManager.GetControlLock(LOCK_ID) != ControlTypes.None;
+            }
+            set
+            {
+                if (value)
+                {
+                    InputLockManager.SetControlLock(EditorLocks | ControlTypes.UI_DIALOGS, LOCK_ID);
+                }
+                else
+                {
+                    InputLockManager.SetControlLock(ControlTypes.None, LOCK_ID);
+                }
+            }
+        }
 
         //GUI Functions Follow
 
@@ -150,18 +178,18 @@ namespace AY
                 Utilities.Log("Exception: {0}", ex);
             }
 
-            if (!GuiVisible || _gamePaused || _hideUI || (!Utilities.GameModeisEditor && !Utilities.GameModeisFlight)) return;
+            if (!AYMenuAppLToolBar.GuiVisible || AYMenuAppLToolBar.gamePaused || AYMenuAppLToolBar.hideUI || (!Utilities.GameModeisEditor && !Utilities.GameModeisFlight)) return;
 
             GUI.skin = HighLogic.Skin;
             if (Utilities.GameModeisFlight)  //FlightScene GUI
             {
                 try
                 {
-                    if (!Utilities.WindowVisibile(_fwindowPos)) _fwindowPos = Utilities.MakeWindowVisible(_fwindowPos);
+                    _fwindowPos.ClampInsideScreen();
                     _fwindowPos = GUILayout.Window(_fwindowId, _fwindowPos, WindowF, "AmpYear Power Manager", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
-                        if (!Utilities.WindowVisibile(_epLwindowPos)) _epLwindowPos = Utilities.MakeWindowVisible(_epLwindowPos);
+                        _epLwindowPos.ClampToScreen();
                         _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
                     }
                     CheckPowerLowWarning();
@@ -183,11 +211,11 @@ namespace AY
             {
                 try
                 {
-                    if (!Utilities.WindowVisibile(_ewindowPos)) _ewindowPos = Utilities.MakeWindowVisible(_ewindowPos);
+                    _ewindowPos.ClampInsideScreen();
                     _ewindowPos = GUILayout.Window(_ewindowId, _ewindowPos, WindowE, "AmpYear Power Manager", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
-                        if (!Utilities.WindowVisibile(_epLwindowPos)) _epLwindowPos = Utilities.MakeWindowVisible(_epLwindowPos);
+                        _epLwindowPos.ClampToScreen();
                         _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
                     }
                 }
@@ -202,7 +230,7 @@ namespace AY
             {
                 try
                 {
-                    if (!Utilities.WindowVisibile(_dwindowPos)) _dwindowPos = Utilities.MakeWindowVisible(_dwindowPos);
+                    _dwindowPos.ClampToScreen();
                     _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, "AmpYear Dark-Side & Solar SOI", GUILayout.MinWidth(330), GUILayout.MinHeight(320));
                 }
                 catch (Exception ex)
@@ -214,6 +242,14 @@ namespace AY
             
             if (AYsettings.TooltipsOn)
                 Utilities.DrawToolTip();
+        }
+
+        /// <summary>
+        ///     Called by unity every frame.
+        /// </summary>
+        protected virtual void Update()
+        {
+            UpdateInputLock();
         }
 
         private void CheckPowerLowWarning()
@@ -243,7 +279,7 @@ namespace AY
             Rect closeRect = new Rect(_fwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
-                OnAppLaunchToggle();
+                AYMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
 
@@ -628,7 +664,7 @@ namespace AY
             Rect closeRect = new Rect(_ewindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
-                OnAppLaunchToggle();
+                AYMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
             GUILayout.BeginVertical();
@@ -861,7 +897,7 @@ namespace AY
                 }
                 GUILayout.Label("", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
                 GUILayout.Label("Total EC Produced", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                GUILayout.Label(new GUIContent(_totalProdPower.ToString("####0.##"), "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(_totalProdPower.ToString("####0.###"), "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
                 GUILayout.EndHorizontal();
             }
                 
@@ -990,7 +1026,7 @@ namespace AY
                 }
                 GUILayout.Label("", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
                 GUILayout.Label("Total EC Consumed", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                GUILayout.Label(new GUIContent(_totalConsPower.ToString("####0.##"), "Total Power Consumption"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(_totalConsPower.ToString("####0.###"), "Total Power Consumption"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
                 GUILayout.EndHorizontal();
             }
             // End the ScrollView
@@ -1108,7 +1144,40 @@ namespace AY
                 Utilities.SetTooltipText();
             GUI.DragWindow();
         }
-        
+
+
+        private bool inputLock;
+        private bool mouseOver;
+
+        /// <summary>
+        ///     Updates the input lock.
+        /// </summary>
+        private void UpdateInputLock()
+        {
+            mouseOver = false; // position.MouseIsOver();
+            if (AYMenuAppLToolBar.GuiVisible && !AYMenuAppLToolBar.gamePaused && !AYMenuAppLToolBar.hideUI)
+            {
+                if (Utilities.GameModeisFlight)
+                    mouseOver = _fwindowPos.MouseIsOver() || (_showParts && _epLwindowPos.MouseIsOver());
+                if (Utilities.GameModeisEditor)
+                    mouseOver = _ewindowPos.MouseIsOver() || (_showParts && _epLwindowPos.MouseIsOver());
+                inputLock = InputLock;
+
+                if (mouseOver && inputLock == false)
+                {
+                    InputLock = true;
+                }
+                else if (mouseOver == false && inputLock)
+                {
+                    InputLock = false;
+                }
+            }
+            else
+            {
+                InputLock = false;
+            }
+        }
+
         //Set the iconAlertstate - DOES NOT PROCESS state = GREEN. If state = Yellow will only change to yellow if state is not already RED.
         //If state = red then it will be changed to RED.
         private void SetIconalertstate(IconAlertState state)
@@ -1126,10 +1195,10 @@ namespace AY
             //Time Remaining in Main batteries
             double timeRemainMains = TotalElectricCharge / TotalPowerDrain;
 
-            string icontoSet = GuiVisible ? "/AYGreenOnTB" : "/AYGreenOffTB";  //Default is Green 
-            Texture iconToSet = GuiVisible ? (Texture)Textures.IconGreenOn : (Texture)Textures.IconGreenOff; //Default is Green
+            string icontoSet = AYMenuAppLToolBar.GuiVisible ? "/AYGreenOnTB" : "/AYGreenOffTB";  //Default is Green 
+            Texture iconToSet = AYMenuAppLToolBar.GuiVisible ? (Texture)Textures.IconGreenOn : (Texture)Textures.IconGreenOff; //Default is Green
 
-            if (!GuiVisible)  //We have to set the alert state here if GUI is not visible. Otherwise the GUI display method sets it.                
+            if (!AYMenuAppLToolBar.GuiVisible)  //We have to set the alert state here if GUI is not visible. Otherwise the GUI display method sets it.                
             {
                 _iconAlertState = IconAlertState.GREEN;
                 if (Utilities.GameModeisFlight)
@@ -1165,39 +1234,39 @@ namespace AY
             }
 
             //if toolbar
-            if (ToolbarManager.ToolbarAvailable && AYsettings.UseAppLauncher == false)
+            if (AYMenuAppLToolBar.usingToolBar)
             {
                 // Set Icon based on the iconAlertState
                 if (_iconAlertState == IconAlertState.RED)
                 {
-                    icontoSet = GuiVisible ? "/AYRedOnTB" : "/AYRedOffTB";
+                    icontoSet = AYMenuAppLToolBar.GuiVisible ? "/AYRedOnTB" : "/AYRedOffTB";
                 }
                 else
                 {
                     if (_iconAlertState == IconAlertState.YELLOW)
                     {
-                        icontoSet = GuiVisible ? "/AYYellowOnTB" : "/AYYellowOffTB";
+                        icontoSet = AYMenuAppLToolBar.GuiVisible ? "/AYYellowOnTB" : "/AYYellowOffTB";
                     }
                 }
-                _button1.TexturePath = Textures.PathToolbarIconsPath + icontoSet;
+                AYMenuAppLToolBar.setToolBarTexturePath(Textures.PathToolbarIconsPath + icontoSet);
             }
             else  //Stock applauncher
             {
-                if (_stockToolbarButton != null)
+                if (AYMenuAppLToolBar.StockButtonNotNull)
                 {
                     // Set Icon
                     if (_iconAlertState == IconAlertState.RED)
                     {
-                        iconToSet = GuiVisible ? (Texture)Textures.IconRedOn : (Texture)Textures.IconRedOff;
+                        iconToSet = AYMenuAppLToolBar.GuiVisible ? (Texture)Textures.IconRedOn : (Texture)Textures.IconRedOff;
                     }
                     else
                     {
                         if (_iconAlertState == IconAlertState.YELLOW)
                         {
-                            iconToSet = GuiVisible ? (Texture)Textures.IconYellowOn : (Texture)Textures.IconYellowOff;
+                            iconToSet = AYMenuAppLToolBar.GuiVisible ? (Texture)Textures.IconYellowOn : (Texture)Textures.IconYellowOff;
                         }
                     }
-                    _stockToolbarButton.SetTexture(iconToSet);
+                    AYMenuAppLToolBar.setAppLauncherTexture(iconToSet);
                 }
             }
         }

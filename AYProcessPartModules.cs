@@ -47,6 +47,69 @@ namespace AY
     public partial class AYController : MonoBehaviour
     {
 
+        //Temp vars for PartModule Processing
+        //Stock
+        private BaseFieldList fieldlist;
+        private object state;
+        private object ec_rate;
+        private object speed;
+        private object lamps;
+        private object is_enabled;
+        private object co2_rate;
+        private ModuleRCS tmpRCSmodule;
+        private ModuleDeployableSolarPanel tmpSol;
+        private double solarFlux;
+        private double orientationFactor;
+        private float multiplier;
+        private ModuleGenerator tmpGen;
+        private ModuleActiveRadiator tmprad;
+        private ModuleLight tmpLight;
+        private ModuleDataTransmitter tmpAnt;
+        private ModuleReactionWheel tmpRw;
+        private ReactionWheelPower rwp;
+        private ModuleEngines tmpEng;
+        private const float grav = 9.81f;
+        private bool usesCharge = false;
+        private float sumRd = 0;
+        private Single ecratio = 0;
+        private bool tmpcurrentEngActive = false;
+        private ModuleEnginesFX tmpEngFx;
+        private ModuleAlternator tmpAlt;
+        private double tmpaltRate = 0f;
+        private ModuleResourceConverter tmpRegRc;
+        private ConversionRecipe recipe;
+        private float FillAmount;
+        private List<ResourceRatio> recInputs;
+        private List<ResourceRatio> recOutputs;
+        private ModuleEnviroSensor tmpEnvS;
+
+        //Other Mods
+        private ALWrapper.ALNavLight ALtmpLight;
+        private string generatorState;
+        private string[] generatorStatewords;
+        private int stringlength;
+        private NFSWrapper.NFSCurvedPanel NFSCPtmpGen;
+        private KASWrapper.KASModuleWinch tmpKw;
+        private KASWrapper.KASModuleMagnet tmpKm;
+        private RTWrapper.RTAntenna RTtmpAnt;
+        private ScanSatWrapper.SCANsat tmpSs;
+        private TeleWrapper.TMPowerDrain tmpTm;
+        private TACLSWrapper.TACLSGenericConverter tacGC;
+        private string resName;
+        private KSPIEWrapper.FNModuleCryostat tmpCryo;
+        private KSPIEWrapper.FNGenerator FNtmpGen;
+        private DFWrapper.DeepFreezer tmpDeepFreezer;
+        private KPBSWrapper.ModuleKPBSConverter KPBSconv;
+        private KPBSWrapper.PlanetaryGreenhouse KPBSgh;
+        private float currentRateConverter;
+        private float currentRateGreenhouse;
+        private USILSWrapper.ModuleLifeSupport usiMLS;
+        private IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs;
+        private IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs;
+        private float IONRCSelecUse;
+        private NFPWrapper.VariableISPEngine tmpVariableIspEngine;
+
+
         #region StockPartModules
 
         internal bool ProcessStockPartModule(Part currentPart, PartModule module, bool inhasAlternator, bool incurrentEngActive, double inaltRate,
@@ -168,9 +231,7 @@ namespace AY
 
             return false;
         }
-
-        private ModuleRCS tmpRCSmodule;
-
+        
         private void ProcessModuleRCS(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -187,12 +248,7 @@ namespace AY
                 checkIONRCS(module, currentPart);
             }
         }
-
-        private ModuleDeployableSolarPanel tmpSol;
-        private double solarFlux;
-        private double orientationFactor;
-        private float multiplier;
-
+        
         private void ProcessModuleDeployableSolarPanel(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -229,9 +285,7 @@ namespace AY
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, true);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleGenerator tmpGen;
-
+        
         private void ProcessModuleGenerator(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -350,9 +404,7 @@ namespace AY
             }
             PartsModuleCommand.Add(currentPart);
         }
-
-        private ModuleActiveRadiator tmprad;
-
+        
         private void ProcessModuleActiveRadiator(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -380,9 +432,7 @@ namespace AY
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleLight tmpLight;
-
+        
         private void ProcessModuleLight(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -397,9 +447,7 @@ namespace AY
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleDataTransmitter tmpAnt;
-
+        
         private void ProcessModuleDataTransmitter(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -420,10 +468,7 @@ namespace AY
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleReactionWheel tmpRw;
-        private ReactionWheelPower rwp;
-
+        
         private void ProcessModuleReactionWheel(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -472,14 +517,7 @@ namespace AY
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleEngines tmpEng;
-        private const float grav = 9.81f;
-        private bool usesCharge = false;
-        private float sumRd = 0;
-        private Single ecratio = 0;
-        private bool tmpcurrentEngActive = false;
-
+        
         private bool ProcessModuleEngines(string prtName, Part currentPart, PartModule module, double altRate)
         {
             prtActive = false;
@@ -527,9 +565,7 @@ namespace AY
             }
             return tmpcurrentEngActive;
         }
-
-        private ModuleEnginesFX tmpEngFx;
-
+      
         private bool ProcessModuleEnginesFX(string prtName, Part currentPart, PartModule module ,double altRate)
         {
             prtActive = false;
@@ -585,10 +621,7 @@ namespace AY
             }
             return tmpcurrentEngActive;
         }
-
-        private ModuleAlternator tmpAlt;
-        private double tmpaltRate = 0f;
-
+        
         private double ProcessModuleAlternator(string prtName, Part currentPart, PartModule module, bool currentEngActive)
         {
             prtActive = false;
@@ -698,13 +731,7 @@ namespace AY
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleResourceConverter tmpRegRc;
-        private ConversionRecipe recipe;
-        private float FillAmount;
-        private List<ResourceRatio> recInputs;
-        private List<ResourceRatio> recOutputs;
-
+        
         private void ProcessModuleResourceConverter(string prtName, Part currentPart, PartModule module, float KPBS)
         {
             prtActive = false;
@@ -761,9 +788,7 @@ namespace AY
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
-        private ModuleEnviroSensor tmpEnvS;
-
+        
         private void ProcessModuleEnviroSensor(string prtName, Part currentPart, PartModule module)
         {
             prtActive = false;
@@ -979,9 +1004,7 @@ namespace AY
                 checkKK(module, current_part);
             }*/
         }
-
-        private ALWrapper.ALNavLight ALtmpLight;
-
+        
         private void checkAv(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1003,7 +1026,7 @@ namespace AY
                     break;
             }
         }
-
+        
         private void checkNFE(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1054,11 +1077,85 @@ namespace AY
                         }
                     }
                     break;
+
+                case "FissionGenerator":
+                    try
+                    {
+                        fieldlist = psdpart.Fields;
+                        state = fieldlist.GetValue("GeneratorStatus");
+                        generatorState = (string)state;
+                        if (generatorState != "Offline")
+                        {
+                            prtActive = true;
+                            generatorStatewords = generatorState.Split(' ');
+                            if (!float.TryParse(generatorStatewords[0], out tmpPower))
+                                tmpPower = 0.0f;
+                        }
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                    }
+                    catch (Exception)
+                    {
+                        //throw;
+                    }
+                    break;
+
+                case "FissionFlowRadiator":
+                    ProcessModuleActiveRadiator(prtName, currentPart, psdpart);
+                    break;
+
+                case "ModuleRadioisotopeGenerator":
+                    try
+                    {
+                        fieldlist = psdpart.Fields;
+                        ec_rate = fieldlist.GetValue("ActualPower");
+                        tmpPower = (float)ec_rate;
+                        if (tmpPower > 0)
+                        {
+                            prtActive = true;
+                        }
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                    }
+                    catch (Exception)
+                    {
+                        //throw;
+                    }
+                    
+                    break;
+
+                case "DischargeCapacitor":
+                    try
+                    {
+                        fieldlist = psdpart.Fields;
+                        state = fieldlist.GetValue("CapacitorStatus");
+                        generatorState = (string)state;
+                        if (generatorState.Contains("Discharging:"))
+                        {
+                            prtActive = true;
+                            stringlength = generatorState.Length - 15;
+                            generatorState = generatorState.Substring(13, stringlength);
+                            if (!float.TryParse(generatorState, out tmpPower))
+                                tmpPower = 0.0f;
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                        }
+                        if (generatorState.Contains("Recharging:"))
+                        {
+                            prtActive = true;
+                            stringlength = generatorState.Length - 14;
+                            generatorState = generatorState.Substring(12, stringlength);
+                            if (!float.TryParse(generatorState, out tmpPower))
+                                tmpPower = 0.0f;
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        //throw;
+                    }
+                    
+                    break;
             }
         }
-
-        private NFSWrapper.NFSCurvedPanel NFSCPtmpGen;
-         
+        
         private void checkNFS(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1085,10 +1182,7 @@ namespace AY
                     break;
             }
         }
-
-        private KASWrapper.KASModuleWinch tmpKw;
-        private KASWrapper.KASModuleMagnet tmpKm;
-
+        
         private void checkKAS(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1130,9 +1224,7 @@ namespace AY
                     break;
             }
         }
-
-        private RTWrapper.RTAntenna RTtmpAnt;
-
+        
         private void checkRT2(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1165,9 +1257,7 @@ namespace AY
                     break;
             }
         }
-
-        private ScanSatWrapper.SCANsat tmpSs;
-
+        
         private void checkSCANsat(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1191,9 +1281,7 @@ namespace AY
                     break;
             }
         }
-
-        private TeleWrapper.TMPowerDrain tmpTm;
-
+        
         private void checkTel(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1224,10 +1312,7 @@ namespace AY
                     break;
             }
         }
-
-        private TACLSWrapper.TACLSGenericConverter tacGC;
-        private string resName;
-
+        
         private void checkTACL(PartModule psdpart, Part currentPart, bool cmdPod)
         {
             if (TACLSWrapper.TACactualAPI.getEnabled())
@@ -1379,10 +1464,7 @@ namespace AY
                     break;
             }
         }
-
-        private KSPIEWrapper.FNModuleCryostat tmpCryo;
-        private KSPIEWrapper.FNGenerator FNtmpGen;
-
+        
         private void checkKSPIE(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1436,9 +1518,7 @@ namespace AY
                     break;
             }
         }
-
-        private DFWrapper.DeepFreezer tmpDeepFreezer;
-
+        
         private void checkDF(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1482,12 +1562,7 @@ namespace AY
                     break;
             }
         }
-
-        private KPBSWrapper.ModuleKPBSConverter KPBSconv;
-        private KPBSWrapper.PlanetaryGreenhouse KPBSgh;
-        private float currentRateConverter;
-        private float currentRateGreenhouse;
-
+        
         private void checkKPBS(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1507,9 +1582,7 @@ namespace AY
                     break;
             }
         }
-
-        private USILSWrapper.ModuleLifeSupport usiMLS;
-
+        
         private void checkUSILS(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1564,11 +1637,7 @@ namespace AY
                     break;
             }
         }
-
-        private IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs;
-        private IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs;
-        private float IONRCSelecUse;
-
+        
         private void checkIONRCS(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1617,17 +1686,7 @@ namespace AY
                     break;
             }
         }
-
-
-        private BaseFieldList fieldlist;
-        private object state;
-        private object ec_rate;
-        private object speed;
-        private object lamps;
-        private object is_enabled;
-        private object co2_rate;
-
-
+        
         private void checkKerbalism(PartModule psdpart, Part currentPart)
         {
             
@@ -1698,9 +1757,7 @@ namespace AY
                 ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
             }
         }
-
-        private NFPWrapper.VariableISPEngine tmpVariableIspEngine;
-
+        
         private void checkNFP(PartModule psdpart, Part currentPart)
         {
 

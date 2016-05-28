@@ -447,6 +447,8 @@ namespace AY
             GameEvents.onVesselChange.Add(OnVesselChange);
             GameEvents.onVesselLoaded.Add(OnVesselLoad);
             GameEvents.onCrewBoardVessel.Add(OnCrewBoardVessel);
+            GameEvents.onGameSceneSwitchRequested.Add(OnGameSceneSwitch);
+            GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoad);
             GameEvents.onGUIEngineersReportReady.Add(AddTests);
             
             Utilities.Log_Debug("AYController Start complete"); 
@@ -465,6 +467,8 @@ namespace AY
             GameEvents.onVesselChange.Remove(OnVesselChange);
             GameEvents.onVesselLoaded.Remove(OnVesselLoad);
             GameEvents.onCrewBoardVessel.Remove(OnCrewBoardVessel);
+            GameEvents.onGameSceneSwitchRequested.Remove(OnGameSceneSwitch);
+            GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoad);
             GameEvents.onGUIEngineersReportReady.Remove(AddTests);
             GameEvents.OnVesselRollout.Remove(OnVesselRollout);
             GameEvents.onVesselCreate.Remove(OnVesselCreate);
@@ -996,27 +1000,28 @@ namespace AY
             //* Delete vessels that do not exist any more or have no crew
             foreach (var entry in AYgameSettings.KnownVessels)
             {
-                Utilities.Log_Debug("AYController knownvessels id = " + entry.Key.ToString() + " Name = " + entry.Value.VesselName);
-                Guid vesselId = entry.Key;
-                VesselInfo vesselInfo = new VesselInfo(entry.Value.VesselName, currentTime);
-                vesselInfo = entry.Value;
-                Vessel vessel = allVessels.Find(v => v.id == vesselId);
-                if (vessel == null)
+                Utilities.Log_Debug("AYController knownvessels id = " + entry.Key + " Name = " + entry.Value.VesselName);
+                //Guid vesselId = entry.Key;
+                //VesselInfo vesselInfo = new VesselInfo(entry.Value.VesselName, currentTime);
+                //vesselInfo = entry.Value;
+                //Vessel vessel = allVessels.Find(v => v.id == entry.Key);
+                //if (vessel == null)
+                if (allVessels.FirstOrDefault(v => v.id == entry.Key) == null)
                 {
-                    Utilities.Log_Debug("Deleting vessel " + vesselInfo.VesselName + " - vessel does not exist anymore");
-                    vesselsToDelete.Add(vesselId);
+                    Utilities.Log_Debug("Deleting vessel " + entry.Value.VesselName + " - vessel does not exist anymore");
+                    vesselsToDelete.Add(entry.Key);
                     continue;
                 }
-                if (vessel.loaded)
-                {
-                    UpdateVesselCounts(vesselInfo, vessel);
-                    if (vesselInfo.NumCrew == 0)
-                    {
-                        Utilities.Log_Debug("Deleting vessel " + vesselInfo.VesselName + " - no crew parts anymore");
-                        vesselsToDelete.Add(vesselId);
-                        continue;
-                    }
-                }
+                //if (vessel.loaded)
+                //{
+                //    UpdateVesselCounts(vesselInfo, vessel);
+                //    if (vesselInfo.NumCrew == 0)
+                //    {
+                //        Utilities.Log_Debug("Deleting vessel " + vesselInfo.VesselName + " - no crew parts anymore");
+                //        vesselsToDelete.Add(vesselId);
+                //        continue;
+                //    }
+                //}
             }
             vesselsToDelete.ForEach(id => AYgameSettings.KnownVessels.Remove(id));
 
@@ -1151,6 +1156,25 @@ namespace AY
             LoadVesselSettings(newvessel);
         }
 
+        private void OnGameSceneLoad(GameScenes scene)
+        {
+            Utilities.Log("OnGameSceneLoadRequested {0}", scene);
+        }
+
+        private void OnGameSceneSwitch(GameEvents.FromToAction<GameScenes, GameScenes> action)
+        {
+            Utilities.Log("OnGameSceneSwitch {0} to {1}", action.from, action.to);
+            if (action.from == GameScenes.FLIGHT)
+            {
+                if (AYgameSettings.KnownVessels.TryGetValue(Currentvesselid, out currvesselInfo))
+                {
+                    UpdateVesselInfo(currvesselInfo);
+                    UpdateVesselCounts(currvesselInfo, FlightGlobals.ActiveVessel);
+                    currvesselInfo.VesselType = FlightGlobals.ActiveVessel.vesselType;
+                }
+            }
+        }
+
         private void OnCrewBoardVessel(GameEvents.FromToAction<Part, Part> action)
         {
             Utilities.Log_Debug("AYController onCrewBoardVessel:{0} ({1}) Old:{2} ({3})" , action.to.vessel.name , action.to.vessel.id, action.from.vessel.name , action.from.vessel.id);
@@ -1166,13 +1190,15 @@ namespace AY
             // Load New Vessel settings from Dictionary
             if (AYgameSettings.KnownVessels.TryGetValue(newvessel.id, out currvesselInfo))
             {
-                Utilities.Log_Debug("AYController Vessel Loading Settings: {0} ({1})" , newvessel.name , newvessel.id);
-                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
+                Utilities.Log_Debug("AYController Vessel Loading Settings: {0} ({1})", newvessel.name, newvessel.id);
+                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++)
+                    // Enum.GetValues(typeof(Subsystem)).Length; i++)
                 {
                     _subsystemToggle[i] = currvesselInfo.SubsystemToggle[i];
                     _subsystemDrain[i] = currvesselInfo.SubsystemDrain[i];
                 }
-                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
+                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++)
+                    // Enum.GetValues(typeof(GUISection)).Length; i++)
                     _guiSectionEnableFlag[i] = currvesselInfo.GuiSectionEnableFlag[i];
                 _managerEnabled = currvesselInfo.ManagerEnabled;
                 _showCrew = currvesselInfo.ShowCrew;
@@ -1208,13 +1234,15 @@ namespace AY
                 VesselInfo newvesselinfo = new VesselInfo(newvessel.name, currentTime);
                 AYgameSettings.KnownVessels.Add(newvessel.id, newvesselinfo);
                 Utilities.Log_Debug("AYController Vessel Setting Default Settings");
-                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++) // Enum.GetValues(typeof(Subsystem)).Length; i++)
+                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++)
+                    // Enum.GetValues(typeof(Subsystem)).Length; i++)
                 {
                     _subsystemToggle[i] = false;
                     _subsystemDrain[i] = 0.0;
                 }
 
-                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++) // Enum.GetValues(typeof(GUISection)).Length; i++)
+                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++)
+                    // Enum.GetValues(typeof(GUISection)).Length; i++)
                     _guiSectionEnableFlag[i] = false;
                 _managerEnabled = true;
                 _showCrew = false;
@@ -1224,33 +1252,34 @@ namespace AY
                 {
                     KKLoadVesselSettings(newvesselinfo, true);
                 }
+
+                if (!KKPresent) //KabinKraziness not present turn off settings for KabinKraziness on vessel
+                {
+                    _subsystemToggle[3] = false;
+                    _subsystemToggle[4] = false;
+                    _subsystemToggle[5] = false;
+                    _subsystemDrain[3] = 0.0;
+                    _subsystemDrain[4] = 0.0;
+                    _subsystemDrain[5] = 0.0;
+                    _guiSectionEnableFlag[2] = false;
+                }
+                EmgcyShutOverride = false;
+                EmgcyShutOverrideStarted = false;
+                Emergencypowerdownactivated = false;
+                Emergencypowerdownreset = false;
+                Emergencypowerdownprevactivated = false;
+                Emergencypowerdownresetprevactivated = false;
+                ESPPriorityHighProcessed = false;
+                ESPPriorityMediumProcessed = false;
+                ESPPriorityLowProcessed = false;
+                ESPPriorityHighResetProcessed = false;
+                ESPPriorityMediumResetProcessed = false;
+                ESPPriorityLowResetProcessed = false;
+                _espPriority = ESPPriority.LOW;
+                _reenableRcs = false;
+                _reenableSas = false;
+                _lockReservePower = false;
             }
-            if (!KKPresent) //KabinKraziness not present turn off settings for KabinKraziness on vessel
-            {
-                _subsystemToggle[3] = false;
-                _subsystemToggle[4] = false;
-                _subsystemToggle[5] = false;
-                _subsystemDrain[3] = 0.0;
-                _subsystemDrain[4] = 0.0;
-                _subsystemDrain[5] = 0.0;
-                _guiSectionEnableFlag[2] = false;
-            }
-            EmgcyShutOverride = false;
-            EmgcyShutOverrideStarted = false;
-            Emergencypowerdownactivated = false;
-            Emergencypowerdownreset = false;
-            Emergencypowerdownprevactivated = false;
-            Emergencypowerdownresetprevactivated = false;
-            ESPPriorityHighProcessed = false;
-            ESPPriorityMediumProcessed = false;
-            ESPPriorityLowProcessed = false;
-            ESPPriorityHighResetProcessed = false;
-            ESPPriorityMediumResetProcessed = false;
-            ESPPriorityLowResetProcessed = false;
-            _espPriority = ESPPriority.LOW;
-            _reenableRcs = false;
-            _reenableSas = false;
-            _lockReservePower = false;
         }
         
         #endregion VesselFunctions

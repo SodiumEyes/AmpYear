@@ -133,7 +133,7 @@ namespace AY
             {
                 if (value)
                 {
-                    InputLockManager.SetControlLock(ControlTypes.All, LOCK_ID);
+                    InputLockManager.SetControlLock(ControlTypes.KSC_ALL, LOCK_ID);
                 }
                 else
                 {

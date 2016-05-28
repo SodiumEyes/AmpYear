@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.3.1.2")]
+[assembly: AssemblyVersion("1.3.1.3")]
 [assembly: KSPAssembly("AmpYear", 1, 3)] 
