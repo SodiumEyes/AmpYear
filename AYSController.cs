@@ -41,6 +41,7 @@ using System.Text.RegularExpressions;
 using KSP.UI.Screens;
 using UnityEngine;
 using RSTUtils;
+using RSTUtils.Extensions;
 using System.Linq;
 
 namespace AY
@@ -48,9 +49,7 @@ namespace AY
     internal class AYSCController : MonoBehaviour, ISavable
     {
         //GUI Properties
-        private IButton _button1;
-
-        private ApplicationLauncherButton _stockToolbarButton = null; // Stock Toolbar Button
+        private AppLauncherToolBar AYSCMenuAppLToolBar;
         private const float SCWINDOW_WIDTH = 450;
         private const float WINDOW_BASE_HEIGHT = 500;
         public Rect SCwindowPos = new Rect(40, Screen.height / 2 - 100, SCWINDOW_WIDTH, 200);
@@ -115,155 +114,85 @@ namespace AY
         public bool Useapplauncher = false;
         private bool KKPresent = false;
         private Vector2 _bodscrollViewVector = Vector2.zero;
+        private static string LOCK_ID = "AmpYear_KeyBinder";
+        private string tmpToolTip;
 
         //AmpYear Savable settings
         private AYSettings _aYsettings;
-
-        //GuiVisibility
-        private bool _visible = false;
-
-        public Boolean GuiVisible
+        
+        //Lifted this more or less directly from the Kerbal Engineer source. Thanks cybutek!
+        /// <summary>
+        ///     Gets and sets the input lock state.
+        /// </summary>
+        public bool InputLock
         {
-            get { return _visible; }
+            get
+            {
+                return InputLockManager.GetControlLock(LOCK_ID) != ControlTypes.None;
+            }
             set
             {
-                _visible = value;      //Set the private variable
+                if (value)
+                {
+                    InputLockManager.SetControlLock(ControlTypes.KSC_ALL, LOCK_ID);
+                }
+                else
+                {
+                    InputLockManager.SetControlLock(ControlTypes.None, LOCK_ID);
+                }
             }
         }
 
         public void Awake()
         {
             _aYsettings = AmpYear.Instance.AYsettings;
+            AYSCMenuAppLToolBar = new AppLauncherToolBar("AmpYear", "AmpYear",
+                Textures.PathToolbarIconsPath + "/AYGreenOffTB",
+                ApplicationLauncher.AppScenes.SPACECENTER,
+                (Texture)Textures.IconGreenOn, (Texture)Textures.IconGreenOff,
+                GameScenes.SPACECENTER);
             Utilities.Log_Debug("AYSCController Awake complete");
         }
-
-        private void OnGuiAppLauncherReady()
-        {
-            Utilities.Log_Debug("OnGUIAppLauncherReady");
-            if (ApplicationLauncher.Ready)
-            {
-                Utilities.Log_Debug("Adding AppLauncherButton");
-                _stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(OnAppLaunchToggleOn, OnAppLaunchToggleOff, DummyVoid,
-                                          DummyVoid, DummyVoid, DummyVoid, ApplicationLauncher.AppScenes.SPACECENTER,
-                                          //(Texture)GameDatabase.Instance.GetTexture("REPOSoftTech/AmpYear/Icons/AYIconOff", false));
-                                          (Texture)Textures.IconGreenOff);
-            }
-        }
-
-        private void DummyVoid()
-        {
-        }
-
-        private void OnAppLaunchToggleOn()
-        {
-            _stockToolbarButton.SetTexture((Texture)Textures.IconGreenOn);
-            GuiVisible = true;
-        }
-
-        private void OnAppLaunchToggleOff()
-        {
-            _stockToolbarButton.SetTexture((Texture)Textures.IconGreenOff);
-            GuiVisible = false;
-        }
-
-        private void SetButtonBar()
-        {
-            // destroy existing toolbar button
-            if (_button1 != null)
-                    _button1.Destroy();
-            if (_stockToolbarButton != null)
-            {
-                ApplicationLauncherButton[] lstButtons = FindObjectsOfType<ApplicationLauncherButton>();
-                Utilities.Log("AmpYear AppLauncher: Destroying Button-Button Count:" + lstButtons.Length);
-                ApplicationLauncher.Instance.RemoveModApplication(_stockToolbarButton);
-                _stockToolbarButton = null;
-                GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnGuiAppLauncherReady);
-            }
-
-            // create toolbar button
-            if (ToolbarManager.ToolbarAvailable && _aYsettings.UseAppLauncher == false)
-            {
-                _button1 = ToolbarManager.Instance.add("AmpYear", "button1");
-                _button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOffTB";
-                _button1.ToolTip = "AmpYear";
-                _button1.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
-                _button1.OnClick += (e) =>
-                {
-                    GuiVisible = !GuiVisible;
-                    if (GuiVisible)
-                        _button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOnTB";
-                    else
-                        _button1.TexturePath = Textures.PathToolbarIconsPath + "/AYGreenOffTB";
-                };
-            }
-            else
-            {
-                // Set up the stock toolbar
-                Utilities.Log_Debug("AYSCController Adding onGUIAppLauncher callbacks");
-                if (ApplicationLauncher.Ready)
-                {
-                    OnGuiAppLauncherReady();
-                }
-                else
-                    GameEvents.onGUIApplicationLauncherReady.Add(OnGuiAppLauncherReady);
-
-                GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoadRequestedForAppLauncher);
-            }
-        }
-
-        void OnGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
-        {            
-            if (_stockToolbarButton != null)
-            {
-                ApplicationLauncherButton[] lstButtons = FindObjectsOfType<ApplicationLauncherButton>();
-                Utilities.Log("AmpYear AppLauncher: Destroying Button-Button Count:" + lstButtons.Length);
-                ApplicationLauncher.Instance.RemoveModApplication(_stockToolbarButton);
-                _stockToolbarButton = null;
-            }
-        }
-
+        
         public void OnDestroy()
         {
-            if (ToolbarManager.ToolbarAvailable && _aYsettings.UseAppLauncher == false)
-            {
-                if (_button1 != null)
-                    _button1.Destroy();
-            }
-            else
-            {
-                // Set up the stock toolbar
-                Utilities.Log_Debug("Removing onGUIAppLauncher callbacks");
-                if (_stockToolbarButton != null)
-                {
-                    ApplicationLauncher.Instance.RemoveModApplication(_stockToolbarButton);
-                    _stockToolbarButton = null;
-                }
-            }
-            GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequestedForAppLauncher);
-            GameEvents.onGUIApplicationLauncherReady.Remove(OnGuiAppLauncherReady);
+            AYSCMenuAppLToolBar.Destroy();
+            
             //if (GuiVisible) GuiVisible = !GuiVisible;
+            InputLock = false;
         }
 
         public void Start()
         {
-            //AYsettings = AmpYear.Instance.AYsettings;
-            //AYgameSettings = AmpYear.Instance.AYgameSettings;
-            Utilities.Log("AYSCController Setup IconBar");
-            SetButtonBar();
-            Utilities.Log_Debug("AYSCController Awake complete");
             Utilities.Log_Debug("AYSController Start");
             KKPresent = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "KabinKraziness");
             Utilities.Log_Debug("Checked for mods");
             Utilities.Log_Debug(KKPresent ? "KabinKraziness present" : "KabinKraziness NOT present");
+
+            //If TST Settings wants to use ToolBar mod, check it is installed and available. If not set the TST Setting to use Stock.
+            if (!ToolbarManager.ToolbarAvailable && !_aYsettings.UseAppLauncher)
+            {
+                _aYsettings.UseAppLauncher = true;
+            }
+
+            AYSCMenuAppLToolBar.Start(_aYsettings.UseAppLauncher);
+
             Utilities.Log_Debug("AYController Start complete");
+        }
+
+        /// <summary>
+        ///     Called by unity every frame.
+        /// </summary>
+        protected virtual void Update()
+        {
+            UpdateInputLock();
         }
 
         //GUI Functions Follow
 
         private void OnGUI()
         {
-            if (!GuiVisible) return;
+            if (!AYSCMenuAppLToolBar.GuiVisible) return;
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
                 if (LoadSettingsSC)
@@ -314,8 +243,7 @@ namespace AY
                     LoadSettingsSC = false;
                 }
                 GUI.skin = HighLogic.Skin;
-                if (!Utilities.WindowVisibile(SCwindowPos))
-                    Utilities.MakeWindowVisible(SCwindowPos);
+                SCwindowPos.ClampInsideScreen();
                 SCwindowPos = GUILayout.Window(_windowId, SCwindowPos, WindowSc, "AmpYear Power Manager Settings",
                     GUILayout.Width(SCWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                 if (_toolTipsOn)
@@ -336,7 +264,7 @@ namespace AY
             Rect closeRect = new Rect(SCwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
-                GuiVisible = !GuiVisible;
+                AYSCMenuAppLToolBar.GuiVisible = false;
                 LoadSettingsSC = true;
                 return;
             }
@@ -406,10 +334,23 @@ namespace AY
                 GUILayout.EndHorizontal();
             }
 
+            if (!ToolbarManager.ToolbarAvailable)
+            {
+                GUI.enabled = false;
+                tmpToolTip = "Not available unless ToolBar mod is installed";
+            }
+            else
+            {
+                tmpToolTip =
+                    "If ON Icon will appear in the stock Applauncher, if OFF Icon will appear in ToolBar mod";
+            }
+
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Use Application Launcher Button (Requires Scene Change to take effect)", "If this is ON Stock Icon will be used, if OFF Blizzy's Toolbar will be used"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent("Use Application Launcher Button", tmpToolTip), Textures.StatusStyle, GUILayout.Width(300));
             _inputAppL = GUILayout.Toggle(_inputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
+
+            GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("Debug Mode", "Creates logs of logging messages to help when there are problems, but will slow KSP down"), Textures.StatusStyle, GUILayout.Width(300));
@@ -594,7 +535,7 @@ namespace AY
                 if (Useapplauncher != _inputAppL)
                 {
                     Useapplauncher = _inputAppL;
-                    SetButtonBar();
+                    AYSCMenuAppLToolBar.chgAppIconStockToolBar(Useapplauncher);
                 }
                 Useapplauncher = _inputAppL;
                 _debugging = _inputVdebug;
@@ -622,6 +563,33 @@ namespace AY
             GUI.DragWindow();
            
         }
+
+        /// <summary>
+        ///     Updates the input lock.
+        /// </summary>
+        private void UpdateInputLock()
+        {
+            bool mouseOver = false; // position.MouseIsOver();
+            if (AYSCMenuAppLToolBar.GuiVisible)
+            {
+                mouseOver = SCwindowPos.MouseIsOver();
+                bool inputLock = InputLock;
+
+                if (mouseOver && inputLock == false)
+                {
+                    InputLock = true;
+                }
+                else if (mouseOver == false && inputLock)
+                {
+                    InputLock = false;
+                }
+            }
+            else
+            {
+                InputLock = false;
+            }
+        }
+
 
         //Class Load and Save of global settings
         public void Load(ConfigNode globalNode)

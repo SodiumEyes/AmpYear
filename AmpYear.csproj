@@ -44,6 +44,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\KSPDLLs\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="KSPUtil">
       <HintPath>..\KSPDLLs\KSPUtil.dll</HintPath>
     </Reference>
@@ -62,8 +63,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\REPOSoftTechKSPUtils\AppLauncherToolBarExtension.cs">
+      <Link>AppLauncherToolBarExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\REPOSoftTechKSPUtils\RectExtentions.cs">
+      <Link>RectExtentions.cs</Link>
+    </Compile>
     <Compile Include="..\REPOSoftTechKSPUtils\RSTutilities.cs">
       <Link>RSTutilities.cs</Link>
+    </Compile>
+    <Compile Include="..\REPOSoftTechKSPUtils\ToolBarManager.cs">
+      <Link>ToolBarManager.cs</Link>
     </Compile>
     <Compile Include="APIs\ALWrapper.cs" />
     <Compile Include="AmpYear.cs" />
@@ -71,6 +81,7 @@
     <Compile Include="APIs\IONRCSWrapper.cs" />
     <Compile Include="APIs\KKWrapper.cs" />
     <Compile Include="APIs\KPBSWrapper.cs" />
+    <Compile Include="APIs\NFPWrapper.cs" />
     <Compile Include="APIs\USILSWrapper.cs" />
     <Compile Include="AYControllerGUI.cs" />
     <Compile Include="AYEnums.cs" />
@@ -94,7 +105,6 @@
     <Compile Include="AYSettings.cs" />
     <Compile Include="AYController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ToolBarManager.cs" />
     <None Include="Distribution\GameData\REPOSoftTech\Agencies\Agents.cfg" />
     <None Include="Distribution\GameData\REPOSoftTech\Agencies\REPOSoftTech_scaled.truecolor" />
     <None Include="Distribution\GameData\REPOSoftTech\AmpYear\AmpYear.version" />

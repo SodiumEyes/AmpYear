@@ -47,6 +47,9 @@ namespace AY
     [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class LoadGlobals : MonoBehaviour
     {
+        internal static Subsystem[] SubsystemArrayCache;
+        internal static GUISection[] GuiSectionArrayCache;
+
         public static LoadGlobals Instance;
         //Awake Event - when the DLL is loaded
         public void Awake()
@@ -57,6 +60,8 @@ namespace AY
             Textures.LoadIconAssets();
             AYVesselPartLists.InitDictionaries();
             DontDestroyOnLoad(this);
+            SubsystemArrayCache = Enum.GetValues(typeof(Subsystem)).Cast<Subsystem>().ToArray();
+            GuiSectionArrayCache = Enum.GetValues(typeof(GUISection)).Cast<GUISection>().ToArray();
             Utilities.Log("AmpYear LoadGlobals Awake Complete");
         }
 
@@ -137,7 +142,7 @@ namespace AY
             Instance = this;
             AYsettings = new AYSettings();
             AYgameSettings = new AYGameSettings();
-            _globalConfigFilename = Path.Combine(AssemblyFolder, "Config.cfg").Replace("\\", "/");
+            _globalConfigFilename = Path.Combine(AssemblyFolder, "PluginData/Config.cfg").Replace("\\", "/");
             Utilities.Log("globalConfigFilename = " + _globalConfigFilename);
         }
 
@@ -202,7 +207,7 @@ namespace AY
             _globalNode.Save(_globalConfigFilename);
 
             if (Utilities.debuggingOn)
-                Debug.Log("OnLoad: " + gameNode + "\n" + _globalNode);
+                Debug.Log("OnSave: " + gameNode + "\n" + _globalNode);
             else
             {
                 Debug.Log("AmpYear Scenario OnSave completed.");

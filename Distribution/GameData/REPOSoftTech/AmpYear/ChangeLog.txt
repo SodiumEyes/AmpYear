@@ -1,4 +1,19 @@
-﻿V1.3.0.0 "KSP 1.1.1+ Mega Edition"
+﻿V1.3.2.0 "Post-Mega Update Tweaks & Fixes"
+	Merged Dark-Side and Solar SOI windows into a single window.
+	Mega efficiency code clean-up. Reduce Garbage generation and CPU overhead.
+	Persist the IsolateReservePower button setting for each vessel between scenes and save/load.
+	Changed the PartsList screen to change colors(colours) and not include in totals on the parts list for parts you exclude from the AmpYear calcs.
+	Changed the PartsList screen to show each part's Title rather than the internal KSP part name.
+	Prevent Click-Through of AmpYear GUI Windows.
+	Added ESP support for IONRCS parts.
+	Added EC usage support for Kerbalism mod parts - Scrubber, Greenhouse, GravityRing (basic as some parts do not expose EC usage currently, ESP Shutdown only support for these parts).
+	Fixed bug not saving default ESP settings for modules in Space Center settings screen.
+	Added support for Near Future Propulsion modules. (No ESP Support).
+	Fixed support for all Near Future Electrical modules. (No ESP Support).
+	Added Gray(Grey) Icons which will appear when you turn AmpYear Manager OFF in flight (no more free Alert Icons).
+	Added KSPedia pages for AmpYear.
+	
+V1.3.0.0 "KSP 1.1.1+ Mega Edition"
 	ION RCS and PPT RCS parts have been split off to their own separate Mod distributable and are no longer part of this mod, this mod will support them if installed separately.
 	Added Stored EC and ReservePower to Dark-Side calculation window. (can be toggled on and off).
 	Added Support for Remote Tech - If you have RemoteTech installed AmpYear functions will be disabled automatically if you have no connection or local control and restored when you do.

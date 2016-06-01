@@ -25,6 +25,8 @@ namespace AY
         internal static Texture2D IconRedOn = new Texture2D(38, 38, TextureFormat.ARGB32, false);
         internal static Texture2D IconYellowOff = new Texture2D(38, 38, TextureFormat.ARGB32, false);
         internal static Texture2D IconYellowOn = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+        internal static Texture2D IconGrayOff = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+        internal static Texture2D IconGrayOn = new Texture2D(38, 38, TextureFormat.ARGB32, false);
 
         //Toolbar Icons
         internal static Texture2D ToolbariconGreenOff = new Texture2D(24, 24, TextureFormat.ARGB32, false);
@@ -33,6 +35,8 @@ namespace AY
         internal static Texture2D ToolbariconRedOn = new Texture2D(24, 24, TextureFormat.ARGB32, false);
         internal static Texture2D ToolbariconYellowOff = new Texture2D(24, 24, TextureFormat.ARGB32, false);
         internal static Texture2D ToolbariconYellowOn = new Texture2D(24, 24, TextureFormat.ARGB32, false);
+        internal static Texture2D ToolbariconGrayOff = new Texture2D(24, 24, TextureFormat.ARGB32, false);
+        internal static Texture2D ToolbariconGrayOn = new Texture2D(24, 24, TextureFormat.ARGB32, false);
 
         //Button Icons
         internal static Texture2D BtnPriority1 = new Texture2D(18, 18, TextureFormat.ARGB32, false);
@@ -40,8 +44,6 @@ namespace AY
         internal static Texture2D BtnPriority3 = new Texture2D(18, 18, TextureFormat.ARGB32, false);
         internal static Texture2D BtnIncInCalcs = new Texture2D(18, 18, TextureFormat.ARGB32, false);
         internal static Texture2D BtnEspInc = new Texture2D(18, 18, TextureFormat.ARGB32, false);
-        internal static Texture2D BtnUnselected = new Texture2D(18, 18, TextureFormat.ARGB32, false);
-        internal static Texture2D BtnSelected = new Texture2D(18, 18, TextureFormat.ARGB32, false);
         internal static Texture2D TooltipBox = new Texture2D(10, 10, TextureFormat.ARGB32, false);
         internal static Texture2D BtnRedCross = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResize = new Texture2D(16, 16, TextureFormat.ARGB32, false);
@@ -62,6 +64,8 @@ namespace AY
                 LoadImageFromFile(ref IconRedOn, "AYRedOn.png", PathIconsPath);
                 LoadImageFromFile(ref IconYellowOff, "AYYellowOff.png", PathIconsPath);
                 LoadImageFromFile(ref IconYellowOn, "AYYellowOn.png", PathIconsPath);
+                LoadImageFromFile(ref IconGrayOff, "AYGrayOff.png", PathIconsPath);
+                LoadImageFromFile(ref IconGrayOn, "AYGrayOn.png", PathIconsPath);
 
                 LoadImageFromFile(ref ToolbariconGreenOff, "AYGreenOffTB.png", PathIconsPath);
                 LoadImageFromFile(ref ToolbariconGreenOn, "AYGreenOnTB.png", PathIconsPath);
@@ -69,14 +73,14 @@ namespace AY
                 LoadImageFromFile(ref ToolbariconRedOn, "AYRedOnTB.png", PathIconsPath);
                 LoadImageFromFile(ref ToolbariconYellowOff, "AYYellowOffTB.png", PathIconsPath);
                 LoadImageFromFile(ref ToolbariconYellowOn, "AYYellowOnTB.png", PathIconsPath);
+                LoadImageFromFile(ref ToolbariconGrayOff, "AYGrayOffTB.png", PathIconsPath);
+                LoadImageFromFile(ref ToolbariconGrayOn, "AYGrayOnTB.png", PathIconsPath);
 
                 LoadImageFromFile(ref BtnPriority1, "AYbtnPriority1.png", PathIconsPath);
                 LoadImageFromFile(ref BtnPriority2, "AYbtnPriority2.png", PathIconsPath);
                 LoadImageFromFile(ref BtnPriority3, "AYbtnPriority3.png", PathIconsPath);
                 LoadImageFromFile(ref BtnIncInCalcs, "AYbtnIncInCalcs.png", PathIconsPath);
                 LoadImageFromFile(ref BtnEspInc, "AYbtnESPInc.png", PathIconsPath);
-                LoadImageFromFile(ref BtnUnselected, "AYbtnUnselected.png", PathIconsPath);
-                LoadImageFromFile(ref BtnSelected, "AYbtnSelected.png", PathIconsPath);
                 LoadImageFromFile(ref TooltipBox, "AYToolTipBox.png", PathIconsPath);
                 LoadImageFromFile(ref BtnRedCross, "AYbtnRedCross.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResize, "AYbtnResize.png", PathIconsPath);
@@ -126,7 +130,7 @@ namespace AY
         }
 
         internal static GUIStyle SectionTitleStyle, SubsystemButtonStyle, SubsystemConsumptionStyle, StatusStyle, WarningStyle,
-            AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListPartRightStyle,
+            AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListPartRightStyle, PartListPartGrayStyle, PartListPartRightGrayStyle,
             ResizeStyle, StatusStyleLeft, WarningStyleLeft, AlertStyleLeft, PartListbtnStyle, PrioritybtnStyle;
 
         internal static bool StylesSet = false;
@@ -257,6 +261,20 @@ namespace AY
                 alignment = TextAnchor.MiddleRight,
                 stretchWidth = true,
                 normal = { textColor = Color.white }
+            };
+
+            PartListPartGrayStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                stretchWidth = true,
+                normal = { textColor = Color.black }
+            };
+
+            PartListPartRightGrayStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleRight,
+                stretchWidth = true,
+                normal = { textColor = Color.black }
             };
 
             PartListbtnStyle = new GUIStyle(GUI.skin.button)

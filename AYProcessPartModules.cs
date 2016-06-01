@@ -47,6 +47,69 @@ namespace AY
     public partial class AYController : MonoBehaviour
     {
 
+        //Temp vars for PartModule Processing
+        //Stock
+        private BaseFieldList fieldlist;
+        private object state;
+        private object ec_rate;
+        private object speed;
+        private object lamps;
+        private object is_enabled;
+        private object co2_rate;
+        private ModuleRCS tmpRCSmodule;
+        private ModuleDeployableSolarPanel tmpSol;
+        private double solarFlux;
+        private double orientationFactor;
+        private float multiplier;
+        private ModuleGenerator tmpGen;
+        private ModuleActiveRadiator tmprad;
+        private ModuleLight tmpLight;
+        private ModuleDataTransmitter tmpAnt;
+        private ModuleReactionWheel tmpRw;
+        private ReactionWheelPower rwp;
+        private ModuleEngines tmpEng;
+        private const float grav = 9.81f;
+        private bool usesCharge = false;
+        private float sumRd = 0;
+        private Single ecratio = 0;
+        private bool tmpcurrentEngActive = false;
+        private ModuleEnginesFX tmpEngFx;
+        private ModuleAlternator tmpAlt;
+        private double tmpaltRate = 0f;
+        private ModuleResourceConverter tmpRegRc;
+        private ConversionRecipe recipe;
+        private float FillAmount;
+        private List<ResourceRatio> recInputs;
+        private List<ResourceRatio> recOutputs;
+        private ModuleEnviroSensor tmpEnvS;
+
+        //Other Mods
+        private ALWrapper.ALNavLight ALtmpLight;
+        private string generatorState;
+        private string[] generatorStatewords;
+        private int stringlength;
+        private NFSWrapper.NFSCurvedPanel NFSCPtmpGen;
+        private KASWrapper.KASModuleWinch tmpKw;
+        private KASWrapper.KASModuleMagnet tmpKm;
+        private RTWrapper.RTAntenna RTtmpAnt;
+        private ScanSatWrapper.SCANsat tmpSs;
+        private TeleWrapper.TMPowerDrain tmpTm;
+        private TACLSWrapper.TACLSGenericConverter tacGC;
+        private string resName;
+        private KSPIEWrapper.FNModuleCryostat tmpCryo;
+        private KSPIEWrapper.FNGenerator FNtmpGen;
+        private DFWrapper.DeepFreezer tmpDeepFreezer;
+        private KPBSWrapper.ModuleKPBSConverter KPBSconv;
+        private KPBSWrapper.PlanetaryGreenhouse KPBSgh;
+        private float currentRateConverter;
+        private float currentRateGreenhouse;
+        private USILSWrapper.ModuleLifeSupport usiMLS;
+        private IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs;
+        private IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs;
+        private float IONRCSelecUse;
+        private NFPWrapper.VariableISPEngine tmpVariableIspEngine;
+
+
         #region StockPartModules
 
         internal bool ProcessStockPartModule(Part currentPart, PartModule module, bool inhasAlternator, bool incurrentEngActive, double inaltRate,
@@ -55,7 +118,7 @@ namespace AY
             currentEngActive = false;
             hasAlternator = false;
             altRate = 0;
-            string prtName = currentPart.name;
+            prtName = currentPart.name;
 
             if (module is LaunchClamp)
                 return true; // skip clamps
@@ -168,16 +231,16 @@ namespace AY
 
             return false;
         }
-
+        
         private void ProcessModuleRCS(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
             HasRcs = true;
 
-            ModuleRCS rcs = (ModuleRCS)module;
-            foreach (float thrust in rcs.thrustForces)
+            tmpRCSmodule = (ModuleRCS)module;
+            foreach (float thrust in tmpRCSmodule.thrustForces)
                 currentRCSThrust += thrust;
 
             if (IONRCSPresent)
@@ -185,31 +248,30 @@ namespace AY
                 checkIONRCS(module, currentPart);
             }
         }
-
+        
         private void ProcessModuleDeployableSolarPanel(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleDeployableSolarPanel tmpSol = (ModuleDeployableSolarPanel)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpSol = (ModuleDeployableSolarPanel)module;
             if (Utilities.GameModeisFlight)
             {
                 prtActive = tmpSol.panelState == ModuleDeployableSolarPanel.panelStates.EXTENDED ||
                         tmpSol.panelState == ModuleDeployableSolarPanel.panelStates.EXTENDING;
                 tmpPower = tmpSol.flowRate;
-                Utilities.Log_Debug("totalPowerProduced SolarPanel Power = " + tmpPower + " Part = " + currentPart.name);
+                //Utilities.Log_Debug("totalPowerProduced SolarPanel Power = " + tmpPower + " Part = " + currentPart.name);
             }
             else
             {
                 prtActive = true;
                 //tmpPower = tmpSol.chargeRate;
-                Vector3d sun_dir;
-                double sun_dist;
+                
                 //Get the distance and direction to Sun from the currently selected target body
-                Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedSolarSOITarget],out sun_dir,out sun_dist);
-                double solarFlux = Utilities.SolarLuminosity / (12.566370614359172 * sun_dist * sun_dist);
-                double orientationFactor = 1;  //Just use one.
-                float multiplier = 1;
+                Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedDarkTarget],out sun_dir,out sun_dist);
+                solarFlux = Utilities.SolarLuminosity / (12.566370614359172 * sun_dist * sun_dist);
+                orientationFactor = 1;  //Just use one.
+                multiplier = 1;
                 if (tmpSol.useCurve)
                 {
                     multiplier = tmpSol.powerCurve.Evaluate((float) sun_dist);
@@ -220,19 +282,16 @@ namespace AY
                 }
                 tmpPower = tmpSol.chargeRate * (float)orientationFactor * multiplier;  //Does not take into account temperature curve
             }
-            
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, true);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, true);
-
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, true);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private void ProcessModuleGenerator(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleGenerator tmpGen = (ModuleGenerator)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpGen = (ModuleGenerator)module;
             foreach (ModuleResource outp in tmpGen.outputList)
             {
                 if (outp.name == MAIN_POWER_NAME)
@@ -248,8 +307,7 @@ namespace AY
                         if (tmpGen.isAlwaysActive || tmpGen.generatorIsActive)
                         {
                             tmpPower = (float)outp.rate;
-                            Utilities.Log_Debug("totalPowerProduced Generator Output Active Power = " + tmpPower + " Part = " + currentPart.name);
-
+                            //Utilities.Log_Debug("totalPowerProduced Generator Output Active Power = " + tmpPower + " Part = " + currentPart.name);
                             prtActive = true;
                         }
                         else
@@ -258,8 +316,7 @@ namespace AY
                             prtActive = false;
                         }
                     }
-                    PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, false);
                 }
             }
             foreach (ModuleResource inp in tmpGen.inputList)
@@ -286,17 +343,16 @@ namespace AY
                             prtActive = false;
                         }
                     }
-                    PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
                 }
             }
         }
 
         private void ProcessModuleWheelMotor(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
             ModuleWheelMotor tmpWheel = (ModuleWheelMotor)module;
             if (tmpWheel.inputResource.name == MAIN_POWER_NAME)
             {
@@ -314,18 +370,16 @@ namespace AY
                     tmpPower = (float)tmpWheel.inputResource.rate + (float)tmpWheel.idleDrain;
                     prtActive = true;
                 }
-                PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                AYVesselPartLists.AddPart(currentPart.craftID,PartAdd, false, false);
-
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
                 ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
             }
         }
 
         private void ProcessModuleCommand(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
             if (TACLPresent)
                 try
                 {
@@ -345,19 +399,18 @@ namespace AY
                 {
                     prtActive = r.rate > 0;
                     tmpPower = (float)r.currentAmount;
-                    PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
                 }
             }
             PartsModuleCommand.Add(currentPart);
         }
-
+        
         private void ProcessModuleActiveRadiator(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleActiveRadiator tmprad = (ModuleActiveRadiator)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmprad = (ModuleActiveRadiator)module;
             if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmprad.IsCooling))
             {
                 prtActive = true;
@@ -376,35 +429,31 @@ namespace AY
                     }
                 }
             }
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private void ProcessModuleLight(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleLight tmpLight = (ModuleLight)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpLight = (ModuleLight)module;
             if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpLight.isOn))
             {
                 prtActive = true;
                 tmpPower = tmpLight.resourceAmount;
             }
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private void ProcessModuleDataTransmitter(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleDataTransmitter tmpAnt = (ModuleDataTransmitter)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpAnt = (ModuleDataTransmitter)module;
 
             if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpAnt.IsBusy()))
             {
@@ -416,19 +465,16 @@ namespace AY
                 tmpPower = 0;
                 prtActive = false;
             }
-
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private void ProcessModuleReactionWheel(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleReactionWheel tmpRw = (ModuleReactionWheel)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpRw = (ModuleReactionWheel)module;
             prtActive = tmpRw.enabled;
 
             tmpPower = 0;
@@ -451,7 +497,6 @@ namespace AY
                 }
             }
             
-            ReactionWheelPower rwp;
             if (!WheelDfltRotPowerMap.ContainsKey(prtName))
             {
                 //Map the part's default rot power to its name
@@ -469,24 +514,17 @@ namespace AY
             }
             ReactionWheels.Add(currentPart);
             //}
-
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private bool ProcessModuleEngines(string prtName, Part currentPart, PartModule module, double altRate)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleEngines tmpEng = (ModuleEngines)module;
-            const float grav = 9.81f;
-            bool usesCharge = false;
-            float sumRd = 0;
-            Single ecratio = 0;
-            bool currentEngActive = false;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpEng = (ModuleEngines)module;
+            
             foreach (Propellant prop in tmpEng.propellants)
             {
                 if (prop.name == MAIN_POWER_NAME)
@@ -513,33 +551,32 @@ namespace AY
 
                     tmpPower = ecratio * massFlowRate / sumRd;
                 }
-                PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             }
 
-            currentEngActive = tmpEng.isOperational && (tmpEng.currentThrottle > 0);
-            if (altRate > 0 && currentEngActive)
+            tmpcurrentEngActive = tmpEng.isOperational && (tmpEng.currentThrottle > 0);
+            if (altRate > 0 && tmpcurrentEngActive)
             {
-                Utilities.Log_Debug("totalPowerProduced ModEngine Active Power = " + altRate.ToString() + " Part = " + currentPart.name);
+                //Utilities.Log_Debug("totalPowerProduced ModEngine Active Power = " + altRate + " Part = " + currentPart.name);
 
                 prtActive = true;
-                PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, (float)altRate, prtActive, false);
-                AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
-            }
-            return currentEngActive;
-        }
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)altRate, true, false);
 
+            }
+            return tmpcurrentEngActive;
+        }
+      
         private bool ProcessModuleEnginesFX(string prtName, Part currentPart, PartModule module ,double altRate)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleEnginesFX tmpEngFx = (ModuleEnginesFX)module;
-            const float grav = 9.81f;
-            bool usesCharge = false;
-            float sumRd = 0;
-            Single ecratio = 0;
-            bool currentEngActive = false;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpEngFx = (ModuleEnginesFX)module;
+            //const float grav = 9.81f;
+            //bool usesCharge = false;
+            //float sumRd = 0;
+            //Single ecratio = 0;
+            //bool currentEngActive = false;
             foreach (Propellant prop in tmpEngFx.propellants)
             {
                 if (prop.name == MAIN_POWER_NAME)
@@ -572,53 +609,48 @@ namespace AY
                         prtActive = false;
                     }
                 }
-
-                PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             }
-            currentEngActive = tmpEngFx.isOperational && (tmpEngFx.currentThrottle > 0);
-            if (altRate > 0 && currentEngActive)
+            tmpcurrentEngActive = tmpEngFx.isOperational && (tmpEngFx.currentThrottle > 0);
+            if (altRate > 0 && tmpcurrentEngActive)
             {
-                Utilities.Log_Debug("totalPowerProduced ModEngine Active Power = " + altRate.ToString() + " Part = " + currentPart.name);
+                //Utilities.Log_Debug("totalPowerProduced ModEngine Active Power = " + altRate + " Part = " + currentPart.name);
 
                 prtActive = true;
-                PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, (float)altRate, prtActive, false);
-                AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)altRate, true, false);
             }
-            return currentEngActive;
+            return tmpcurrentEngActive;
         }
-
+        
         private double ProcessModuleAlternator(string prtName, Part currentPart, PartModule module, bool currentEngActive)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            double altRate = 0f;
-            ModuleAlternator tmpAlt = (ModuleAlternator)module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpAlt = (ModuleAlternator)module;
             foreach (ModuleResource r in tmpAlt.outputResources)
             {
                 if (r.name == MAIN_POWER_NAME)
                 {
                     if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && currentEngActive))
                     {
-                        Utilities.Log_Debug("totalPowerProduced ModAlt Active Power = " + r.rate.ToString() + " Part = " + currentPart.name);
+                        //Utilities.Log_Debug("totalPowerProduced ModAlt Active Power = " + r.rate + " Part = " + currentPart.name);
                         prtActive = true;
                     }
                     else
-                        altRate = r.rate;
-                    PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, (float)r.rate, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, r.rate >= 0, false);
+                        tmpaltRate = r.rate;
+                    
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)r.rate, r.rate >= 0, false);
                 }
             }
-            return altRate;
+            return tmpaltRate;
         }
 
         private void ProcessModuleScienceLab(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            double tmpPwr = 0;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
             prtActive = false;
             ModuleScienceLab tmpLab = (ModuleScienceLab)module;
             if (Utilities.GameModeisFlight)
@@ -628,25 +660,23 @@ namespace AY
                     if (r.name == MAIN_POWER_NAME && tmpLab.IsOperational() && r.currentAmount > 0.0)
                     {
                         prtActive = true;
-                        tmpPwr += r.currentAmount;
+                        tmpPower += (float)r.currentAmount;
                     }
                 }
             }
             if (Utilities.GameModeisEditor)
             {
                 prtActive = true;
-                tmpPwr += tmpLab.processResources.Where(r => r.name == MAIN_POWER_NAME).Sum(r => r.amount);
+                tmpPower += (float)tmpLab.processResources.Where(r => r.name == MAIN_POWER_NAME).Sum(r => r.amount);
             }
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, (float)tmpPwr, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
         }
 
         private void ProcessModuleScienceConverter(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            double tmpPwr = 0;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
             prtActive = false;
             if (Utilities.GameModeisFlight)
             {
@@ -655,73 +685,68 @@ namespace AY
                 if (tmpbsecnv.IsActivated)
                 {
                     prtActive = true;
-                    tmpPwr = tmpcnv.powerRequirement;
+                    tmpPower = tmpcnv.powerRequirement;
                 }
             }
             if (Utilities.GameModeisEditor)
             {
                 ModuleScienceConverter tmpcnv = (ModuleScienceConverter)module;
                 prtActive = true;
-                tmpPwr = tmpcnv.powerRequirement;
+                tmpPower = tmpcnv.powerRequirement;
             }
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, (float)tmpPwr, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
         }
 
         private void ProcessModuleResourceharvester(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            double tmpPwr = 0;
-            Utilities.Log_Debug("Resource Harvester " + currentPart.name);
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            //double tmpPwr = 0;
+            //Utilities.Log_Debug("Resource Harvester " + currentPart.name);
             ModuleResourceHarvester tmpHvstr = (ModuleResourceHarvester)module;
             List<PartResourceDefinition> rscse = tmpHvstr.GetConsumedResources();
 
             if (Utilities.GameModeisFlight)
             {
                 prtActive = tmpHvstr.ModuleIsActive();
-                Utilities.Log_Debug("Inflight andIsactive = " + prtActive.ToString());
+                //Utilities.Log_Debug("Inflight andIsactive = " + prtActive);
             }
             if (Utilities.GameModeisEditor)
             {
                 prtActive = true;
-                Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
+                //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
             }
 
             foreach (PartResourceDefinition r in tmpHvstr.GetConsumedResources())
             {
-                Utilities.Log_Debug("Harvester resource = " + r.name.ToString() + " cost = " + r.unitCost.ToString());
+                //Utilities.Log_Debug("Harvester resource = " + r.name + " cost = " + r.unitCost);
                 if (r.name == MAIN_POWER_NAME && prtActive)
                 {
                     //Appears to be NO way to get to the input resources.... set to 15 for current value in distro files
-
-                    tmpPwr += 15.0;
+                    tmpPower += 15.0f;
                 }
             }
-            tmpPower = (float)tmpPwr;
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private void ProcessModuleResourceConverter(string prtName, Part currentPart, PartModule module, float KPBS)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleResourceConverter tmpRegRc = (ModuleResourceConverter)module;
-            ConversionRecipe recipe = tmpRegRc.Recipe;
-
-            Utilities.Log_Debug("Resource Converter " + prtName);
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpRegRc = (ModuleResourceConverter)module;
+            recipe = tmpRegRc.Recipe;
+            //Utilities.Log_Debug("Resource Converter " + prtName);
 
             if (Utilities.GameModeisFlight)
             {
                 Utilities.ISRUStatus status = Utilities.GetModResConverterStatus(tmpRegRc);
                 if (status == Utilities.ISRUStatus.Active) prtActive = true;
-                Utilities.Log_Debug("Inflight andIsactive = {0}, status - {1}" , prtActive , status);
-                Utilities.Log_Debug("Status : {0}, Determined Status : {1}", tmpRegRc.status, status.ToString());
+                //Utilities.Log_Debug("Inflight andIsactive = {0}, status - {1}" , prtActive , status);
+                //Utilities.Log_Debug("Status : {0}, Determined Status : {1}", tmpRegRc.status, status.ToString());
             }
             if (Utilities.GameModeisEditor)
             {
@@ -730,55 +755,52 @@ namespace AY
 
             prtPower = "";
             tmpPower = 0f;
-            float FillAmount = recipe.FillAmount;
+            FillAmount = recipe.FillAmount;
             if (KPBS > 0) FillAmount = KPBS;
 
-            List<ResourceRatio> recInputs = tmpRegRc.Recipe.Inputs;
+            recInputs = tmpRegRc.Recipe.Inputs;
 
             foreach (ResourceRatio r in recInputs)
             {
                 if (r.ResourceName == MAIN_POWER_NAME)
                 {
-                    Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                    //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
                         tmpPower = (float)r.Ratio * FillAmount;
-                    PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower,prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, false, false);
                 }
             }
 
             prtPower = "";
             tmpPower = 0f;
-            List<ResourceRatio> recOutputs = tmpRegRc.Recipe.Outputs;
+            recOutputs = tmpRegRc.Recipe.Outputs;
 
             foreach (ResourceRatio r in recOutputs)
             {
                 if (r.ResourceName == MAIN_POWER_NAME)
                 {
-                    Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                    //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
                         tmpPower = (float)r.Ratio * recipe.TakeAmount;
-                    PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, true, false);
                 }
             }
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
-
+        
         private void ProcessModuleEnviroSensor(string prtName, Part currentPart, PartModule module)
         {
-            bool prtActive = false;
-            string prtPower = "";
-            float tmpPower = 0f;
-            ModuleEnviroSensor tmpEnvS = (ModuleEnviroSensor) module;
+            prtActive = false;
+            prtPower = "";
+            tmpPower = 0f;
+            tmpEnvS = (ModuleEnviroSensor) module;
             if (Utilities.GameModeisFlight && tmpEnvS.sensorActive || Utilities.GameModeisEditor)
             {
                 prtActive = true;
                 tmpPower = tmpEnvS.powerConsumption;
             }
-            PwrPartList PartAdd = new PwrPartList(prtName, module.moduleName, false, prtPower, tmpPower, prtActive, false);
-            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
@@ -790,6 +812,7 @@ namespace AY
         private bool ALPresent = false;
         private bool NFEPresent = false;
         private bool NFSPresent = false;
+        private bool NFPPresent = false;
         private bool KASPresent = false;
         private bool _rt2Present = false;
         private bool ScSPresent = false;
@@ -802,6 +825,7 @@ namespace AY
         private bool KPBSPresent = false;
         private bool USILSPresent = false;
         private bool IONRCSPresent = false;
+        private bool KERBALISMPresent = false;
 
         internal void ProcessModPartModule(Part currentPart, PartModule module)
         {
@@ -856,6 +880,16 @@ namespace AY
                 catch
                 {
                     Utilities.Log_Debug("Wrong Near Future solar library version - disabled.");
+                    //NFSPresent = false;
+                }
+            if (NFPPresent)
+                try
+                {
+                    checkNFP(module, currentPart);
+                }
+                catch
+                {
+                    Utilities.Log_Debug("Wrong Near Future Propulsion library version - disabled.");
                     //NFSPresent = false;
                 }
 
@@ -954,45 +988,55 @@ namespace AY
                     Utilities.Log("Wrong USI LS version - disabled.");
                     //KPBSPresent = false;
                 }
+            if (KERBALISMPresent)
+                try
+                {
+                    checkKerbalism(module, currentPart);
+                }
+                catch (Exception)
+                {
+                    Utilities.Log("Wrong kerbalism version - disabled.");
+                    KERBALISMPresent = false;
+                }
+        
             /*if (KKPresent)
             {
                 checkKK(module, current_part);
             }*/
         }
-
+        
         private void checkAv(PartModule psdpart, Part currentPart)
         {
-            string prtName = currentPart.name;
-            string prtPower = "";
-            bool prtActive = false;
-            float tmpPower = 0;
+            prtName = currentPart.name;
+            prtPower = "";
+            prtActive = false;
+            tmpPower = 0;
             switch (psdpart.moduleName)
             {
                 case "ModuleNavLight":
-                    ALWrapper.ALNavLight tmpLight = new ALWrapper.ALNavLight(psdpart);
-                    if ((Utilities.GameModeisFlight && tmpLight.navLightSwitch != 0) || Utilities.GameModeisEditor)
+                    ALtmpLight = new ALWrapper.ALNavLight(psdpart);
+                    if ((Utilities.GameModeisFlight && ALtmpLight.navLightSwitch != 0) || Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        tmpPower = tmpLight.EnergyReq;
-                        PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                        AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                        tmpPower = ALtmpLight.EnergyReq;
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                     }
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
                     break;
             }
         }
-
+        
         private void checkNFE(PartModule psdpart, Part currentPart)
         {
-            string prtName = currentPart.name;
-            string prtPower = "";
-            bool prtActive = false;
-            float tmpPower = 0;
+            prtName = currentPart.name;
+            prtPower = "";
+            prtActive = false;
+            tmpPower = 0;
             switch (psdpart.moduleName)
             {
                 case "FissionReactor":
-                    ModuleResourceConverter tmpRegRc = (ModuleResourceConverter)psdpart;
+                    tmpRegRc = (ModuleResourceConverter)psdpart;
                     prtName = currentPart.name;
                     if (Utilities.GameModeisFlight)
                     {
@@ -1001,85 +1045,154 @@ namespace AY
                     if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
+                        //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
                     }
                     
                     prtPower = "";
                     tmpPower = 0f;
-                    List<ResourceRatio> recInputs = tmpRegRc.Recipe.Inputs;
+                    recInputs = tmpRegRc.Recipe.Inputs;
 
                     foreach (ResourceRatio r in recInputs)
                     {
                         
                         if (r.ResourceName == MAIN_POWER_NAME && prtActive)
                         {
-                            Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                            //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             tmpPower = (float)r.Ratio;
-                            PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                         }
                     }
 
                     prtPower = "";
                     tmpPower = 0f;
-                    List<ResourceRatio> recOutputs = tmpRegRc.Recipe.Outputs;
+                    recOutputs = tmpRegRc.Recipe.Outputs;
 
                     foreach (ResourceRatio r in recOutputs)
                     {
                         if (r.ResourceName == MAIN_POWER_NAME && prtActive)
                         {
-                            Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                            //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             tmpPower = (float)r.Ratio;
-                            PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                         }
                     }
                     break;
+
+                case "FissionGenerator":
+                    try
+                    {
+                        fieldlist = psdpart.Fields;
+                        state = fieldlist.GetValue("GeneratorStatus");
+                        generatorState = (string)state;
+                        if (generatorState != "Offline")
+                        {
+                            prtActive = true;
+                            generatorStatewords = generatorState.Split(' ');
+                            if (!float.TryParse(generatorStatewords[0], out tmpPower))
+                                tmpPower = 0.0f;
+                        }
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                    }
+                    catch (Exception)
+                    {
+                        //throw;
+                    }
+                    break;
+
+                case "FissionFlowRadiator":
+                    ProcessModuleActiveRadiator(prtName, currentPart, psdpart);
+                    break;
+
+                case "ModuleRadioisotopeGenerator":
+                    try
+                    {
+                        fieldlist = psdpart.Fields;
+                        ec_rate = fieldlist.GetValue("ActualPower");
+                        tmpPower = (float)ec_rate;
+                        if (tmpPower > 0)
+                        {
+                            prtActive = true;
+                        }
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                    }
+                    catch (Exception)
+                    {
+                        //throw;
+                    }
+                    
+                    break;
+
+                case "DischargeCapacitor":
+                    try
+                    {
+                        fieldlist = psdpart.Fields;
+                        state = fieldlist.GetValue("CapacitorStatus");
+                        generatorState = (string)state;
+                        if (generatorState.Contains("Discharging:"))
+                        {
+                            prtActive = true;
+                            stringlength = generatorState.Length - 15;
+                            generatorState = generatorState.Substring(13, stringlength);
+                            if (!float.TryParse(generatorState, out tmpPower))
+                                tmpPower = 0.0f;
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                        }
+                        if (generatorState.Contains("Recharging:"))
+                        {
+                            prtActive = true;
+                            stringlength = generatorState.Length - 14;
+                            generatorState = generatorState.Substring(12, stringlength);
+                            if (!float.TryParse(generatorState, out tmpPower))
+                                tmpPower = 0.0f;
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        //throw;
+                    }
+                    
+                    break;
             }
         }
-
+        
         private void checkNFS(PartModule psdpart, Part currentPart)
         {
-            string prtName = currentPart.name;
-            string prtPower = "";
-            bool prtActive = false;
-            float tmpPower = 0;
+            prtName = currentPart.name;
+            prtPower = "";
+            prtActive = false;
+            tmpPower = 0;
             switch (psdpart.moduleName)
             {
                 case "Curved Solar Panel":
-                    NFSWrapper.NFSCurvedPanel tmpGen = new NFSWrapper.NFSCurvedPanel(psdpart);
-                    if (Utilities.GameModeisFlight && tmpGen.State == ModuleDeployableSolarPanel.panelStates.EXTENDED)
+                    NFSCPtmpGen = new NFSWrapper.NFSCurvedPanel(psdpart);
+                    if (Utilities.GameModeisFlight && NFSCPtmpGen.State == ModuleDeployableSolarPanel.panelStates.EXTENDED)
                     {
                         prtActive = true;
-                        tmpPower = tmpGen.EnergyFlow;
+                        tmpPower = NFSCPtmpGen.EnergyFlow;
                     }
                     else if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        tmpPower = tmpGen.TotalEnergyRate;
-                        Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
+                        tmpPower = NFSCPtmpGen.TotalEnergyRate;
+                        //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
                     }
-                    
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, true);
-
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, true);
-
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, true);
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
-
                     break;
             }
         }
-
+        
         private void checkKAS(PartModule psdpart, Part currentPart)
         {
-            string prtName = currentPart.name;
-            string prtPower = "";
-            bool prtActive = false;
-            float tmpPower = 0;
+            prtName = currentPart.name;
+            prtPower = "";
+            prtActive = false;
+            tmpPower = 0;
             switch (psdpart.moduleName)
             {
                 case "KASModuleWinch":
-                    KASWrapper.KASModuleWinch tmpKw = new KASWrapper.KASModuleWinch(psdpart);
+                    tmpKw = new KASWrapper.KASModuleWinch(psdpart);
                     if (Utilities.GameModeisFlight && tmpKw.isActive && tmpKw.motorSpeed > 0f)
                     {
                         tmpPower = tmpKw.powerDrain * tmpKw.motorSpeed;
@@ -1090,16 +1203,14 @@ namespace AY
                         prtActive = true;
                         tmpPower = tmpKw.powerDrain;
 
-                        Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
+                        //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
                     }
-                    
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-                    
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+
                     break;
 
                 case "KASModuleMagnet":
-                    KASWrapper.KASModuleMagnet tmpKm = new KASWrapper.KASModuleMagnet(psdpart);
+                    tmpKm = new KASWrapper.KASModuleMagnet(psdpart);
                     prtActive = false;
                     tmpPower = 0;
 
@@ -1108,86 +1219,79 @@ namespace AY
                         prtActive = true;
                         tmpPower = tmpKm.powerDrain;
                     }
-                    
-                    PwrPartList PartAdd2 = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd2, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
                     break;
             }
         }
-
+        
         private void checkRT2(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
             {
                 case "ModuleRTAntenna":
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    RTWrapper.RTAntenna tmpAnt = new RTWrapper.RTAntenna(psdpart);
-                    if (Utilities.GameModeisFlight && tmpAnt.Activated)
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    RTtmpAnt = new RTWrapper.RTAntenna(psdpart);
+                    if (Utilities.GameModeisFlight && RTtmpAnt.Activated)
                     {
-                        Utilities.Log_Debug("RTAntenna consumption " + tmpAnt.Consumption);
+                        //Utilities.Log_Debug("RTAntenna consumption " + RTtmpAnt.Consumption);
 
                         prtActive = true;
-                        tmpPower = tmpAnt.Consumption;
+                        tmpPower = RTtmpAnt.Consumption;
                     }
                     if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        tmpPower = tmpAnt.EnergyCost;
+                        tmpPower = RTtmpAnt.EnergyCost;
 
-                        Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
-                        Utilities.Log_Debug("tmpant2 energycost " + tmpAnt.EnergyCost);
+                        //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
+                        //Utilities.Log_Debug("tmpant2 energycost " + RTtmpAnt.EnergyCost);
                     }
-
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
                     break;
             }
         }
-
+        
         private void checkSCANsat(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
             {
                 case "SCANsat":
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(psdpart);
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    tmpSs = new ScanSatWrapper.SCANsat(psdpart);
 
                     if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpSs.power > 0.0 && tmpSs.scanning))
                     {
                         prtActive = true;
                         tmpPower = tmpSs.power;
                     }
-                    
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
                     break;
             }
         }
-
+        
         private void checkTel(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
             {
                 case "TelemachusPowerDrain":
-                    string prtName = "Telemachus";
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    TeleWrapper.TMPowerDrain tmpTm = new TeleWrapper.TMPowerDrain(psdpart);
+                    prtName = "Telemachus";
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    tmpTm = new TeleWrapper.TMPowerDrain(psdpart);
                     if (Utilities.GameModeisFlight && tmpTm.isActive)
                     {
                         prtPower = tmpTm.powerConsumption.ToString("000.00000");
@@ -1200,26 +1304,24 @@ namespace AY
                         tmpPower = 0.01f;
 
                         prtPower = "0.010";
-                        Utilities.Log_Debug("Telemachus In VAB and editorMaxECusage is on so part active");
+                        //Utilities.Log_Debug("Telemachus In VAB and editorMaxECusage is on so part active");
                     }
-                    
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-                    
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+
 
                     break;
             }
         }
-
+        
         private void checkTACL(PartModule psdpart, Part currentPart, bool cmdPod)
         {
             if (TACLSWrapper.TACactualAPI.getEnabled())
             {
                 if (cmdPod)
                 {
-                    string prtName = "TACL Life Support";
-                    string prtPower = "";
-                    bool prtActive = false;
+                    prtName = "TACL Life Support";
+                    prtPower = "";
+                    prtActive = false;
                     if (Utilities.GameModeisFlight) //if in flight set maxCrew to actual crew on board. Set earlier based on maximum crew capacity of each part
                     {
                         MaxCrew = FlightGlobals.ActiveVessel.GetCrewCount();
@@ -1230,21 +1332,19 @@ namespace AY
                     calcDrain += TACLSWrapper.TACactualAPI.ElectricityConsumptionRate * MaxCrew;
 
                     prtActive = MaxCrew > 0;
-                    
-                    PwrPartList PartAdd = new PwrPartList(prtName, "LifeSupport", false, prtPower, (float)calcDrain, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
-                    
+
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, (float)calcDrain, false, false);
                 }
                 else
                 {
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
                     switch (psdpart.moduleName)
                     {
                         case "TacGenericConverter":
-                            TACLSWrapper.TACLSGenericConverter tacGC = new TACLSWrapper.TACLSGenericConverter(psdpart);
+                            tacGC = new TACLSWrapper.TACLSGenericConverter(psdpart);
                             if (Utilities.GameModeisFlight)
                                 prtActive = tacGC.converterEnabled;
                             else if (Utilities.GameModeisEditor)
@@ -1253,15 +1353,14 @@ namespace AY
                             string[] arr = tacGC.inputResources.Split(',');
                             for (int i = 0; i < arr.Length; i += 2)
                             {
-                                string resName = arr[i].Trim();
+                                resName = arr[i].Trim();
                                 if (resName == MAIN_POWER_NAME)
                                 {
                                     double resAmt = 0;
                                     bool prse = double.TryParse(arr[i + 1], out resAmt);
                                     if (!prse) resAmt = 0;
                                     tmpPower = (float)resAmt * tacGC.conversionRate;
-                                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                                     break;
                                 }
                             }
@@ -1269,15 +1368,14 @@ namespace AY
                             arr = tacGC.outputResources.Split(',');
                             for (int i = 0; i < arr.Length; i += 3)
                             {
-                                string resName = arr[i].Trim();
+                                resName = arr[i].Trim();
                                 if (resName == MAIN_POWER_NAME)
                                 {
                                     double resAmt = 0;
                                     bool prse = double.TryParse(arr[i + 1], out resAmt);
                                     if (!prse) resAmt = 0;
                                     tmpPower = (float)resAmt * tacGC.conversionRate;
-                                    PwrPartList PartAdd2 = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd2, true, false);
+                                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                                     break;
                                 }
                             }
@@ -1295,20 +1393,18 @@ namespace AY
             switch (psdpart.moduleName)
             {
                 case "ModuleLimitedDataTransmitter":
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    ModuleDataTransmitter tmpAnt = (ModuleDataTransmitter)psdpart;
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    tmpAnt = (ModuleDataTransmitter)psdpart;
 
                     if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpAnt.IsBusy()))
                     {
                         prtActive = true;
                         tmpPower = (float)tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
                     }
-                   
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false); ;
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
@@ -1321,13 +1417,13 @@ namespace AY
             switch (psdpart.moduleName)
             {
                 case "ModuleFuelCell":
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    ModuleResourceConverter tmpRegRc = (ModuleResourceConverter)psdpart;
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    tmpRegRc = (ModuleResourceConverter)psdpart;
 
-                    Utilities.Log_Debug("Resource Converter " + prtName);
+                    //Utilities.Log_Debug("Resource Converter " + prtName);
 
                     if (Utilities.GameModeisFlight)
                     {
@@ -1340,47 +1436,45 @@ namespace AY
 
                     prtPower = "";
                     tmpPower = 0f;
-                    List<ResourceRatio> recInputs = tmpRegRc.Recipe.Inputs;
+                    recInputs = tmpRegRc.Recipe.Inputs;
 
                     foreach (ResourceRatio r in recInputs)
                     {
                         if (r.ResourceName == MAIN_POWER_NAME && prtActive)
                         {
                             tmpPower = (float)r.Ratio;
-                            Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                            //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                         }
                     }
 
                     prtPower = "";
                     tmpPower = 0f;
-                    List<ResourceRatio> recOutputs = tmpRegRc.Recipe.Outputs;
+                    recOutputs = tmpRegRc.Recipe.Outputs;
 
                     foreach (ResourceRatio r in recOutputs)
                     {
                         if (r.ResourceName == MAIN_POWER_NAME && prtActive)
                         {
                             tmpPower = (float)r.Ratio;
-                            Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                            AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                            //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                         }
                     }
                     break;
             }
         }
-
+        
         private void checkKSPIE(PartModule psdpart, Part currentPart)
         {
-            string prtName = currentPart.name;
-            string prtPower = "";
-            bool prtActive = false;
-            float tmpPower = 0;
+            prtName = currentPart.name;
+            prtPower = "";
+            prtActive = false;
+            tmpPower = 0;
             switch (psdpart.moduleName)
             {
                 case "FNModuleCryostat":
-                    KSPIEWrapper.FNModuleCryostat tmpCryo = new KSPIEWrapper.FNModuleCryostat(psdpart);
+                    tmpCryo = new KSPIEWrapper.FNModuleCryostat(psdpart);
 
                     if (Utilities.GameModeisFlight && !tmpCryo.isDisabled)
                     {
@@ -1393,52 +1487,50 @@ namespace AY
                         prtActive = true;
                         tmpPower = tmpCryo.powerReqKW;
                         prtPower = tmpCryo.powerReqKW.ToString("####000.00");
-                        Utilities.Log_Debug("KSPIE Cryostat In VAB and editorMaxECusage is on so part active");
+                        //Utilities.Log_Debug("KSPIE Cryostat In VAB and editorMaxECusage is on so part active");
                     }
                     if (prtActive)
                     {
-                        PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                        AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                     }
                     break;
 
                 case "FNGenerator":
-                    KSPIEWrapper.FNGenerator tmpGen = new KSPIEWrapper.FNGenerator(psdpart);
+                    FNtmpGen = new KSPIEWrapper.FNGenerator(psdpart);
 
-                    if (Utilities.GameModeisFlight && tmpGen.IsEnabled)
+                    if (Utilities.GameModeisFlight && FNtmpGen.IsEnabled)
                     {
-                        prtPower = tmpGen.outputPower.ToString("####000.00");
+                        prtPower = FNtmpGen.outputPower.ToString("####000.00");
                         prtActive = true;
-                        tmpPower = tmpGen.outputPower;
+                        tmpPower = FNtmpGen.outputPower;
                     }
                     if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        tmpPower = tmpGen.maxThermalPower;
-                        prtPower = tmpGen.maxThermalPower.ToString("####000.00");
-                        Utilities.Log_Debug("KSPIE Cryostat In VAB and editorMaxECusage is on so part active");
+                        tmpPower = FNtmpGen.maxThermalPower;
+                        prtPower = FNtmpGen.maxThermalPower.ToString("####000.00");
+                        //Utilities.Log_Debug("KSPIE Cryostat In VAB and editorMaxECusage is on so part active");
                     }
                     if (prtActive)
                     {
-                        PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                        AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                     }
                     break;
             }
         }
-
+        
         private void checkDF(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
             {
                 case "DeepFreezer":
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    DFWrapper.DeepFreezer tmpDeepFreezer = new DFWrapper.DeepFreezer(psdpart);
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    tmpDeepFreezer = new DFWrapper.DeepFreezer(psdpart);
 
-                    Utilities.Log_Debug("DeepFreezer " + prtName);
+                    //Utilities.Log_Debug("DeepFreezer " + prtName);
                     prtPower = "";
                     tmpPower = 0f;
                     if (Utilities.GameModeisFlight)
@@ -1466,32 +1558,31 @@ namespace AY
                         }
                         
                     }
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                     break;
             }
         }
-
+        
         private void checkKPBS(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
             {
                 case "ModuleKPBSConverter":
-                    KPBSWrapper.ModuleKPBSConverter KPBSconv = new KPBSWrapper.ModuleKPBSConverter(psdpart);
-                    float currentRateConverter = KPBSconv.currentRate;
+                    KPBSconv = new KPBSWrapper.ModuleKPBSConverter(psdpart);
+                    currentRateConverter = KPBSconv.currentRate;
                     ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, currentRateConverter);
                     
                     break;
 
                 case "PlanetaryGreenhouse":
-                    KPBSWrapper.PlanetaryGreenhouse KPBSgh = new KPBSWrapper.PlanetaryGreenhouse(psdpart);
-                    float currentRateGreenhouse = KPBSgh.currentRate;
+                    KPBSgh = new KPBSWrapper.PlanetaryGreenhouse(psdpart);
+                    currentRateGreenhouse = KPBSgh.currentRate;
                     ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, currentRateGreenhouse);
 
                     break;
             }
         }
-
+        
         private void checkUSILS(PartModule psdpart, Part currentPart)
         {
             switch (psdpart.moduleName)
@@ -1501,11 +1592,11 @@ namespace AY
                     break;
 
                 case "ModuleLifeSupport":
-                    string prtName = currentPart.name;
-                    string prtPower = "";
-                    bool prtActive = false;
-                    float tmpPower = 0;
-                    USILSWrapper.ModuleLifeSupport usiMLS = new USILSWrapper.ModuleLifeSupport(psdpart);
+                    prtName = currentPart.name;
+                    prtPower = "";
+                    prtActive = false;
+                    tmpPower = 0;
+                    usiMLS = new USILSWrapper.ModuleLifeSupport(psdpart);
 
                     if ((Utilities.GameModeisFlight && currentPart.protoModuleCrew.Count > 0) || Utilities.GameModeisEditor)
                     {
@@ -1513,96 +1604,203 @@ namespace AY
                     }
                     if (usiMLS != null && Utilities.GameModeisFlight)
                     {
-                        List<ResourceRatio> recInputs = usiMLS.LifeSupportRecipe.Inputs;
+                        recInputs = usiMLS.LifeSupportRecipe.Inputs;
 
                         foreach (ResourceRatio r in recInputs)
                         {
-                            Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                            //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             if (r.ResourceName == MAIN_POWER_NAME)
                             {
                                 if (prtActive)
                                     tmpPower = (float)r.Ratio;
 
-                                PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                                AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false); ;
                             }
                         }
 
                         prtPower = ""; 
                         tmpPower = 0f;
-                        List<ResourceRatio> recOutputs = usiMLS.LifeSupportRecipe.Outputs;
+                        recOutputs = usiMLS.LifeSupportRecipe.Outputs;
 
                         foreach (ResourceRatio r in recOutputs)
                         {
-                            Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
+                            //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             if (r.ResourceName == MAIN_POWER_NAME)
                             {
                                 if (prtActive)
                                     tmpPower = (float)r.Ratio;
 
-                                PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, tmpPower, prtActive, false);
-                                AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, true, false);
+                                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                             }
                         }
                     }
                     break;
             }
         }
-
+        
         private void checkIONRCS(PartModule psdpart, Part currentPart)
         {
-            string prtName = currentPart.name;
-            string prtPower = "";
-            bool prtActive = false;
-            float tmpPower = 0;
+            prtName = currentPart.name;
+            prtPower = "";
+            prtActive = false;
+            tmpPower = 0;
 
             switch (psdpart.moduleName)
             {
                 case "ModuleIONPoweredRCS":
-                    IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs = new IONRCSWrapper.ModuleIONPoweredRCS(psdpart);
-                    float elecUse = tmpIonPoweredRcs.ElecUsed;
+                    tmpIonPoweredRcs = new IONRCSWrapper.ModuleIONPoweredRCS(psdpart);
+                    IONRCSelecUse = tmpIonPoweredRcs.ElecUsed;
 
-                    prtActive = elecUse > 0;
+                    prtActive = IONRCSelecUse > 0;
                     if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        elecUse = tmpIonPoweredRcs.powerRatio;
+                        IONRCSelecUse = tmpIonPoweredRcs.powerRatio;
                     }
-                    PwrPartList PartAdd = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, elecUse, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, IONRCSelecUse, false, false);
 
-                    currentPoweredRCSDrain += elecUse;
-                    Utilities.Log_Debug("AYIONRCS ElecUsage = " + elecUse.ToString("0.00000000"));
-                    
-                    //ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
+                    currentPoweredRCSDrain += IONRCSelecUse;
+                    //Utilities.Log_Debug("AYIONRCS ElecUsage = " + IONRCSelecUse.ToString("0.00000000"));
+
+                    ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
                     break;
 
                 case "ModulePPTPoweredRCS":
-                    IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs = new IONRCSWrapper.ModulePPTPoweredRCS(psdpart);
-                    float elecUse2 = tmpPPTPoweredRcs.ElecUsed;
+                    tmpPPTPoweredRcs = new IONRCSWrapper.ModulePPTPoweredRCS(psdpart);
+                    IONRCSelecUse = tmpPPTPoweredRcs.ElecUsed;
 
-                    prtActive = elecUse2 > 0;
+                    prtActive = IONRCSelecUse > 0;
                     if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
-                        elecUse2 = tmpPPTPoweredRcs.powerRatio;
+                        IONRCSelecUse = tmpPPTPoweredRcs.powerRatio;
                     }
-                    PwrPartList PartAdd2 = new PwrPartList(prtName, psdpart.moduleName, false, prtPower, elecUse2, prtActive, false);
-                    AYVesselPartLists.AddPart(currentPart.craftID, PartAdd2, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, IONRCSelecUse, false, false);
 
-                    currentPoweredRCSDrain += elecUse2;
-                    Utilities.Log_Debug("AYPPTRCS ElecUsage = " + elecUse2.ToString("0.00000000"));
-                    
-                    //ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
+                    currentPoweredRCSDrain += IONRCSelecUse;
+                    //Utilities.Log_Debug("AYPPTRCS ElecUsage = " + IONRCSelecUse.ToString("0.00000000"));
+
+                    ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
                     break;
             }
         }
         
+        private void checkKerbalism(PartModule psdpart, Part currentPart)
+        {
+            
+            if (psdpart.moduleName == "GravityRing")
+            {
+                prtName = currentPart.name;
+                prtPower = "";
+                prtActive = false;
+                tmpPower = 0;
+                fieldlist = psdpart.Fields;
+                state = fieldlist.GetValue("opened");
+                ec_rate = fieldlist.GetValue("ec_rate");
+                speed = fieldlist.GetValue("speed");
+                prtActive = (bool) state;
+                if (Utilities.GameModeisEditor)
+                {
+                    prtActive = true;
+                }
+                if (prtActive)
+                    tmpPower = (float)(double) ec_rate * (float) speed;
+
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+
+                ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
+            }
+            if (psdpart.moduleName == "Greenhouse")
+            {
+                prtName = currentPart.name;
+                prtPower = "";
+                prtActive = false;
+                tmpPower = 0;
+                fieldlist = psdpart.Fields;
+                lamps = fieldlist.GetValue("lamps");
+                ec_rate = fieldlist.GetValue("ec_rate");
+                prtActive = (float)lamps > 0.0f;
+                if (Utilities.GameModeisEditor)
+                {
+                    prtActive = true;
+                }
+                if (prtActive)
+                    tmpPower = (float)(double)ec_rate * (float)lamps;
+
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+
+                ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
+            }
+            if (psdpart.moduleName == "Scrubber")
+            {
+                prtName = currentPart.name;
+                prtPower = "";
+                prtActive = false;
+                tmpPower = 0;
+                fieldlist = psdpart.Fields;
+                is_enabled = fieldlist.GetValue("is_enabled");
+                ec_rate = fieldlist.GetValue("ec_rate");
+                co2_rate = fieldlist.GetValue("co2_rate");
+
+                prtActive = (bool)is_enabled;
+                if (Utilities.GameModeisEditor)
+                {
+                    prtActive = true;
+                }
+                if (prtActive)
+                    tmpPower = (float)(double)ec_rate * (float)(double)co2_rate;
+
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+
+                ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
+            }
+        }
+        
+        private void checkNFP(PartModule psdpart, Part currentPart)
+        {
+
+            if (psdpart.moduleName == "VariablePowerEngine")
+            {
+                prtName = currentPart.name;
+                prtPower = "";
+                prtActive = false;
+                tmpPower = 0;
+                fieldlist = psdpart.Fields;
+                ec_rate = fieldlist.GetValue("curPowerUse");
+                prtActive = (float)ec_rate > 0.0f;
+                if (Utilities.GameModeisEditor)
+                {
+                    prtActive = true;
+                }
+                if (prtActive)
+                    tmpPower = (float)ec_rate;
+
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+            }
+            if (psdpart.moduleName == "VariableISPEngine")
+            {
+                prtName = currentPart.name;
+                prtPower = "";
+                prtActive = false;
+                tmpPower = 0;
+                tmpVariableIspEngine = new NFPWrapper.VariableISPEngine(psdpart);
+                tmpPower = tmpVariableIspEngine.ECUsage;
+                prtActive = tmpPower > 0.0f;
+                if (Utilities.GameModeisEditor)
+                {
+                    prtActive = true;
+                }
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+            }
+        }
+
         #endregion OtherMods
 
         #region EmergencyShutdownProcedures
+
+        private double ESPpowerPercent;
 
         private void ProcessEmergencyShutdownChecking()
         {
@@ -1678,12 +1876,12 @@ namespace AY
                 {
                     try
                     {
-                        double powerPercent = TotalElectricCharge / TotalElectricChargeCapacity * 100.0;
+                        ESPpowerPercent = TotalElectricCharge / TotalElectricChargeCapacity * 100.0;
                         PowerState = TotalPowerProduced >= TotalPowerDrain ? PowerState.Increasing : PowerState.Decreasing;
                         //If power state is decreasing we check if power percentage has gone below the LowThreshold (as it is always the highest percentage)
                         if (PowerState == PowerState.Decreasing)
                         {
-                            if (powerPercent < AYsettings.ESPLowThreshold)  //Are we in an Emergency Power Down State?
+                            if (ESPpowerPercent < AYsettings.ESPLowThreshold)  //Are we in an Emergency Power Down State?
                             {
                                 //If emergency power down was not previously activated we reset ALL the processing flags at the start of a powerdown.
                                 if (!Emergencypowerdownprevactivated)  
@@ -1702,7 +1900,7 @@ namespace AY
                             ESPPriorityHighProcessed = ESPPriorityMediumProcessed = ESPPriorityLowProcessed = false;
 
                             //if power percentage has gone below the LowThreshold (as it is always the highest percentage)
-                            if (powerPercent < AYsettings.ESPLowThreshold)   //Are we in an Emergency Power Down Reset state?
+                            if (ESPpowerPercent < AYsettings.ESPLowThreshold)   //Are we in an Emergency Power Down Reset state?
                             {
                                 Emergencypowerdownreset = true;
                             }
@@ -1740,13 +1938,13 @@ namespace AY
                         }
                         //If we get here we are either dong Emergency Power Down or Emergency Reset
                         //Now set the Priority
-                        if (powerPercent < AYsettings.ESPHighThreshold)  //Check the lowest percentage first, which is the high priority parts.
+                        if (ESPpowerPercent < AYsettings.ESPHighThreshold)  //Check the lowest percentage first, which is the high priority parts.
                         {
                             _espPriority = ESPPriority.HIGH;
                         }
                         else
                         {
-                            _espPriority = powerPercent < AYsettings.ESPMediumThreshold ? ESPPriority.MEDIUM : ESPPriority.LOW;
+                            _espPriority = ESPpowerPercent < AYsettings.ESPMediumThreshold ? ESPPriority.MEDIUM : ESPPriority.LOW;
                         }
 
                         //Process EmergencyPowerdownactivated for AmpYear subsystems
@@ -1838,8 +2036,7 @@ namespace AY
                         ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Emergency Shutdown Procedures Activated. Restart Subsystems.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                     //Process AmpYear Subsystems
-                    int index = 2;
-                    foreach (Subsystem subsystem in Enum.GetValues(typeof(Subsystem)))
+                    foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
                     {
                         PwrPartList partFnd;
                         string keyValue = AYVesselPartLists.CreatePartKey(partId, SubsystemName(subsystem));
@@ -1877,7 +2074,6 @@ namespace AY
                                 }
                             }
                         }
-                        index++;
                     }
                 }
                 catch (Exception ex)
@@ -1887,56 +2083,57 @@ namespace AY
                 }
             }
         }
-        
+
+        private string PPESPkeyValue;
+        private PwrPartList PPESPpartFnd;
         private void ProcessPartEmergencyShutdownProcedures(Part currentPart, PartModule module, bool prtActive)
         {
             if (Utilities.GameModeisFlight && (Emergencypowerdownactivated || Emergencypowerdownreset))  //Emergency Procedures
             {
                 //string keyValue = AYVesselPartLists.CreatePartKey(currentPart.flightID, module.moduleName);
-                string keyValue = AYVesselPartLists.CreatePartKey(currentPart.craftID, module.moduleName);
-                PwrPartList partFnd;
-                if (AYVesselPartLists.VesselProdPartsList.TryGetValue(keyValue, out partFnd))
+                PPESPkeyValue = AYVesselPartLists.CreatePartKey(currentPart.craftID, module.moduleName);
+                if (AYVesselPartLists.VesselProdPartsList.TryGetValue(PPESPkeyValue, out PPESPpartFnd))
                 {
-                    if (partFnd.ValidprtEmergShutDn && partFnd.PrtEmergShutDnInclude)
+                    if (PPESPpartFnd.ValidprtEmergShutDn && PPESPpartFnd.PrtEmergShutDnInclude)
                     {
                         if (Emergencypowerdownactivated) //Emergency ShutDown Procedures
                         {
-                            if (_espPriority == partFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
+                            if (_espPriority == PPESPpartFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
                             {
-                                partFnd.PrtPreEmergShutDnStateActive = prtActive;
-                                AYVesselPartLists.VesselProdPartsList[keyValue] = partFnd;
-                                ProcessPartModuleShutdown(currentPart, module, keyValue, partFnd, prtActive);
+                                PPESPpartFnd.PrtPreEmergShutDnStateActive = prtActive;
+                                AYVesselPartLists.VesselProdPartsList[PPESPkeyValue] = PPESPpartFnd;
+                                ProcessPartModuleShutdown(currentPart, module, PPESPkeyValue, PPESPpartFnd, prtActive);
                             }
                         }
                         if (Emergencypowerdownreset) //Emergency Reset Procedures
                         {
-                            if (_espPriority == partFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
+                            if (_espPriority == PPESPpartFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
                             {
-                                ProcessPartModuleRestart(currentPart, module, partFnd, prtActive);
+                                ProcessPartModuleRestart(currentPart, module, PPESPpartFnd, prtActive);
                             }
                         }
                     }
                 }
                 else
                 {
-                    if (AYVesselPartLists.VesselConsPartsList.TryGetValue(keyValue, out partFnd))
+                    if (AYVesselPartLists.VesselConsPartsList.TryGetValue(PPESPkeyValue, out PPESPpartFnd))
                     {
-                        if (partFnd.ValidprtEmergShutDn && partFnd.PrtEmergShutDnInclude)
+                        if (PPESPpartFnd.ValidprtEmergShutDn && PPESPpartFnd.PrtEmergShutDnInclude)
                         {
                             if (Emergencypowerdownactivated) //Emergency ShutDown Procedures
                             {
-                                if (_espPriority == partFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
+                                if (_espPriority == PPESPpartFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
                                 {
-                                    partFnd.PrtPreEmergShutDnStateActive = prtActive;
-                                    AYVesselPartLists.VesselConsPartsList[keyValue] = partFnd;
-                                    ProcessPartModuleShutdown(currentPart, module, keyValue, partFnd, prtActive);
+                                    PPESPpartFnd.PrtPreEmergShutDnStateActive = prtActive;
+                                    AYVesselPartLists.VesselConsPartsList[PPESPkeyValue] = PPESPpartFnd;
+                                    ProcessPartModuleShutdown(currentPart, module, PPESPkeyValue, PPESPpartFnd, prtActive);
                                 }
                             }
                             if (Emergencypowerdownreset) //Emergency Reset Procedures
                             {
-                                if (_espPriority == partFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
+                                if (_espPriority == PPESPpartFnd.PrtEmergShutDnPriority && PriorityNotProcessed)
                                 {
-                                    ProcessPartModuleRestart(currentPart, module, partFnd, prtActive);
+                                    ProcessPartModuleRestart(currentPart, module, PPESPpartFnd, prtActive);
                                 }
                             }
                         }
@@ -1944,7 +2141,7 @@ namespace AY
                     else
                     {
                         Utilities.Log(
-                        "Failed to find {0} in Dictionary for EmergencyShutdown Processing", keyValue);
+                        "Failed to find {0} in Dictionary for EmergencyShutdown Processing", PPESPkeyValue);
                     }
                 }
             }
@@ -1954,6 +2151,30 @@ namespace AY
         {
             switch (module.moduleName)
             {
+                case "ModuleIONPoweredRCS":
+                    if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+                        ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
+                        tmpIonPoweredRcs.rcsEnabled = false;
+                        ScreenMessages.PostScreenMessage(
+                            "Electricity Levels Critical! Disabling ION RCS!", 5.0f,
+                            ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Disabling ION RCS");
+                    }
+                    break;
+
+                case "ModulePPTPoweredRCS":
+                    if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+                        ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
+                        tmpIonPoweredRcs.rcsEnabled = false;
+                        ScreenMessages.PostScreenMessage(
+                            "Electricity Levels Critical! Disabling PPT RCS!", 5.0f,
+                            ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Disabling PPT RCS");
+                    }
+                    break;
+
                 case "ModuleDeployableSolarPanel":
                     if (FlightGlobals.ActiveVessel.atmDensity < 0.2 ||
                                 FlightGlobals.ActiveVessel.situation != Vessel.Situations.SUB_ORBITAL
@@ -2118,6 +2339,40 @@ namespace AY
                     }
                     break;
 
+                case "Scrubber":
+                    if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+
+                        BaseEventList scrubbereventlist = currentPart.Events;
+                        scrubbereventlist["DeactivateEvent"].Invoke();
+                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Scrubber!",
+                            5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Turning off Scrubber");
+                    }
+                    break;
+
+                case "Greenhouse":
+                    if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+
+                        BaseFieldList ghfieldlist = currentPart.Fields;
+                        ghfieldlist.SetValue("lamps", 0.0f);
+                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Greenhouse!",
+                            5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Turning off Greenhouse");
+                    }
+                    break;
+                case "GravityRing":
+                    if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+
+                        BaseFieldList grfieldlist = currentPart.Fields;
+                        grfieldlist.SetValue("speed", 0.0f);
+                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off GravityRing!",
+                            5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Turning off GravityRing");
+                    }
+                    break;
                 case "ModuleLimitedDataTransmitter":
                     if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
                     {
@@ -2134,6 +2389,30 @@ namespace AY
         {
             switch (module.moduleName)
             {
+                case "ModuleIONPoweredRCS":
+                    if (partFnd.PrtPreEmergShutDnStateActive && !prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+                        ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
+                        tmpIonPoweredRcs.rcsEnabled = true;
+                        ScreenMessages.PostScreenMessage(
+                            "Electricity Levels OK Enable ION RCS!", 5.0f,
+                            ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Enabling ION RCS");
+                    }
+                    break;
+
+                case "ModulePPTPoweredRCS":
+                    if (partFnd.PrtPreEmergShutDnStateActive && !prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+                        ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
+                        tmpIonPoweredRcs.rcsEnabled = true;
+                        ScreenMessages.PostScreenMessage(
+                            "Electricity Levels OK Enable PPT RCS!", 5.0f,
+                            ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Enabling PPT RCS");
+                    }
+                    break;
+
                 case "ModuleDeployableSolarPanel":
                     ModuleDeployableSolarPanel tmpSol = (ModuleDeployableSolarPanel) module;
                     if (!partFnd.PrtPreEmergShutDnStateActive &&
@@ -2307,9 +2586,23 @@ namespace AY
                         Utilities.Log("Enabling ARAntenna");
                     }
                     break;
+                case "Scrubber":
+                    if (partFnd.PrtPreEmergShutDnStateActive && !prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
+                    {
+
+                        BaseEventList gheventlist = currentPart.Events;
+                        gheventlist["ActivateEvent"].Invoke();
+                        ScreenMessages.PostScreenMessage("Electricity Levels OK Enable Scrubber!",
+                            5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        Utilities.Log("Enabling Scrubber");
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
+        private bool PNPreturnval;
         /// <summary>
         /// REturns TRUE is the current ESPPriorityProcessed bool relevent for the current _espPriority is FALSE.
         /// </summary>
@@ -2317,27 +2610,29 @@ namespace AY
         {
             get
             {
-                bool returnval = true;
+                PNPreturnval = true;
                 switch (_espPriority)
                 {
                     case ESPPriority.HIGH:
-                        if (ESPPriorityHighProcessed) returnval = false;
+                        if (ESPPriorityHighProcessed) PNPreturnval = false;
                         
                         break;
                     case ESPPriority.MEDIUM:
-                        if (ESPPriorityMediumProcessed) returnval = false;
+                        if (ESPPriorityMediumProcessed) PNPreturnval = false;
                         break;
                     case ESPPriority.LOW:
-                        if (ESPPriorityLowProcessed) returnval = false;
+                        if (ESPPriorityLowProcessed) PNPreturnval = false;
                         break;
                 }
-                return returnval;
+                return PNPreturnval;
             }
         }
 
+        private uint CalcAmpYearMgrPartIDpartId = 1111;
+
         private uint CalcAmpYearMgrPartID()
         {
-            uint partId = 1111;
+            CalcAmpYearMgrPartIDpartId = 1111;
             if (rootPartID != 1111)  //If rootPartID is not the default value we have a rootPart to use.
             {
                 return rootPartID;
@@ -2347,16 +2642,16 @@ namespace AY
             if (Utilities.GameModeisFlight)
             {
                 if (FlightGlobals.ActiveVessel != null)
-                    partId = FlightGlobals.ActiveVessel.rootPart.craftID;
+                    CalcAmpYearMgrPartIDpartId = FlightGlobals.ActiveVessel.rootPart.craftID;
             }
             else
             {
                 if (Utilities.GameModeisEditor && EditorLogic.RootPart != null)
                     rootPartID = EditorLogic.RootPart.craftID;
             }
-            return partId;
+            return CalcAmpYearMgrPartIDpartId;
         }
-        
+
         #endregion EmergencyShutdownProcedures
     }
 }

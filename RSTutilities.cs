@@ -138,7 +138,21 @@ namespace RSTUtils
 			return DstFrmHome;
 		}
 
-		public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
+        public static double DistanceFromHomeWorld(string bodyname)
+        {
+            CelestialBody body = FlightGlobals.Bodies.FirstOrDefault(a => a.name == bodyname);
+            if (body == null) body = Planetarium.fetch.Home;
+            Vector3d bodyPos = body.getPositionAtUT(0);
+            CelestialBody HmePlanet = Planetarium.fetch.Home;
+            Log_Debug("Home = " + HmePlanet.name + " Pos = " + HmePlanet.getPositionAtUT(0));
+            Log_Debug("Body Pos = " + bodyPos);
+            Vector3d hmeplntPos = HmePlanet.getPositionAtUT(0);
+            double DstFrmHome = Math.Sqrt(Math.Pow(bodyPos.x - hmeplntPos.x, 2) + Math.Pow(bodyPos.y - hmeplntPos.y, 2) + Math.Pow(bodyPos.z - hmeplntPos.z, 2));
+            Log_Debug("Distance from Home Planet = " + DstFrmHome);
+            return DstFrmHome;
+        }
+
+        public static bool CelestialBodyDistancetoSun(CelestialBody cb, out Vector3d sun_dir, out double sun_dist)
 		{
 			// bodies traced against
 			CelestialBody sun = FlightGlobals.Bodies[0];
@@ -1298,7 +1312,20 @@ namespace RSTUtils
 			}
 		}
 
-		internal static bool IsModInstalled(string assemblyName)
+        internal static bool IsNHInstalled
+        {
+            get
+            {
+                CelestialBody sonnah = FlightGlobals.Bodies.FirstOrDefault(a => a.name == "Sonnah");
+                if (sonnah != null)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        internal static bool IsModInstalled(string assemblyName)
 		{
 			Assembly assembly = (from a in assemblies
 								 where a.FullName.Contains(assemblyName)
