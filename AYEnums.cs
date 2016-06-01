@@ -54,7 +54,8 @@ namespace AY
     {
         GREEN = 0,
         YELLOW = 1,
-        RED = 2
+        RED = 2,
+        GRAY = 3
     }
 
     public enum ESPPriority

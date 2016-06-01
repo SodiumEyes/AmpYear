@@ -426,7 +426,7 @@ namespace AY
                     if (TimewarpIsValid)
                     {
                         GUILayout.Label(new GUIContent("Manager Disabled", "The AmpYear Power Management Unit has been disabled"), Textures.WarningStyle);
-                        SetIconalertstate(IconAlertState.YELLOW);
+                        SetIconalertstate(IconAlertState.GRAY);
                     }
                     else
                     {
@@ -1180,6 +1180,7 @@ namespace AY
 
         //Set the iconAlertstate - DOES NOT PROCESS state = GREEN. If state = Yellow will only change to yellow if state is not already RED.
         //If state = red then it will be changed to RED.
+        //If state = gray then it will be changed to GRAY.
         private void SetIconalertstate(IconAlertState state)
         {
             if (state == IconAlertState.YELLOW && _iconAlertState != IconAlertState.RED)
@@ -1187,6 +1188,8 @@ namespace AY
                 _iconAlertState = state;
             }
             if (state == IconAlertState.RED)
+                _iconAlertState = state;
+            if (state == IconAlertState.GRAY)
                 _iconAlertState = state;
         }
 
@@ -1247,6 +1250,17 @@ namespace AY
                     {
                         icontoSet = AYMenuAppLToolBar.GuiVisible ? "/AYYellowOnTB" : "/AYYellowOffTB";
                     }
+                    else
+                    {
+                        if (_iconAlertState == IconAlertState.GRAY)
+                        {
+                            icontoSet = AYMenuAppLToolBar.GuiVisible ? "/AYGrayOnTB" : "/AYGrayOffTB";
+                        }
+                    }
+                }
+                if (Utilities.GameModeisFlight && !ManagerIsActive)
+                {
+                    icontoSet = AYMenuAppLToolBar.GuiVisible ? "/AYGrayOnTB" : "/AYGrayOffTB";
                 }
                 AYMenuAppLToolBar.setToolBarTexturePath(Textures.PathToolbarIconsPath + icontoSet);
             }
@@ -1265,6 +1279,17 @@ namespace AY
                         {
                             iconToSet = AYMenuAppLToolBar.GuiVisible ? (Texture)Textures.IconYellowOn : (Texture)Textures.IconYellowOff;
                         }
+                        else
+                        {
+                            if (_iconAlertState == IconAlertState.GRAY)
+                            {
+                                iconToSet = AYMenuAppLToolBar.GuiVisible ? (Texture)Textures.IconGrayOn : (Texture)Textures.IconGrayOff;
+                            }
+                        }
+                    }
+                    if (Utilities.GameModeisFlight && !ManagerIsActive)
+                    {
+                        iconToSet = AYMenuAppLToolBar.GuiVisible ? (Texture)Textures.IconGrayOn : (Texture)Textures.IconGrayOff;
                     }
                     AYMenuAppLToolBar.setAppLauncherTexture(iconToSet);
                 }
@@ -1378,13 +1403,28 @@ namespace AY
                 }
             }
         }
-        
+
+        private string tmpToolTipSS;
         private void SubsystemButton(Subsystem subsystem)
         {
+            tmpToolTipSS = "Enable/Disable " + SubsystemName(subsystem);
+            if (subsystem == Subsystem.SAS)
+            {
+                if (!FlightGlobals.ActiveVessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.StabilityAssist))
+                {
+                    GUI.enabled = false;
+                    tmpToolTipSS = "Vessel has no SAS modules";
+                }
+                else
+                {
+                    tmpToolTipSS = "Toggle SAS on or off";
+                }
+            }
             SetSubsystemEnabled(
                 subsystem,
-                GUILayout.Toggle(SubsystemEnabled(subsystem), new GUIContent(SubsystemName(subsystem), "Enable/Disable " + SubsystemName(subsystem)), Textures.SubsystemButtonStyle, GUILayout.Width(FWINDOW_WIDTH / 2.0f))
+                GUILayout.Toggle(SubsystemEnabled(subsystem), new GUIContent(SubsystemName(subsystem), tmpToolTipSS), Textures.SubsystemButtonStyle, GUILayout.Width(FWINDOW_WIDTH / 2.0f))
                 );
+            GUI.enabled = true;
         }
 
         private void SubsystemConsumptionLabel(Subsystem subsystem)
@@ -1418,7 +1458,7 @@ namespace AY
             else
                 Textures.SubsystemConsumptionStyle.normal.textColor = Color.green;
 
-            GUILayout.Label(new GUIContent(drain.ToString("0.000") + "/s", "The current EC drain per second"), Textures.SubsystemConsumptionStyle);
+            GUILayout.Label(new GUIContent(drain.ToString("0.000") + "/s", "The current EC drain per second if enabled"), Textures.SubsystemConsumptionStyle);
         }
 
         private static string GuiSectionName(GUISection section)

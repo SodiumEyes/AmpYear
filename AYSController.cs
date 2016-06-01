@@ -115,6 +115,7 @@ namespace AY
         private bool KKPresent = false;
         private Vector2 _bodscrollViewVector = Vector2.zero;
         private static string LOCK_ID = "AmpYear_KeyBinder";
+        private string tmpToolTip;
 
         //AmpYear Savable settings
         private AYSettings _aYsettings;
@@ -333,10 +334,23 @@ namespace AY
                 GUILayout.EndHorizontal();
             }
 
+            if (!ToolbarManager.ToolbarAvailable)
+            {
+                GUI.enabled = false;
+                tmpToolTip = "Not available unless ToolBar mod is installed";
+            }
+            else
+            {
+                tmpToolTip =
+                    "If ON Icon will appear in the stock Applauncher, if OFF Icon will appear in ToolBar mod";
+            }
+
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Use Application Launcher Button (Requires Scene Change to take effect)", "If this is ON Stock Icon will be used, if OFF Blizzy's Toolbar will be used"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent("Use Application Launcher Button", tmpToolTip), Textures.StatusStyle, GUILayout.Width(300));
             _inputAppL = GUILayout.Toggle(_inputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
+
+            GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("Debug Mode", "Creates logs of logging messages to help when there are problems, but will slow KSP down"), Textures.StatusStyle, GUILayout.Width(300));

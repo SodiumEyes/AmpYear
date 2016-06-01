@@ -1375,8 +1375,8 @@ namespace AY
                 case Subsystem.SAS:
                     if (cv.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.StabilityAssist))
                         cv.ActionGroups.SetGroup(KSPActionGroup.SAS, enabled);
-                    else
-                        ScreenMessages.PostScreenMessage(cv.vesselName + " - Cannot Engage SAS - Autopilot function not available", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    //else
+                    //    ScreenMessages.PostScreenMessage(cv.vesselName + " - Cannot Engage SAS - Autopilot function not available", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                     break;
 
                 case Subsystem.RCS:
