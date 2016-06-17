@@ -1,4 +1,7 @@
-﻿V1.3.2.0 "Post-Mega Update Tweaks & Fixes"
+﻿v1.3.3.0 "ksp 1.1.3"
+    Re-compile for KSP 1.1.3.
+
+V1.3.2.0 "Post-Mega Update Tweaks & Fixes"
 	Merged Dark-Side and Solar SOI windows into a single window.
 	Mega efficiency code clean-up. Reduce Garbage generation and CPU overhead.
 	Persist the IsolateReservePower button setting for each vessel between scenes and save/load.
