@@ -97,7 +97,6 @@
     <Compile Include="AYSettings.cs" />
     <Compile Include="AYController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="Distribution\GameData\REPOSoftTech\Agencies\Agents.cfg" />
     <None Include="Distribution\GameData\REPOSoftTech\Agencies\REPOSoftTech_scaled.truecolor" />
     <None Include="Distribution\GameData\REPOSoftTech\AmpYear\AmpYear.version" />
