@@ -40,6 +40,7 @@ namespace RSTUtils
         private ApplicationLauncher.AppScenes VisibleinScenes; //What scenes is the applauncher button seen in
         private UnityEngine.Texture appbtnTexON; //Texture for AppLauncher button when ON
         private UnityEngine.Texture appbtnTexOFF; //Texture for AppLauncher button when OFF
+        private bool showHoverText = false; //Whether to show AppLauncher Hover Text or not.
 
         private bool _gamePaused;
         public Boolean gamePaused
@@ -90,6 +91,11 @@ namespace RSTUtils
             {
                 _Visible = value;      //Set the private variable
             }
+        }
+
+        public bool ShowHoverText
+        {
+            get { return showHoverText; }
         }
 
         private void GamePaused()
@@ -146,8 +152,8 @@ namespace RSTUtils
                 stockToolbarButton = ApplicationLauncher.Instance.AddModApplication(
                     onAppLaunchToggle,
                     onAppLaunchToggle,
-                    DummyVoid,
-                    DummyVoid,
+                    onHoverOn,
+                    onHoverOff,
                     DummyVoid,
                     DummyVoid,
                     VisibleinScenes,
@@ -157,6 +163,15 @@ namespace RSTUtils
 
         private void DummyVoid()
         {
+        }
+
+        private void onHoverOn()
+        {
+            showHoverText = true;
+        }
+        private void onHoverOff()
+        {
+            showHoverText = false;
         }
 
         public void onAppLaunchToggle()

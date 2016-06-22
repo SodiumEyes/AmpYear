@@ -525,8 +525,6 @@ namespace AY
                     }
                 }
                 //get current vessel parts list
-                //List<Part> vesselparts = new List<Part> { };
-                //vesselparts.Clear();
                 if (Utilities.GameModeisFlight)
                 {
                     try

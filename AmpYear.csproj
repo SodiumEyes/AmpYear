@@ -1,10 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{AACF3579-E4E6-48BB-B278-E7B664D06F65}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -22,31 +21,25 @@
     <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\KSPDLLs\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\KSPDLLs - 1.1.3\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp-firstpass, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\KSPDLLs - 1.1.3\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
     <Reference Include="KSPUtil">
-      <HintPath>..\KSPDLLs\KSPUtil.dll</HintPath>
+      <HintPath>..\KSPDLLs - 1.1.3\KSPUtil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -54,12 +47,11 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\KSPDLLs\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine">
+      <HintPath>..\KSPDLLs - 1.1.3\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\KSPDLLs\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\KSPDLLs - 1.1.3\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -120,7 +112,6 @@
     <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z400_ReserveBatteryPack\model.mu" />
     <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z400_ReserveBatteryPack\model000.dds" />
     <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z400_ReserveBatteryPack\part.cfg" />
-    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Plugins\Config.cfg" />
     <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Resources\AmpYearResources.cfg" />
   </ItemGroup>
   <ItemGroup>
@@ -151,17 +142,14 @@
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC Licence.txt" />
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC.dll" />
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC.xml" />
-    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Plugins\AmpYear.dll" />
-    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Plugins\AmpYear.dll.mdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Plugins\AmpYear.pdb" />
     <Content Include="LocalDev\7za_dir.txt" />
     <Content Include="LocalDev\ksp_dir.txt" />
     <Content Include="LocalDev\mono_exe.txt" />
     <Content Include="LocalDev\pdb2mdb_exe.txt" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Distribution\GameData\REPOSoftTech\AmpYear\Plugins\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="PostBuildMacros">
     <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
@@ -183,8 +171,8 @@ set /p MONO_EXE_DIR=&lt;"$(ProjectDir)LocalDev\mono_exe.txt"
 set /p PDB2MDB_EXE_DIR=&lt;"$(ProjectDir)LocalDev\pdb2mdb_exe.txt"
 
 set /p ZA_DIR=&lt;"$(ProjectDir)LocalDev\7za_dir.txt"
-
 xcopy "$(TargetPath)" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
 xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 cd "$(TargetDir)"
@@ -192,11 +180,17 @@ cd "$(TargetDir)"
 xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
 
 where /q %25ZA_DIR%25:7za.exe
-if %25ERRORLEVEL%25 == 1 (  echo Cannot find 7-zip to package build) else (  echo Packaging build  ) 
-
-if exist "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" del "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip"   
-%25ZA_DIR%257za.exe a -tzip "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "$(SolutionDir)Distribution\GameData" 
-%25ZA_DIR%257za.exe d -r "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.xcf" "*.blend" "thumbs.db" "*.pdb" "*.dll.mdb"
+if %25ERRORLEVEL%25 == 1 (
+   echo Cannot find 7-zip to package build
+) else (
+   echo Packaging build
+  ) 
+if exist "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" del "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip"
+   
+%25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "$(SolutionDir)Distribution\GameData"
+cd "$(SolutionDir)Distribution\GameData\RepoSoftTech\AmpYear\Icons"
+dir /b &gt; "$(SolutionDir)IconsExclude.txt"
+c:\7za\7za d -r  -x@"$(SolutionDir)IconsExclude.txt" -x!REPOSoftTech.png "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
 xcopy /E /Y "$(SolutionDir)Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
