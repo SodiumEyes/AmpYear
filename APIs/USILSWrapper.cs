@@ -88,7 +88,7 @@ namespace AY
             {
                 actualModuleLifeSupport = a;
 
-                LifeSupportRecipeMethod = USIMLSType.GetMethod("get_LifeSupportRecipe", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                LifeSupportRecipeMethod = USIMLSType.GetMethod("get_ECRecipe", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             }
 
             private Object actualModuleLifeSupport;

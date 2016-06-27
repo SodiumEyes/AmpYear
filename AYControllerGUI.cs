@@ -285,24 +285,24 @@ namespace AY
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            foreach (GUISection section in LoadGlobals.GuiSectionArrayCache) // Enum.GetValues(typeof(GUISection)))
+            for (int i = LoadGlobals.GuiSectionArrayCache.Length - 1; i >= 0; --i)
             {
-                if (section == GUISection.LUXURY)
+                if (LoadGlobals.GuiSectionArrayCache[i] == GUISection.LUXURY)
                 {
                     if (KKPresent)
                     {
-                        _guiSectionEnableFlag[(int)section]
-                        = GUILayout.Toggle(_guiSectionEnableFlag[(int)section], GuiSectionName(section), GUI.skin.button);
+                        _guiSectionEnableFlag[(int)LoadGlobals.GuiSectionArrayCache[i]]
+                        = GUILayout.Toggle(_guiSectionEnableFlag[(int)LoadGlobals.GuiSectionArrayCache[i]], GuiSectionName(LoadGlobals.GuiSectionArrayCache[i]), GUI.skin.button);
                     }
                     else
                     {
-                        _guiSectionEnableFlag[(int)section] = false;
+                        _guiSectionEnableFlag[(int)LoadGlobals.GuiSectionArrayCache[i]] = false;
                     }
                 }
                 else
                 {
-                    _guiSectionEnableFlag[(int)section]
-                    = GUILayout.Toggle(_guiSectionEnableFlag[(int)section], GuiSectionName(section), GUI.skin.button);
+                    _guiSectionEnableFlag[(int)LoadGlobals.GuiSectionArrayCache[i]]
+                    = GUILayout.Toggle(_guiSectionEnableFlag[(int)LoadGlobals.GuiSectionArrayCache[i]], GuiSectionName(LoadGlobals.GuiSectionArrayCache[i]), GUI.skin.button);
                 }
             }
             GUILayout.EndHorizontal();
@@ -459,13 +459,13 @@ namespace AY
             if (ManagerIsActive && GuiSectionEnabled(GUISection.SUBSYSTEM))
             {
                 GUILayout.Label("Subsystems", Textures.SectionTitleStyle);
-                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
+                for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
-                    if (!SubsystemIsLuxury(subsystem) && SubsystemVisible(subsystem))
+                    if (!SubsystemIsLuxury(LoadGlobals.SubsystemArrayCache[i]) && SubsystemVisible(LoadGlobals.SubsystemArrayCache[i]))
                     {
                         GUILayout.BeginHorizontal();
-                        SubsystemButton(subsystem);
-                        SubsystemConsumptionLabel(subsystem);
+                        SubsystemButton(LoadGlobals.SubsystemArrayCache[i]);
+                        SubsystemConsumptionLabel(LoadGlobals.SubsystemArrayCache[i]);
                         GUILayout.EndHorizontal();
                     }
                 }
@@ -562,13 +562,13 @@ namespace AY
             {
                 GUILayout.Label("Luxury", Textures.SectionTitleStyle);
                 if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
-                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
+                for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
-                    if (SubsystemIsLuxury(subsystem) && SubsystemVisible(subsystem))
+                    if (SubsystemIsLuxury(LoadGlobals.SubsystemArrayCache[i]) && SubsystemVisible(LoadGlobals.SubsystemArrayCache[i]))
                     {
                         GUILayout.BeginHorizontal();
-                        SubsystemButton(subsystem);
-                        SubsystemConsumptionLabel(subsystem);
+                        SubsystemButton(LoadGlobals.SubsystemArrayCache[i]);
+                        SubsystemConsumptionLabel(LoadGlobals.SubsystemArrayCache[i]);
                         GUILayout.EndHorizontal();
                     }
                 }
@@ -642,9 +642,9 @@ namespace AY
                 GUILayout.Label("Crew", Textures.SectionTitleStyle);
                 if (VslRstr.Count > 0)
                 {
-                    foreach (ProtoCrewMember crewMbr in VslRstr)
+                    for (int i = VslRstr.Count - 1; i >= 0; --i)
                     {
-                        GUILayout.Label(crewMbr.name + " - " + crewMbr.experienceTrait.Title, Textures.StatusStyle);
+                        GUILayout.Label(VslRstr[i].name + " - " + VslRstr[i].experienceTrait.Title, Textures.StatusStyle);
                     }
                 }
                 else //if (timewarpIsValid)

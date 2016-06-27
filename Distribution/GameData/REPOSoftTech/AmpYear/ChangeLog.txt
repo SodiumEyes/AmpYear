@@ -1,5 +1,9 @@
-﻿v1.3.3.0 "ksp 1.1.3"
-    Re-compile for KSP 1.1.3.
+﻿V1.3.4.0 "Some fixes"
+	Fix integration with USI-LS Life Support module  (https://github.com/JPLRepo/AmpYear/issues/32)
+	Fixed support for ModuleResourceConverter - new Status - Operational in KSP 1.1.3 that I missed. (https://github.com/JPLRepo/AmpYear/issues/33)
+	Some further performance and garbage improvements.
+v1.3.3.0 "ksp 1.1.3"
+	Re-compile for KSP 1.1.3.
 
 V1.3.2.0 "Post-Mega Update Tweaks & Fixes"
 	Merged Dark-Side and Solar SOI windows into a single window.

@@ -608,6 +608,7 @@ namespace AY
                 try
                 {
                     PartsToDelete.Clear();
+
                     foreach (var entry in AYVesselPartLists.VesselProdPartsList)
                     {
                         entry.Value.PrtPower = "0";
@@ -859,10 +860,10 @@ namespace AY
                 //Calculate total drain from subsystems
                 subsystem_drain = 0.0;
                 _subsystemDrain[(int)Subsystem.RCS] -= currentPoweredRCSDrain;
-                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache)// Enum.GetValues(typeof(Subsystem)))
+                for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
-                    _subsystemDrain[(int)subsystem] = SubsystemCurrentDrain(subsystem);
-                    subsystem_drain += _subsystemDrain[(int)subsystem];
+                    _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]] = SubsystemCurrentDrain(LoadGlobals.SubsystemArrayCache[i]);
+                    subsystem_drain += _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]];
                 }
 
                 manager_drain = ManagerCurrentDrain; 
@@ -878,11 +879,11 @@ namespace AY
                 //Store the AmpYear Manager and Subsystems into the parts list
                 prtName = "AmpYear SubSystems";
                 uint partId = CalcAmpYearMgrPartID();
-                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
+                for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
-                    if (!KKPresent && (subsystem == Subsystem.CLIMATE || subsystem == Subsystem.MASSAGE || subsystem == Subsystem.MUSIC))
+                    if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(subsystem), true, SubsystemEnabled(subsystem), (float)_subsystemDrain[(int)subsystem], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, SubsystemEnabled(LoadGlobals.SubsystemArrayCache[i]), (float)_subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
                 }
                 prtName = "AmpYear Manager";
                 AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
@@ -966,13 +967,13 @@ namespace AY
                 prtName = "AmpYear SubSystems-Max";
                 prtPower = "";
                 uint partId = CalcAmpYearMgrPartID();
-                foreach (Subsystem subsystem in LoadGlobals.SubsystemArrayCache) // Enum.GetValues(typeof(Subsystem)))
+                for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
-                    _subsystemDrain[(int)subsystem] = SubsystemActiveDrain(subsystem);
-                    subsystem_drain += _subsystemDrain[(int)subsystem];
-                    if (!KKPresent && (subsystem == Subsystem.CLIMATE || subsystem == Subsystem.MASSAGE || subsystem == Subsystem.MUSIC))
+                    _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]] = SubsystemActiveDrain(LoadGlobals.SubsystemArrayCache[i]);
+                    subsystem_drain += _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]];
+                    if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(subsystem), true, true, (float)_subsystemDrain[(int)subsystem], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, (float)_subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
                     
                 }
                 manager_drain = ManagerCurrentDrain;
@@ -1105,11 +1106,11 @@ namespace AY
         {
             // save current toggles to current vesselinfo
             vesselInfo.ClearAmounts(); // numCrew = 0; numOccupiedParts = 0;
-            foreach (Part part in vessel.parts)
+            for (int i = vessel.parts.Count - 1; i >= 0; --i)
             {
-                if (part.protoModuleCrew.Count > 0)
+                if (vessel.parts[i].protoModuleCrew.Count > 0)
                 {
-                    vesselInfo.NumCrew += part.protoModuleCrew.Count;
+                    vesselInfo.NumCrew += vessel.parts[i].protoModuleCrew.Count;
                     ++vesselInfo.NumOccupiedParts;
                 }
             }
