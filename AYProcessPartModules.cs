@@ -282,7 +282,7 @@ namespace AY
                 {
                     multiplier = (float)(solarFlux / PhysicsGlobals.SolarLuminosityAtHome);
                 }
-                tmpPower = tmpSol.chargeRate * (float)orientationFactor * multiplier;  //Does not take into account temperature curve
+                tmpPower = tmpSol.chargeRate * orientationFactor * multiplier;  //Does not take into account temperature curve
             }
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, true);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
@@ -308,13 +308,13 @@ namespace AY
                     {
                         if (tmpGen.isAlwaysActive || tmpGen.generatorIsActive)
                         {
-                            tmpPower = (float)tmpGen.outputList[i].rate;
+                            tmpPower = tmpGen.outputList[i].rate;
                             //Utilities.Log_Debug("totalPowerProduced Generator Output Active Power = " + tmpPower + " Part = " + currentPart.name);
                             prtActive = true;
                         }
                         else
                         {
-                            tmpPower = (float)tmpGen.outputList[i].rate;
+                            tmpPower = tmpGen.outputList[i].rate;
                             prtActive = false;
                         }
                     }
@@ -327,7 +327,7 @@ namespace AY
                 {
                     if (Utilities.GameModeisEditor)
                     {
-                        tmpPower = (float)tmpGen.inputList[i].rate;
+                        tmpPower = tmpGen.inputList[i].rate;
 
                         prtActive = true;
                     }
@@ -335,13 +335,13 @@ namespace AY
                     {
                         if (tmpGen.isAlwaysActive || tmpGen.generatorIsActive)
                         {
-                            tmpPower = (float)tmpGen.inputList[i].rate;
+                            tmpPower = tmpGen.inputList[i].rate;
 
                             prtActive = true;
                         }
                         else
                         {
-                            tmpPower = (float)tmpGen.inputList[i].rate;
+                            tmpPower = tmpGen.inputList[i].rate;
                             prtActive = false;
                         }
                     }
@@ -369,7 +369,7 @@ namespace AY
 
                 if (Utilities.GameModeisEditor)
                 {
-                    tmpPower = (float)tmpWheel.inputResource.rate + (float)tmpWheel.idleDrain;
+                    tmpPower = tmpWheel.inputResource.rate + tmpWheel.idleDrain;
                     prtActive = true;
                 }
                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
@@ -396,13 +396,22 @@ namespace AY
             ModuleCommand tmpPod = (ModuleCommand)module;
             for (int i = tmpPod.inputResources.Count - 1; i >= 0; --i)
             {
-                if (tmpPod.inputResources[i].id == definition.id)
+                if (tmpPod.inputResources[i].name == MAIN_POWER_NAME)
                 {
-                    prtActive = tmpPod.inputResources[i].rate > 0;
-                    tmpPower = (float)tmpPod.inputResources[i].currentAmount;
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+                    if (Utilities.GameModeisEditor)
+                    {
+                        prtActive = true;
+                        tmpPower += tmpPod.inputResources[i].rate;
+                    }
+                    else
+                    {
+                        prtActive = tmpPod.inputResources[i].rate > 0;
+                        tmpPower += tmpPod.inputResources[i].currentAmount;
+                    }
+
                 }
             }
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             PartsModuleCommand.Add(currentPart);
         }
         
@@ -421,11 +430,11 @@ namespace AY
                     {
                         if (Utilities.GameModeisEditor)
                         {
-                            tmpPower += (float)tmprad.inputResources[i].rate;
+                            tmpPower += tmprad.inputResources[i].rate;
                         }
                         else
                         {
-                            tmpPower += (float)tmprad.inputResources[i].currentAmount;
+                            tmpPower += tmprad.inputResources[i].currentAmount;
                         }
                     }
                 }
@@ -458,7 +467,7 @@ namespace AY
 
             if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpAnt.IsBusy()))
             {
-                tmpPower = (float)tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
+                tmpPower = tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
                 prtActive = true;
             }
             else
@@ -487,11 +496,11 @@ namespace AY
                     {
                         if (Utilities.GameModeisEditor)
                         {
-                            tmpPower += (float)(tmpRw.inputResources[i].rate * tmpRw.PitchTorque); // rough guess for VAB
+                            tmpPower += tmpRw.inputResources[i].rate * tmpRw.PitchTorque; // rough guess for VAB
                         }
                         else
                         {
-                            tmpPower += (float)tmpRw.inputResources[i].currentAmount;
+                            tmpPower += tmpRw.inputResources[i].currentAmount;
                             _sasPwrDrain += tmpRw.inputResources[i].currentAmount;
                         }
                     }
@@ -660,14 +669,14 @@ namespace AY
                     if (tmpLab.processResources[i].name == MAIN_POWER_NAME && tmpLab.IsOperational() && tmpLab.processResources[i].currentAmount > 0.0)
                     {
                         prtActive = true;
-                        tmpPower += (float)tmpLab.processResources[i].currentAmount;
+                        tmpPower += tmpLab.processResources[i].currentAmount;
                     }
                 }
             }
             if (Utilities.GameModeisEditor)
             {
                 prtActive = true;
-                tmpPower += (float)tmpLab.processResources.Where(r => r.name == MAIN_POWER_NAME).Sum(r => r.amount);
+                tmpPower += tmpLab.processResources.Where(r => r.name == MAIN_POWER_NAME).Sum(r => r.amount);
             }
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
         }
@@ -764,7 +773,7 @@ namespace AY
                 {
                     //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
-                        tmpPower = (float)recInputs[i].Ratio * FillAmount;
+                        tmpPower = recInputs[i].Ratio * FillAmount;
                     AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, false, false);
                 }
             }
@@ -778,7 +787,7 @@ namespace AY
                 {
                     //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
-                        tmpPower = (float)recOutputs[i].Ratio * recipe.TakeAmount;
+                        tmpPower = recOutputs[i].Ratio * recipe.TakeAmount;
                     AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, true, false);
                 }
             }
@@ -1054,7 +1063,7 @@ namespace AY
                         if (recInputs[i].ResourceName == MAIN_POWER_NAME && prtActive)
                         {
                             //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            tmpPower = (float)recInputs[i].Ratio;
+                            tmpPower = recInputs[i].Ratio;
                             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                         }
                     }
@@ -1067,7 +1076,7 @@ namespace AY
                         if (recOutputs[i].ResourceName == MAIN_POWER_NAME && prtActive)
                         {
                             //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            tmpPower = (float)recOutputs[i].Ratio;
+                            tmpPower = recOutputs[i].Ratio;
                             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                         }
                     }
@@ -1083,7 +1092,7 @@ namespace AY
                         {
                             prtActive = true;
                             generatorStatewords = generatorState.Split(' ');
-                            if (!float.TryParse(generatorStatewords[0], out tmpPower))
+                            if (!double.TryParse(generatorStatewords[0], out tmpPower))
                                 tmpPower = 0.0f;
                         }
                         AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
@@ -1128,7 +1137,7 @@ namespace AY
                             prtActive = true;
                             stringlength = generatorState.Length - 15;
                             generatorState = generatorState.Substring(13, stringlength);
-                            if (!float.TryParse(generatorState, out tmpPower))
+                            if (!double.TryParse(generatorState, out tmpPower))
                                 tmpPower = 0.0f;
                             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                         }
@@ -1137,7 +1146,7 @@ namespace AY
                             prtActive = true;
                             stringlength = generatorState.Length - 14;
                             generatorState = generatorState.Substring(12, stringlength);
-                            if (!float.TryParse(generatorState, out tmpPower))
+                            if (!double.TryParse(generatorState, out tmpPower))
                                 tmpPower = 0.0f;
                             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                         }
@@ -1354,7 +1363,7 @@ namespace AY
                                     double resAmt = 0;
                                     bool prse = double.TryParse(arr[i + 1], out resAmt);
                                     if (!prse) resAmt = 0;
-                                    tmpPower = (float)resAmt * tacGC.conversionRate;
+                                    tmpPower = resAmt * tacGC.conversionRate;
                                     AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                                     break;
                                 }
@@ -1369,7 +1378,7 @@ namespace AY
                                     double resAmt = 0;
                                     bool prse = double.TryParse(arr[i + 1], out resAmt);
                                     if (!prse) resAmt = 0;
-                                    tmpPower = (float)resAmt * tacGC.conversionRate;
+                                    tmpPower = resAmt * tacGC.conversionRate;
                                     AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                                     break;
                                 }
@@ -1397,7 +1406,7 @@ namespace AY
                     if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpAnt.IsBusy()))
                     {
                         prtActive = true;
-                        tmpPower = (float)tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
+                        tmpPower = tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
                     }
                     AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false); ;
 
@@ -1436,7 +1445,7 @@ namespace AY
                     {
                         if (recInputs[i].ResourceName == MAIN_POWER_NAME && prtActive)
                         {
-                            tmpPower = (float)recInputs[i].Ratio;
+                            tmpPower = recInputs[i].Ratio;
                             //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
                         }
@@ -1449,7 +1458,7 @@ namespace AY
                     {
                         if (recOutputs[i].ResourceName == MAIN_POWER_NAME && prtActive)
                         {
-                            tmpPower = (float)recOutputs[i].Ratio;
+                            tmpPower = recOutputs[i].Ratio;
                             //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                         }
@@ -1604,7 +1613,7 @@ namespace AY
                             if (recInputs[i].ResourceName == MAIN_POWER_NAME)
                             {
                                 if (prtActive)
-                                    tmpPower = (float)recInputs[i].Ratio;
+                                    tmpPower = recInputs[i].Ratio;
 
                                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false); ;
                             }
@@ -1698,7 +1707,7 @@ namespace AY
                     prtActive = true;
                 }
                 if (prtActive)
-                    tmpPower = (float)(double) ec_rate * (float) speed;
+                    tmpPower = (double) ec_rate * (double) speed;
 
                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
@@ -1719,7 +1728,7 @@ namespace AY
                     prtActive = true;
                 }
                 if (prtActive)
-                    tmpPower = (float)(double)ec_rate * (float)lamps;
+                    tmpPower = (double)ec_rate * (double)lamps;
 
                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
@@ -1742,7 +1751,7 @@ namespace AY
                     prtActive = true;
                 }
                 if (prtActive)
-                    tmpPower = (float)(double)ec_rate * (float)(double)co2_rate;
+                    tmpPower = (double)ec_rate * (double)co2_rate;
 
                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
@@ -1767,7 +1776,7 @@ namespace AY
                     prtActive = true;
                 }
                 if (prtActive)
-                    tmpPower = (float)ec_rate;
+                    tmpPower = (double)ec_rate;
 
                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
             }

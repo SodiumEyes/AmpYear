@@ -115,6 +115,8 @@ namespace AY
 
         public double EmgcyShutOverrideCooldown;
 
+        public bool showSI;
+
         public AYSettings()
         {
             FwindowPosX = 40;
@@ -135,6 +137,7 @@ namespace AY
             ESPMediumThreshold = 10;
             ESPLowThreshold = 20;
             EmgcyShutOverrideCooldown = 300;
+            showSI = false;
         }
 
         //Settings Functions Follow
@@ -159,6 +162,7 @@ namespace AY
                 AYsettingsNode.TryGetValue("debugging", ref debugging);
                 RSTUtils.Utilities.debuggingOn = debugging;
                 AYsettingsNode.TryGetValue("TooltipsOn", ref TooltipsOn);
+                AYsettingsNode.TryGetValue("ShowSI", ref showSI);
                 AYsettingsNode.TryGetValue("ESPHighThreshold", ref ESPHighThreshold);
                 AYsettingsNode.TryGetValue("ESPMediumThreshold", ref ESPMediumThreshold);
                 AYsettingsNode.TryGetValue("ESPLowThreshold", ref ESPLowThreshold);
@@ -212,6 +216,7 @@ namespace AY
             settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
             settingsNode.AddValue("debugging", debugging);
             settingsNode.AddValue("TooltipsOn", TooltipsOn);
+            settingsNode.AddValue("ShowSI", showSI);
             settingsNode.AddValue("ESPHighThreshold", ESPHighThreshold);
             settingsNode.AddValue("ESPMediumThreshold", ESPMediumThreshold);
             settingsNode.AddValue("ESPLowThreshold", ESPLowThreshold);
