@@ -3,7 +3,11 @@
 	Added Toggle Button in the top right corner of the Show Parts List window. this toggle will change the display to show Stock EC units or SI units
 	(Système international d'unités) showing EC converted to Watts, kiloWatts and megaWatts. (for better Realism Overhaul compatibility). 
 	Fixed bug:- ModuleCommand not showing EC usage.	
-
+	Fixed ModuleResourceConverter to include Heat Throttle and Efficiency where the part uses it. (EG: USI reactors).
+	Fixed ModuleEnginesFX to correctly show EC usage for ION engines in editor.
+	Enabled Reserve Power functions in the AmpYear menu for RemoteTech users. You can transfer Reserve Power to Mains even if there is no RemoteTech connection to the vessel.
+	This is temporary fix until I can work on better integration with RemoteTech.
+	
 V1.3.4.0 "Some fixes"
 	Fix integration with USI-LS Life Support module  (https://github.com/JPLRepo/AmpYear/issues/32)
 	Fixed support for ModuleResourceConverter - new Status - Operational in KSP 1.1.3 that I missed. (https://github.com/JPLRepo/AmpYear/issues/33)

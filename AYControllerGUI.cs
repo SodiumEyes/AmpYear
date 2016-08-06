@@ -681,7 +681,7 @@ namespace AY
 
                 //Reserve transfer
                 //String[] incrementPercentString = new String[_reserveTransferIncrements.Length];
-                if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
+                //if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent("XFer Reserve to Main", "Transfer a percentage of Reserve Power to Mains Power"));
                 for (int i = 0; i < _reserveTransferIncrements.Length; i++)
@@ -706,7 +706,7 @@ namespace AY
 
             if (GuiSectionEnabled(GUISection.RESERVE))
             {
-                if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
+                //if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
                 _lockReservePower = GUILayout.Toggle(_lockReservePower, new GUIContent("Isolate Reserve Power", "Isolation Switch for Reserve Power, ReservePower will not be used if this switch is on"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
                 GUILayout.EndHorizontal();

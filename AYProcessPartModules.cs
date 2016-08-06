@@ -533,6 +533,7 @@ namespace AY
             prtActive = false;
             prtPower = "";
             tmpPower = 0f;
+            sumRd = 0f;
             tmpEng = (ModuleEngines)module;
             for (int i = tmpEng.propellants.Count - 1; i >= 0; --i)
             {
@@ -581,6 +582,7 @@ namespace AY
             prtPower = "";
             tmpPower = 0f;
             tmpEngFx = (ModuleEnginesFX)module;
+            sumRd = 0f;
             //const float grav = 9.81f;
             //bool usesCharge = false;
             //float sumRd = 0;
@@ -599,17 +601,18 @@ namespace AY
             {
                 float massFlowRate = 0;
 
-                if ((Utilities.GameModeisFlight && tmpEngFx.isOperational && tmpEngFx.currentThrottle > 0) || Utilities.GameModeisEditor)
+                if ((Utilities.GameModeisFlight && tmpEngFx.isOperational && tmpEngFx.currentThrottle > 0) ||
+                    Utilities.GameModeisEditor)
                 {
                     if (Utilities.GameModeisEditor)
-                        massFlowRate = tmpEngFx.currentThrottle * tmpEngFx.maxThrust / (tmpEngFx.atmosphereCurve.Evaluate(0) * grav);
+                        massFlowRate = tmpEngFx.maxThrust/(tmpEngFx.atmosphereCurve.Evaluate(0)*grav);
                     else
-                        massFlowRate = tmpEngFx.currentThrottle * tmpEngFx.maxThrust / (tmpEngFx.atmosphereCurve.Evaluate(0) * grav);
+                        massFlowRate = tmpEngFx.currentThrottle*tmpEngFx.maxThrust/
+                                       (tmpEngFx.atmosphereCurve.Evaluate(0)*grav);
 
                     if (Utilities.GameModeisEditor || Utilities.GameModeisFlight)
                     {
                         tmpPower = ecratio * massFlowRate / sumRd;
-
                         prtActive = true;
                     }
                     else
@@ -617,6 +620,11 @@ namespace AY
                         tmpPower = 0;
                         prtActive = false;
                     }
+                }
+                else
+                {
+                    tmpPower = 0;
+                    prtActive = false;
                 }
                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             }
@@ -765,6 +773,7 @@ namespace AY
             tmpPower = 0f;
             FillAmount = recipe.FillAmount;
             if (KPBS > 0) FillAmount = KPBS;
+            var efficiency = tmpRegRc.GetHeatThrottle()*tmpRegRc.Efficiency;
 
             recInputs = tmpRegRc.Recipe.Inputs;
             for (int i = recInputs.Count - 1; i >= 0; --i)
@@ -773,7 +782,7 @@ namespace AY
                 {
                     //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
-                        tmpPower = recInputs[i].Ratio * FillAmount;
+                        tmpPower = recInputs[i].Ratio * FillAmount * efficiency;
                     AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, false, false);
                 }
             }
@@ -787,7 +796,7 @@ namespace AY
                 {
                     //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
-                        tmpPower = recOutputs[i].Ratio * recipe.TakeAmount;
+                        tmpPower = recOutputs[i].Ratio * recipe.TakeAmount * efficiency;
                     AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, true, false);
                 }
             }
