@@ -161,7 +161,7 @@ namespace AY
             totalElecreceived2;
         private string prtName, prtPower;
         private bool prtActive;
-        private float tmpPower;
+        private double tmpPower;
         private ModuleReactionWheel reactWheelModule;
         private List<Part> vesselparts = new List<Part>();
         private double currentTime, checkVesselUpdateTime;
@@ -883,7 +883,7 @@ namespace AY
                 {
                     if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, SubsystemEnabled(LoadGlobals.SubsystemArrayCache[i]), (float)_subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, SubsystemEnabled(LoadGlobals.SubsystemArrayCache[i]), _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
                 }
                 prtName = "AmpYear Manager";
                 AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
@@ -973,12 +973,12 @@ namespace AY
                     subsystem_drain += _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]];
                     if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, (float)_subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
                     
                 }
                 manager_drain = ManagerCurrentDrain;
                 prtName = "AmpYear Manager";
-                AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
+                AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain, false, false);
                 hasPower = true;
                 HasReservePower = true;
             }

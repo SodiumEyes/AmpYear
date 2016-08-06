@@ -119,6 +119,8 @@ namespace AY
             tmpPrtProdEditorIncludeAll,
             tmpPrtProdEmergShutDnIncludeAll;
 
+        private double tmpPrtPowerV;
+        private string tmpPrtPower, Units;
         private bool tmpPrtProdOneAll, tmpPrtProdThreeAll, tmpPrtProdTwoAll;
         private float _totalConsPower;
         private Vector3d sun_dir;
@@ -186,7 +188,7 @@ namespace AY
                 try
                 {
                     _fwindowPos.ClampInsideScreen();
-                    _fwindowPos = GUILayout.Window(_fwindowId, _fwindowPos, WindowF, "AmpYear Power Manager", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+                    _fwindowPos = GUILayout.Window(_fwindowId, _fwindowPos, WindowF, "AmpYear", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
                         _epLwindowPos.ClampToScreen();
@@ -212,7 +214,7 @@ namespace AY
                 try
                 {
                     _ewindowPos.ClampInsideScreen();
-                    _ewindowPos = GUILayout.Window(_ewindowId, _ewindowPos, WindowE, "AmpYear Power Manager", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+                    _ewindowPos = GUILayout.Window(_ewindowId, _ewindowPos, WindowE, "AmpYear", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
                         _epLwindowPos.ClampToScreen();
@@ -282,6 +284,8 @@ namespace AY
                 AYMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
+            AYsettings.showSI = GUI.Toggle(new Rect(_fwindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
+
 
             GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
@@ -337,34 +341,51 @@ namespace AY
                             powerPercent = TotalElectricCharge / TotalElectricChargeCapacity * 100.0;
                             if (powerPercent < 20.00)
                             {
-                                GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.AlertStyle);
+                                GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.AlertStyleLeft);
                                 SetIconalertstate(IconAlertState.RED);
                             }
                             else
                             {
                                 if (powerPercent < 35.00)
                                 {
-                                    GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.WarningStyle);
+                                    GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.WarningStyleLeft);
 
                                     SetIconalertstate(IconAlertState.YELLOW);
                                 }
                                 else
-                                    GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.StatusStyle);
+                                    GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.StatusStyleLeft);
                             }
-
+                            if (AYsettings.showSI)
+                            {
+                                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalPowerDrain, out Units);
+                                tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                            }
+                            else
+                            {
+                                tmpPrtPower = TotalPowerDrain.ToString("0.##");
+                            }
                             if (TotalPowerDrain > TotalPowerProduced)
                             {
-                                GUILayout.Label(new GUIContent("Power Drain : " + TotalPowerDrain.ToString("0.##"), "The Total Power Drain on this vessel"), Textures.AlertStyle);
+                                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.AlertStyleLeft);
                                 SetIconalertstate(IconAlertState.RED);
                             }
                             else
-                                GUILayout.Label(new GUIContent("Power Drain : " + TotalPowerDrain.ToString("0.##"), "The Total Power Drain on this vessel"), Textures.StatusStyle);
+                                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.StatusStyleLeft);
 
-                            if (TotalPowerProduced > 0)
-                                GUILayout.Label(new GUIContent("Power Prod : " + TotalPowerProduced.ToString("0.##"), "The Total Power Production of this vessel"), Textures.StatusStyle);
+                            if (AYsettings.showSI)
+                            {
+                                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalPowerProduced, out Units);
+                                tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                            }
                             else
                             {
-                                GUILayout.Label(new GUIContent("Power Prod : " + TotalPowerProduced.ToString("0.##"), "The Total Power Production of this vessel"), Textures.AlertStyle);
+                                tmpPrtPower = TotalPowerProduced.ToString("0.##");
+                            }
+                            if (TotalPowerProduced > 0)
+                                GUILayout.Label(new GUIContent("Power Prod : " + tmpPrtPower, "The Total Power Production of this vessel"), Textures.StatusStyleLeft);
+                            else
+                            {
+                                GUILayout.Label(new GUIContent("Power Prod : " + tmpPrtPower, "The Total Power Production of this vessel"), Textures.AlertStyleLeft);
                                 SetIconalertstate(IconAlertState.YELLOW);
                             }
 
@@ -373,18 +394,18 @@ namespace AY
                             timeRemainMains = TotalElectricCharge / TotalPowerDrain;
                             if (timeRemainMains < 300) //5 mins
                             {
-                                GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.AlertStyle);
+                                GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.AlertStyleLeft);
                                 SetIconalertstate(IconAlertState.RED);
                             }
                             else
                             {
                                 if (timeRemainMains < 1800) //30 mins
                                 {
-                                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.WarningStyle);
+                                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.WarningStyleLeft);
                                     SetIconalertstate(IconAlertState.YELLOW);
                                 }
                                 else
-                                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.StatusStyle);
+                                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.StatusStyleLeft);
                             }
 
                             //Time Remaining in Reserver Batteries
@@ -393,30 +414,68 @@ namespace AY
                                     new GUIContent(
                                         "Reserve Time: " + KSPUtil.PrintTimeCompact((int) timeRemainReserve, false),
                                         "Time remaining in Reserve Power Batteries"),
-                                    timeRemainReserve < 30 ? Textures.AlertStyle : Textures.StatusStyle);
+                                    timeRemainReserve < 30 ? Textures.AlertStyle : Textures.StatusStyleLeft);
+
+                            
                             if (_lockReservePower)
-                                GUILayout.Label(new GUIContent("Reserve Power Isolated","Reserve Power Isolation Switch is ON"),Textures.WarningStyle);
+                                GUILayout.Label(new GUIContent("Reserve Power Isolated","Reserve Power Isolation Switch is ON"),Textures.WarningStyleLeft);
 
                             if (TotalElectricChargeFlowOff > 0)
                             {
-                                GUILayout.Label(new GUIContent("Disabled EC: " + TotalElectricChargeFlowOff.ToString("0.00"), "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.WarningStyle);
+                                if (AYsettings.showSI)
+                                {
+                                    tmpPrtPowerV = Utilities.ConvertECtoSI(TotalElectricChargeFlowOff, out Units);
+                                    tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                                }
+                                else
+                                {
+                                    tmpPrtPower = TotalElectricChargeFlowOff.ToString("0.##");
+                                }
+                                GUILayout.Label(new GUIContent("Disabled EC: " + tmpPrtPower, "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.WarningStyleLeft);
                             }
                             if (TotalReservePowerFlowOff > 0)
                             {
-                                GUILayout.Label(new GUIContent("Disabled ReservePower: " + TotalReservePowerFlowOff.ToString("0.00"), "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.WarningStyle);
+                                if (AYsettings.showSI)
+                                {
+                                    tmpPrtPowerV = Utilities.ConvertECtoSI(TotalReservePowerFlowOff, out Units);
+                                    tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                                }
+                                else
+                                {
+                                    tmpPrtPower = TotalReservePowerFlowOff.ToString("0.##");
+                                }
+                                GUILayout.Label(new GUIContent("Disabled ReservePower: " + tmpPrtPower, "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.WarningStyleLeft);
                             }
                         }
                     }
                     else
                     {
-                        GUILayout.Label(new GUIContent("Running on Reserve Power!", "Main EC power is exhausted, we are running on Reserve Power. Until that runs out..."), Textures.AlertStyle);
+                        GUILayout.Label(new GUIContent("Running on Reserve Power!", "Main EC power is exhausted, we are running on Reserve Power. Until that runs out..."), Textures.AlertStyleLeft);
                         if (TotalElectricChargeFlowOff > 0)
                         {
-                            GUILayout.Label(new GUIContent("Disabled EC: " + TotalElectricChargeFlowOff.ToString("0.00"), "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.AlertStyle);
+                            if (AYsettings.showSI)
+                            {
+                                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalElectricChargeFlowOff, out Units);
+                                tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                            }
+                            else
+                            {
+                                tmpPrtPower = TotalElectricChargeFlowOff.ToString("0.##");
+                            }
+                            GUILayout.Label(new GUIContent("Disabled EC: " + tmpPrtPower, "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
                         }
                         if (TotalReservePowerFlowOff > 0)
                         {
-                            GUILayout.Label(new GUIContent("Disabled ReservePower: " + TotalReservePowerFlowOff.ToString("0.00") , "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.AlertStyle);
+                            if (AYsettings.showSI)
+                            {
+                                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalReservePowerFlowOff, out Units);
+                                tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                            }
+                            else
+                            {
+                                tmpPrtPower = TotalReservePowerFlowOff.ToString("0.##");
+                            }
+                            GUILayout.Label(new GUIContent("Disabled ReservePower: " + tmpPrtPower, "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
                         }
                         SetIconalertstate(IconAlertState.RED);
                     }
@@ -425,25 +484,43 @@ namespace AY
                 {
                     if (TimewarpIsValid)
                     {
-                        GUILayout.Label(new GUIContent("Manager Disabled", "The AmpYear Power Management Unit has been disabled"), Textures.WarningStyle);
+                        GUILayout.Label(new GUIContent("Manager Disabled", "The AmpYear Power Management Unit has been disabled"), Textures.WarningStyleLeft);
                         SetIconalertstate(IconAlertState.GRAY);
                     }
                     else
                     {
-                        GUILayout.Label(new GUIContent("Auto-Hibernation", "AmpYear functions are disabled at High rates of Time Warp"), Textures.StatusStyle);
+                        GUILayout.Label(new GUIContent("Auto-Hibernation", "AmpYear functions are disabled at High rates of Time Warp"), Textures.StatusStyleLeft);
                     }
                 }
             }
             else
             {
-                GUILayout.Label(new GUIContent("Insufficient Power", "There is insufficient Power to run ANY of the vessels systems"), Textures.AlertStyle);
+                GUILayout.Label(new GUIContent("Insufficient Power", "There is insufficient Power to run ANY of the vessels systems"), Textures.AlertStyleLeft);
                 if (TotalElectricChargeFlowOff > 0)
                 {
-                    GUILayout.Label(new GUIContent("Disabled EC: " + TotalElectricChargeFlowOff.ToString("0.00"), "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.AlertStyle);
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(TotalElectricChargeFlowOff, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = TotalElectricChargeFlowOff.ToString("0.##");
+                    }
+                    GUILayout.Label(new GUIContent("Disabled EC: " + tmpPrtPower, "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
                 }
                 if (TotalReservePowerFlowOff > 0)
                 {
-                    GUILayout.Label(new GUIContent("Disabled ReservePower: " + TotalReservePowerFlowOff.ToString("0.00"), "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.AlertStyle);
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(TotalReservePowerFlowOff, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("0.##") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = TotalReservePowerFlowOff.ToString("0.##");
+                    }
+                    GUILayout.Label(new GUIContent("Disabled ReservePower: " + tmpPrtPower, "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
                 }
                 SetIconalertstate(IconAlertState.RED);
             }
@@ -503,7 +580,7 @@ namespace AY
                             ststext += "Low";
                             break;
                     }
-                    GUILayout.Label(new GUIContent("Auto ESP Active: " + ststext, "Automatic ESP is Actively processing"), Textures.AlertStyle);
+                    GUILayout.Label(new GUIContent("Auto ESP Active: " + ststext, "Automatic ESP is Actively processing"), Textures.AlertStyleLeft);
                 }
                 GUILayout.BeginHorizontal();
                 GUIContent btntext = new GUIContent("Emerg. SP Manual",
@@ -587,24 +664,24 @@ namespace AY
                     {
                         reservePercent = TotalReservePower / TotalReservePowerCapacity * 100.0;
                         if (reservePercent < 20.0)
-                            GUILayout.Label(new GUIContent("Reserve Power: " + reservePercent.ToString("0.00") + '%', "Percentage of Reserve Power Available"), Textures.AlertStyle);
+                            GUILayout.Label(new GUIContent("Reserve Power: " + reservePercent.ToString("0.00") + '%', "Percentage of Reserve Power Available"), Textures.AlertStyleLeft);
                         else
                         {
                             GUILayout.Label(
                                 new GUIContent("Reserve Power: " + reservePercent.ToString("0.00") + '%',
                                     "Percentage of Reserve Power Available"),
-                                reservePercent < 40.0 ? Textures.WarningStyle : Textures.StatusStyle);
+                                reservePercent < 40.0 ? Textures.WarningStyle : Textures.StatusStyleLeft);
                         }
                     }
                     else
-                        GUILayout.Label("Reserve Power Depleted", Textures.AlertStyle);
+                        GUILayout.Label("Reserve Power Depleted", Textures.AlertStyleLeft);
                 }
                 else
-                    GUILayout.Label("Reserve Power not Found!", Textures.AlertStyle);
+                    GUILayout.Label("Reserve Power not Found!", Textures.AlertStyleLeft);
 
                 //Reserve transfer
                 //String[] incrementPercentString = new String[_reserveTransferIncrements.Length];
-                if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
+                //if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(new GUIContent("XFer Reserve to Main", "Transfer a percentage of Reserve Power to Mains Power"));
                 for (int i = 0; i < _reserveTransferIncrements.Length; i++)
@@ -629,7 +706,7 @@ namespace AY
 
             if (GuiSectionEnabled(GUISection.RESERVE))
             {
-                if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
+                //if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
                 _lockReservePower = GUILayout.Toggle(_lockReservePower, new GUIContent("Isolate Reserve Power", "Isolation Switch for Reserve Power, ReservePower will not be used if this switch is on"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
                 GUILayout.EndHorizontal();
@@ -644,11 +721,11 @@ namespace AY
                 {
                     for (int i = VslRstr.Count - 1; i >= 0; --i)
                     {
-                        GUILayout.Label(VslRstr[i].name + " - " + VslRstr[i].experienceTrait.Title, Textures.StatusStyle);
+                        GUILayout.Label(VslRstr[i].name + " - " + VslRstr[i].experienceTrait.Title, Textures.StatusStyleLeft);
                     }
                 }
                 else //if (timewarpIsValid)
-                    GUILayout.Label("No Crew OnBoard", Textures.WarningStyle);
+                    GUILayout.Label("No Crew OnBoard", Textures.WarningStyleLeft);
             }
 
             GUILayout.EndVertical();
@@ -667,6 +744,7 @@ namespace AY
                 AYMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
+            AYsettings.showSI = GUI.Toggle(new Rect(_ewindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
             GUILayout.BeginVertical();
 
             //Manager status+drain
@@ -686,20 +764,46 @@ namespace AY
             }
             //ShowSOIWindow = GUILayout.Toggle(ShowSOIWindow, new GUIContent("Select Solar Panel SOI", "Open the Solar Panel SOI Selector"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
             //Power Capacity
-            GUILayout.Label(new GUIContent("Power Capacity: " + TotalElectricChargeCapacity.ToString("0.00"), "Total Power Capacity of this vessel"), Textures.StatusStyle);
+            if (AYsettings.showSI)
+            {
+                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalElectricChargeCapacity, out Units);
+                tmpPrtPower = tmpPrtPowerV.ToString("0.00") + Units;
+            }
+            else
+            {
+                tmpPrtPower = TotalElectricChargeCapacity.ToString("0.00");
+            }
+            GUILayout.Label(new GUIContent("Power Capacity: " + tmpPrtPower, "Total Power Capacity of this vessel"), Textures.StatusStyleLeft);
+            if (AYsettings.showSI)
+            {
+                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalPowerDrain, out Units);
+                tmpPrtPower = tmpPrtPowerV.ToString("0.00") + Units;
+            }
+            else
+            {
+                tmpPrtPower = TotalPowerDrain.ToString("0.00");
+            }
             if (TotalPowerDrain > TotalPowerProduced)
             {
-                GUILayout.Label(new GUIContent("Power Drain : " + TotalPowerDrain.ToString("0.00"), "The Total Power Drain on this vessel"), Textures.AlertStyle);
+                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.AlertStyleLeft);
                 SetIconalertstate(IconAlertState.RED);
             }
             else
-                GUILayout.Label(new GUIContent("Power Drain : " + TotalPowerDrain.ToString("0.00"), "The Total Power Drain on this vessel"), Textures.StatusStyle);
-
-            if (TotalPowerProduced > 0)
-                GUILayout.Label("Power Prod : " + TotalPowerProduced.ToString("0.00"), Textures.StatusStyle);
+                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.StatusStyleLeft);
+            if (AYsettings.showSI)
+            {
+                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalPowerProduced, out Units);
+                tmpPrtPower = tmpPrtPowerV.ToString("0.00") + Units;
+            }
             else
             {
-                GUILayout.Label(new GUIContent("Power Prod : " + TotalPowerProduced.ToString("0.00"), "The Total Power Production of this vessel"), Textures.AlertStyle);
+                tmpPrtPower = TotalPowerProduced.ToString("0.00");
+            }
+            if (TotalPowerProduced > 0)
+                GUILayout.Label("Power Prod : " + tmpPrtPower, Textures.StatusStyleLeft);
+            else
+            {
+                GUILayout.Label(new GUIContent("Power Prod : " + tmpPrtPower, "The Total Power Production of this vessel"), Textures.AlertStyleLeft);
                 SetIconalertstate(IconAlertState.YELLOW);
             }
 
@@ -707,34 +811,43 @@ namespace AY
             double timeRemainMains = TotalElectricCharge / TotalPowerDrain;
             if (timeRemainMains < 300) //5 mins
             {
-                GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.AlertStyle);
+                GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.AlertStyleLeft);
                 SetIconalertstate(IconAlertState.RED);
             }
             else
             {
                 if (timeRemainMains < 1800) //30 mins
                 {
-                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.WarningStyle);
+                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.WarningStyleLeft);
                     SetIconalertstate(IconAlertState.YELLOW);
                 }
                 else
-                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.StatusStyle);
+                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.StatusStyleLeft);
             }
 
             //Time Remaining in Reserver Batteries
             double timeRemainReserve = TotalReservePower / TotalPowerDrain;
             if (timeRemainReserve < 30)
             {
-                GUILayout.Label(new GUIContent("Reserve Time: " + KSPUtil.PrintTimeCompact((int)timeRemainReserve, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.AlertStyle);
+                GUILayout.Label(new GUIContent("Reserve Time: " + KSPUtil.PrintTimeCompact((int)timeRemainReserve, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.AlertStyleLeft);
                 SetIconalertstate(IconAlertState.YELLOW);
             }
             else
-                GUILayout.Label(new GUIContent("Reserve Time: " + KSPUtil.PrintTimeCompact((int)timeRemainReserve, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.StatusStyle);
+                GUILayout.Label(new GUIContent("Reserve Time: " + KSPUtil.PrintTimeCompact((int)timeRemainReserve, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.StatusStyleLeft);
 
             //Reserve
             GUILayout.Label("Reserve Power", Textures.SectionTitleStyle);
             //Reserve status label
-            GUILayout.Label(new GUIContent("Reserve Power Capacity: " + TotalReservePowerCapacity.ToString("0.00"), "The total capacity of ReservePower of the current vessel"), Textures.StatusStyle);
+            if (AYsettings.showSI)
+            {
+                tmpPrtPowerV = Utilities.ConvertECtoSI(TotalReservePowerCapacity, out Units);
+                tmpPrtPower = tmpPrtPowerV.ToString("0.00") + Units;
+            }
+            else
+            {
+                tmpPrtPower = TotalReservePowerCapacity.ToString("0.00");
+            }
+            GUILayout.Label(new GUIContent("Reserve Capacity: " + tmpPrtPower, "The total capacity of ReservePower of the current vessel"), Textures.StatusStyleLeft);
             GUILayout.EndVertical();
             if (AYsettings.TooltipsOn)
                 Utilities.SetTooltipText();
@@ -750,16 +863,27 @@ namespace AY
                 _showParts = false; 
                 return;
             }
+            //Rect showSIRect = new Rect(_epLwindowPos.width - 45, 4, 16, 16);
+            AYsettings.showSI = GUI.Toggle(new Rect(_epLwindowPos.width - 45, 4, 16, 16), AYsettings.showSI,  new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
             GUILayout.BeginVertical();
             GUILayout.Label("Power Production Parts", Textures.PartListStyle);
             GUILayout.BeginHorizontal();
             GUILayout.Label("", Textures.PartListpartHeadingStyle, GUILayout.Width(5));
             GUILayout.Label(new GUIContent("Calc", "If on, this PartModule will be Included in AmpYear Power Calculations"), Textures.PartListpartHeadingStyle, GUILayout.Width(28));
             GUILayout.Label(new GUIContent("ESP", "If on, this PartModule will be Included in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(24));
-            GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(70));
+            GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(80));
             GUILayout.Label(new GUIContent("PartTitle", "The Title of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
             GUILayout.Label(new GUIContent("Module", "The name of the PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));
-            GUILayout.Label(new GUIContent("EC", "Electric Charge produced by this PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+            if (!AYsettings.showSI)
+            {
+                GUILayout.Label(new GUIContent("EC", "Electric Charge produced by this PartModule"),Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+            }
+            else
+            {
+                GUILayout.Label(new GUIContent("SI", "Electric Charge produced by this PartModule, in Système international Units"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+            }
+            //AYsettings.showSI = GUILayout.Toggle(AYsettings.showSI, new GUIContent("Units", "Toggle the display to use EC or SI units"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+
             GUILayout.EndHorizontal();
             // Begin the ScrollView
             _plProdscrollViewVector = GUILayout.BeginScrollView(_plProdscrollViewVector, true, true, GUILayout.Height(_eplProdListHeight));
@@ -799,7 +923,16 @@ namespace AY
                     entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                     GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
                     GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
-                    GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(entry.Value.PrtPowerF, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("####0.###") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = entry.Value.PrtPower;
+                    }
+                    GUILayout.Label(tmpPrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
                     GUILayout.EndHorizontal();
                     GUI.enabled = true;
                 }
@@ -829,7 +962,17 @@ namespace AY
                     GUI.enabled = true;
                     GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
                     GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
-                    GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
+                    //GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(entry.Value.PrtPowerF, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("####0.###") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = entry.Value.PrtPower;
+                    }
+                    GUILayout.Label(tmpPrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
                     GUILayout.EndHorizontal();
                     entry.Value.PrtUserEditorInclude = entry.Value.PrtEditorInclude;
                     entry.Value.PrtEmergShutDnInclude = entry.Value.PrtEmergShutDnInclude;
@@ -895,9 +1038,19 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.LOW;
                     }
                 }
-                GUILayout.Label("", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                GUILayout.Label("Total EC Produced", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                GUILayout.Label(new GUIContent(_totalProdPower.ToString("####0.###"), "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label("   ", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
+                GUILayout.Label("Total Produced", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
+                //GUILayout.Label(new GUIContent(_totalProdPower.ToString("####0.###"), "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                if (AYsettings.showSI)
+                {
+                    tmpPrtPowerV = Utilities.ConvertECtoSI(_totalProdPower, out Units);
+                    tmpPrtPower = tmpPrtPowerV.ToString("####0.###") + Units;
+                }
+                else
+                {
+                    tmpPrtPower = _totalProdPower.ToString("####0.###");
+                }
+                GUILayout.Label(new GUIContent(tmpPrtPower, "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
                 GUILayout.EndHorizontal();
             }
                 
@@ -917,10 +1070,18 @@ namespace AY
             GUILayout.Label("", Textures.PartListpartHeadingStyle, GUILayout.Width(5));
             GUILayout.Label(new GUIContent("Calc", "If on, this PartModule will be Included in AmpYear Power Calculations"), Textures.PartListpartHeadingStyle, GUILayout.Width(28));
             GUILayout.Label(new GUIContent("ESP", "If on, this PartModule will be Included in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(24));
-            GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(70));
+            GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(80));
             GUILayout.Label(new GUIContent("PartTitle", "The Title of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
             GUILayout.Label(new GUIContent("Module", "The name of the PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));
-            GUILayout.Label(new GUIContent("EC", "Electric Charge Used by this PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+            if (!AYsettings.showSI)
+            {
+                GUILayout.Label(new GUIContent("EC", "Electric Charge Used by this PartModule"),Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+            }
+            else
+            {
+                GUILayout.Label(new GUIContent("SI", "Electric Charge produced by this PartModule, in Système international Units"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+            }
+
             GUILayout.EndHorizontal();
             if (Event.current.type == EventType.Repaint)
                 _eplHeaders2 = GUILayoutUtility.GetLastRect();
@@ -962,7 +1123,17 @@ namespace AY
                 GUI.enabled = true;
                 GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
                 GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
-                GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
+                if (AYsettings.showSI)
+                {
+                    tmpPrtPowerV = Utilities.ConvertECtoSI(entry.Value.PrtPowerF, out Units);
+                    tmpPrtPower = tmpPrtPowerV.ToString("####0.###") + Units;
+                }
+                else
+                {
+                    tmpPrtPower = entry.Value.PrtPower;
+                }
+                GUILayout.Label(tmpPrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
+
                 GUILayout.EndHorizontal();
             }
             if (AYVesselPartLists.VesselConsPartsList.Count > 0) //This is very clunky but we get there in the end... and KSP 1.1 will probably mean have to re-do this anyway
@@ -1024,9 +1195,18 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.LOW;
                     }
                 }
-                GUILayout.Label("", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                GUILayout.Label("Total EC Consumed", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
-                GUILayout.Label(new GUIContent(_totalConsPower.ToString("####0.###"), "Total Power Consumption"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(" ", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
+                GUILayout.Label("Total Consumed", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
+                if (AYsettings.showSI)
+                {
+                    tmpPrtPowerV = Utilities.ConvertECtoSI(_totalConsPower, out Units);
+                    tmpPrtPower = tmpPrtPowerV.ToString("####0.###") + Units;
+                }
+                else
+                {
+                    tmpPrtPower = _totalConsPower.ToString("####0.###");
+                }
+                GUILayout.Label(new GUIContent(tmpPrtPower, "Total Power Consumption"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
                 GUILayout.EndHorizontal();
             }
             // End the ScrollView
@@ -1061,6 +1241,8 @@ namespace AY
                 ShowDarkSideWindow = false;
                 return;
             }
+            AYsettings.showSI = GUI.Toggle(new Rect(_dwindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
+
 
             GUILayout.BeginVertical();
             GUILayout.Label(new GUIContent("Select Body", "Select the body for darkside period and Solar Panel usage EC calculations"), Textures.SectionTitleStyle, GUILayout.Width(280));
@@ -1106,27 +1288,73 @@ namespace AY
                     ECprodfordarkTime = 0;
                     ECreqdfordarkTime = TotalPowerDrain * darkTime;
                     ECprodfordarkTime = TotalPowerProduced * darkTime;
-                    GUILayout.Label(new GUIContent("EC required for Dark-Side Transit: " + ECreqdfordarkTime.ToString("##########0"), "EC required during darkside period based on current EC usage"), Textures.WarningStyleLeft, GUILayout.Width(300));
-                    GUILayout.Label(new GUIContent("EC produced for Dark-Side Transit: " + ECprodfordarkTime.ToString("##########0"), "EC produced during darkside period based on current EC production"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(ECreqdfordarkTime, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = ECreqdfordarkTime.ToString("##########0");
+                    }
+                    GUILayout.Label(new GUIContent("EC required for Dark-Side Transit: " + tmpPrtPower, "EC required during darkside period based on current EC usage"), Textures.WarningStyleLeft, GUILayout.Width(300));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(ECprodfordarkTime, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = ECprodfordarkTime.ToString("##########0");
+                    }
+                    GUILayout.Label(new GUIContent("EC produced for Dark-Side Transit: " + tmpPrtPower, "EC produced during darkside period based on current EC production"), Textures.StatusStyleLeft, GUILayout.Width(300));
                     GUILayout.BeginHorizontal();
                     _includeStoredEc = GUILayout.Toggle(_includeStoredEc, new GUIContent(" ", "Toggle to Include Stored MainPower in Dark-Side Calculation"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
-                    GUILayout.Label(new GUIContent("Total Stored EC: " + TotalElectricCharge.ToString("##########0"), "Total Stored EC on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(TotalElectricCharge, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = TotalElectricCharge.ToString("##########0");
+                    }
+                    GUILayout.Label(new GUIContent("Total Stored EC: " + tmpPrtPower, "Total Stored EC on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     _includeSoredRp = GUILayout.Toggle(_includeSoredRp, new GUIContent(" ", "Toggle to include Stored ReservePower in Dark-Side Calculation"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
-                    GUILayout.Label(new GUIContent("Total Stored ReservePower: " + TotalReservePower.ToString("##########0"), "Total Stored ReservePower on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(TotalReservePower, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = TotalReservePower.ToString("##########0");
+                    }
+                    GUILayout.Label(new GUIContent("Total Stored ReservePower: " + tmpPrtPower, "Total Stored ReservePower on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
                     GUILayout.EndHorizontal();
                     powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTime;
                     eCdifference = 0;
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(eCdifference, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = eCdifference.ToString("##########0");
+                    }
                     if (ECreqdfordarkTime > powerSupply)
                     {
                         eCdifference = ECreqdfordarkTime - powerSupply;
-                        GUILayout.Label(new GUIContent("EC deficit for Dark-Side Transit: " + eCdifference.ToString("##########0"), "EC required for darkside period"), Textures.AlertStyleLeft, GUILayout.Width(300));
+                        
+                        GUILayout.Label(new GUIContent("EC deficit for Dark-Side Transit: " + tmpPrtPower, "EC required for darkside period"), Textures.AlertStyleLeft, GUILayout.Width(300));
                     }
                     else
                     {
                         eCdifference = powerSupply - ECreqdfordarkTime;
-                        GUILayout.Label(new GUIContent("EC surplus for Dark-Side Transit: " + eCdifference.ToString("##########0"), "EC surplus for darkside period"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                        GUILayout.Label(new GUIContent("EC surplus for Dark-Side Transit: " + tmpPrtPower, "EC surplus for darkside period"), Textures.StatusStyleLeft, GUILayout.Width(300));
                     }
                 }
             }
@@ -1457,8 +1685,16 @@ namespace AY
                 Textures.SubsystemConsumptionStyle.normal.textColor = Color.red;
             else
                 Textures.SubsystemConsumptionStyle.normal.textColor = Color.green;
-
-            GUILayout.Label(new GUIContent(drain.ToString("0.000") + "/s", "The current EC drain per second if enabled"), Textures.SubsystemConsumptionStyle);
+            if (AYsettings.showSI)
+            {
+                tmpPrtPowerV = Utilities.ConvertECtoSI(drain, out Units);
+                tmpPrtPower = tmpPrtPowerV.ToString("0.###") + Units;
+            }
+            else
+            {
+                tmpPrtPower = drain.ToString("0.###");
+            }
+            GUILayout.Label(new GUIContent(tmpPrtPower + "/s", "The current EC drain per second if enabled"), Textures.SubsystemConsumptionStyle);
         }
 
         private static string GuiSectionName(GUISection section)

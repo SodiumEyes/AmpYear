@@ -47,7 +47,7 @@ namespace AY
         /// <param name="prtPowerF">The Amount of EC being drawn (float)</param>
         /// <param name="prodPrt">True if it is producing Power, otherwise False</param>
         /// <param name="partSolar">True if the part is Solar dependant, otherwise False</param>
-        internal static void AddPart(uint pkey, string prtName, string prtTitle, string prtModuleName, bool prtSubsystem, bool prtActive, float prtPowerF, bool prodPrt, bool partSolar)
+        internal static void AddPart(uint pkey, string prtName, string prtTitle, string prtModuleName, bool prtSubsystem, bool prtActive, double prtPowerF, bool prodPrt, bool partSolar)
         {
             string keyValue = CreatePartKey(pkey, prtModuleName);
 
@@ -69,7 +69,7 @@ namespace AY
                     {
                         if (partFnd.PrtEditorInclude && prtActive)
                             AYController.Instance.TotalPowerProduced += prtPowerF;
-                        partFnd.PrtPowerF += prtPowerF;
+                        partFnd.PrtPowerF += (float)prtPowerF;
                         partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.###");
                     }
                     partFnd.PrtSolarDependant = partSolar;
@@ -84,7 +84,7 @@ namespace AY
                 }
                 else
                 {
-                    PwrPartList newProdPart = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
+                    PwrPartList newProdPart = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, "", (float)prtPowerF, prtActive, partSolar);
                     if (AYController.ShowDarkSideWindow && partSolar)
                     {
                         newProdPart.PrtEditorInclude = false;
@@ -129,7 +129,7 @@ namespace AY
                     {
                         if (partFnd.PrtEditorInclude && prtActive)
                             AYController.Instance.TotalPowerDrain += prtPowerF;
-                        partFnd.PrtPowerF += prtPowerF;
+                        partFnd.PrtPowerF += (float)prtPowerF;
                         partFnd.PrtPower = partFnd.PrtPowerF.ToString("####0.###");
                     }
                     partFnd.PrtSolarDependant = partSolar;
@@ -144,10 +144,10 @@ namespace AY
                 }
                 else
                 {
-                    PwrPartList newConsPart = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, "", prtPowerF, prtActive, partSolar);
+                    PwrPartList newConsPart = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, "", (float)prtPowerF, prtActive, partSolar);
                     if (prtActive)
                         AYController.Instance.TotalPowerDrain += prtPowerF;
-                    newConsPart.PrtPowerF = prtPowerF;
+                    newConsPart.PrtPowerF = (float)prtPowerF;
                     newConsPart.PrtPower = newConsPart.PrtPowerF.ToString("####0.###");
                     newConsPart.PrtSolarDependant = partSolar;
                     tmpESPDfltValue =

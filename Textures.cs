@@ -49,6 +49,7 @@ namespace AY
         internal static Texture2D BtnResize = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResizeHeight = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResizeWidth = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+        internal static Texture2D BtnIS = new Texture2D(16, 16, TextureFormat.ARGB32, false);
 
         internal static String PathIconsPath = System.IO.Path.Combine(AmpYear.AssemblyFolder.Substring(0, AmpYear.AssemblyFolder.IndexOf("/AmpYear/") + 9), "Icons").Replace("\\", "/");
         internal static String PathToolbarIconsPath = PathIconsPath.Substring(PathIconsPath.ToLower().IndexOf("/gamedata/") + 10);
@@ -86,6 +87,7 @@ namespace AY
                 LoadImageFromFile(ref BtnResize, "AYbtnResize.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResizeHeight, "AYbtnResizeHeight.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResizeWidth, "AYbtnResizeWidth.png", PathIconsPath);
+                LoadImageFromFile(ref BtnIS, "AYbtnIS.png", PathIconsPath);
             }
             catch (Exception)
             {
@@ -129,7 +131,7 @@ namespace AY
             return blnReturn;
         }
 
-        internal static GUIStyle SectionTitleStyle, SubsystemButtonStyle, SubsystemConsumptionStyle, StatusStyle, WarningStyle,
+        internal static GUIStyle SectionTitleStyle, SectionTitleStyleLeft, SubsystemButtonStyle, SubsystemConsumptionStyle, StatusStyle, WarningStyle,
             AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListPartRightStyle, PartListPartGrayStyle, PartListPartRightGrayStyle,
             ResizeStyle, StatusStyleLeft, WarningStyleLeft, AlertStyleLeft, PartListbtnStyle, PrioritybtnStyle;
 
@@ -158,6 +160,13 @@ namespace AY
             SectionTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
+                stretchWidth = true,
+                fontStyle = FontStyle.Bold
+            };
+
+            SectionTitleStyleLeft = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
                 fontStyle = FontStyle.Bold
             };
