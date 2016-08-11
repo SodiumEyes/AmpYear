@@ -1,130 +1,233 @@
-﻿using System;
+﻿
+
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using UnityEngine;
-
-namespace AmpYear
+/**
+* AYSettings.cs
+* (C) Copyright 2015, Jamie Leighton
+* AmpYear power management.
+* The original code and concept of AmpYear rights go to SodiumEyes on the Kerbal Space Program Forums, which was covered by GNU License GPL (no version stated).
+* As such this code continues to be covered by GNU GPL license.
+* Kerbal Space Program is Copyright (C) 2013 Squad. See http://kerbalspaceprogram.com/. This
+* project is in no way associated with nor endorsed by Squad.
+*
+*  This file is part of AmpYear.
+*
+*  AmpYear is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  AmpYear is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with AmpYear.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
+namespace AY
 {
-	class AYSettings
-	{
-		public const string GLOBAL_SETTINGS_FILENAME = "globalsettings.txt";
-		public const string VESSEL_SETTINGS_FILENAME = "vesselsettings.txt";
+    public class ESPValues
+    {
+        public bool EmergShutDnDflt ;
 
-		public static Rect windowPos = new Rect(40, Screen.height/2-100, AmpYearModule.WINDOW_WIDTH, 200);
-		public static Rect flightCompWindowPos = new Rect(40 + AmpYearModule.WINDOW_WIDTH, Screen.height / 2 - 100, 100, 200);
+        public ESPPriority EmergShutPriority ;
 
-		public static void saveGlobalSettings()
-		{
-			//Get the global settings
-			AYGlobalSettings global_settings = new AYGlobalSettings();
-			global_settings.windowPosX = windowPos.x;
-			global_settings.windowPosY = windowPos.y;
+        public ESPValues(bool emergShutDnDflt, ESPPriority emergShutPriority)
+        {
+            EmergShutDnDflt = emergShutDnDflt;
+            EmergShutPriority = emergShutPriority;
+        }
+    }
+    
+    public class AYSettings
+    {
 
-			global_settings.flightCompWindowPosX = flightCompWindowPos.x;
-			global_settings.flightCompWindowPosY = flightCompWindowPos.y;
+        public static string[] ValidPartModuleEmergShutDn = new string[]
+        {
+            "Turn Booster",
+            "RCS",
+            "SAS",
+            "AYSubsystems",
+            "Climate Control",
+            "Smooth Jazz",
+            "Massage Chair",
+            "ModuleIONPoweredRCS",
+            "ModulePPTPoweredRCS",
+            "ModuleDeployableSolarPanel",
+            "ModuleWheel",
+            "ModuleLight",
+            "ModuleDataTransmitter",
+            "ModuleReactionWheel",
+        //   "ModuleScienceLab",
+        //   "ModuleScienceConverter",
+            "ModuleResourceHarvester",
+            "ModuleResourceConverter",
+            "ModuleNavLight", //AV Lights
+            "Curved Solar Panel", //NFS
+        //   "KASModuleWinch", //KAS
+        //   "KASModuleMagnet", //KAS
+           "ModuleRTAntenna", //Remote Tech
+           "SCANsat",  //SCANsat
+           "TacGenericConverter", //TAC-LS
+           "ModuleLimitedDataTransmitter", //Antenna Range
+           "Scrubber",  //Kerbalism
+           "Greenhouse", //Kerbalism
+           "GravityRing" //Kerbalism
+        };
 
-			//Serialize global settings to file
-			try
-			{
-				byte[] serialized = KSP.IO.IOUtils.SerializeToBinary(global_settings);
-				KSP.IO.File.WriteAllBytes<AmpYearModule>(serialized, GLOBAL_SETTINGS_FILENAME);
-			}
-			catch (KSP.IO.IOException)
-			{
-			}
+        private const string configNodeName = "AYSettings";
 
-		}
+        public float FwindowPosX ;
 
-		public static void loadGlobalSettings()
-		{
-			try
-			{
-				if (KSP.IO.File.Exists<AmpYearModule>(GLOBAL_SETTINGS_FILENAME))
-				{
-					//Deserialize global settings from file
-					byte[] bytes = KSP.IO.File.ReadAllBytes<AmpYearModule>(GLOBAL_SETTINGS_FILENAME);
-					object deserialized = KSP.IO.IOUtils.DeserializeFromBinary(bytes);
-					if (deserialized is AYGlobalSettings)
-					{
-						AYGlobalSettings global_settings = (AYGlobalSettings)deserialized;
+        public float FwindowPosY ;
 
-						//Apply deserialized global settings
-						windowPos.x = global_settings.windowPosX;
-						windowPos.y = global_settings.windowPosY;
+        public float EwindowPosX ;
 
-						flightCompWindowPos.x = global_settings.flightCompWindowPosX;
-						flightCompWindowPos.y = global_settings.flightCompWindowPosY;
-					}
-				}
-			}
-			catch (KSP.IO.IOException)
-			{
-			}
-		}
+        public float EwindowPosY ;
 
-		public static void saveVesselSettings(AmpYearModule module)
-		{
-			Debug.Log("Begin save");
+        public float SCwindowPosX ;
 
-			//Get the vessel settings
-			AYVesselSettings settings = new AYVesselSettings();
-			foreach (AmpYearModule.Subsystem subsystem in Enum.GetValues(typeof(AmpYearModule.Subsystem)))
-			{
-				settings.subsystemToggle[(int)subsystem] = module.subsystemEnabled(subsystem);
-			}
+        public float SCwindowPosY ;
 
-			Debug.Log("Mid save");
+        public float EPLwindowPosX ;
 
-			//Serialize settings to file
-			try
-			{
-				byte[] serialized = KSP.IO.IOUtils.SerializeToBinary(settings);
-				KSP.IO.File.WriteAllBytes<AmpYearModule>(serialized, VESSEL_SETTINGS_FILENAME, module.vessel);
-				Debug.Log("End save");
-			}
-			catch (KSP.IO.IOException)
-			{
-			}
-		}
+        public float EPLwindowPosY ;
 
-		public static void loadVesselSettings(AmpYearModule module)
-		{
+        public double RECHARGE_RESERVE_THRESHOLD ;
 
-			Debug.Log("Begin load");
+        public double POWER_LOW_WARNING_AMT ;
 
-			try
-			{
-				if (KSP.IO.File.Exists<AmpYearModule>(VESSEL_SETTINGS_FILENAME, module.vessel))
-				{
+        public bool UseAppLauncher ;
 
-					Debug.Log("Mid load");
-					//Deserialize settings from file
-					byte[] bytes = KSP.IO.File.ReadAllBytes<AmpYearModule>(VESSEL_SETTINGS_FILENAME, module.vessel);
-					object deserialized = KSP.IO.IOUtils.DeserializeFromBinary(bytes);
-					if (deserialized is AYVesselSettings)
-					{
-						AYVesselSettings settings = (AYVesselSettings)deserialized;
+        public bool debugging ;
 
-						if (settings.subsystemToggle != null
-							&& settings.subsystemToggle.Length >= Enum.GetValues(typeof(AmpYearModule.Subsystem)).Length)
-						{
-							//Apply deserialized settings
-							foreach (AmpYearModule.Subsystem subsystem in Enum.GetValues(typeof(AmpYearModule.Subsystem)))
-							{
-								module.setSubsystemEnabled(subsystem, settings.subsystemToggle[(int)subsystem]);
-							}
-							Debug.Log("End load");
-						}
+        public bool TooltipsOn ;
 
-						
-					}
-				}
-			}
-			catch (KSP.IO.IOException)
-			{
-			}
-		}
-	}
+        public List<KeyValuePair<string, ESPValues>> PartModuleEmergShutDnDflt  ;
+
+        public double ESPHighThreshold ;
+
+        public double ESPMediumThreshold ;
+
+        public double ESPLowThreshold ;
+
+        public double EmgcyShutOverrideCooldown;
+
+        public bool showSI;
+
+        public AYSettings()
+        {
+            FwindowPosX = 40;
+            FwindowPosY = 50;
+            EwindowPosX = 40;
+            EwindowPosY = 50;
+            SCwindowPosX = 40;
+            SCwindowPosY = 50;
+            EPLwindowPosX = 270;
+            EPLwindowPosY = 50;
+            RECHARGE_RESERVE_THRESHOLD = 0.95;
+            POWER_LOW_WARNING_AMT = 5;
+            UseAppLauncher = true;
+            debugging = true;
+            TooltipsOn = true;
+            PartModuleEmergShutDnDflt = new List<KeyValuePair<string, ESPValues>>();
+            ESPHighThreshold = 5;
+            ESPMediumThreshold = 10;
+            ESPLowThreshold = 20;
+            EmgcyShutOverrideCooldown = 300;
+            showSI = false;
+        }
+
+        //Settings Functions Follow
+
+        public void Load(ConfigNode node)
+        {
+            if (node.HasNode(configNodeName))
+            {
+                ConfigNode AYsettingsNode = new ConfigNode();
+                if (!node.TryGetNode(configNodeName, ref AYsettingsNode)) return;
+                AYsettingsNode.TryGetValue("FwindowPosX", ref this.FwindowPosX);
+                AYsettingsNode.TryGetValue("FwindowPosY", ref FwindowPosY);
+                AYsettingsNode.TryGetValue("EwindowPosX", ref EwindowPosX);
+                AYsettingsNode.TryGetValue("EwindowPosY", ref EwindowPosY);
+                AYsettingsNode.TryGetValue("SCwindowPosX", ref SCwindowPosX);
+                AYsettingsNode.TryGetValue("SCwindowPosY", ref SCwindowPosY);
+                AYsettingsNode.TryGetValue("EPLwindowPosX", ref EPLwindowPosX);
+                AYsettingsNode.TryGetValue("EPLwindowPosY", ref EPLwindowPosY);
+                AYsettingsNode.TryGetValue("RECHARGE_RESERVE_THRESHOLD", ref RECHARGE_RESERVE_THRESHOLD);
+                AYsettingsNode.TryGetValue("POWER_LOW_WARNING_AMT", ref POWER_LOW_WARNING_AMT);
+                AYsettingsNode.TryGetValue("UseAppLauncher", ref UseAppLauncher);
+                AYsettingsNode.TryGetValue("debugging", ref debugging);
+                RSTUtils.Utilities.debuggingOn = debugging;
+                AYsettingsNode.TryGetValue("TooltipsOn", ref TooltipsOn);
+                AYsettingsNode.TryGetValue("ShowSI", ref showSI);
+                AYsettingsNode.TryGetValue("ESPHighThreshold", ref ESPHighThreshold);
+                AYsettingsNode.TryGetValue("ESPMediumThreshold", ref ESPMediumThreshold);
+                AYsettingsNode.TryGetValue("ESPLowThreshold", ref ESPLowThreshold);
+                AYsettingsNode.TryGetValue("EmgcyShutOverrideCooldown", ref EmgcyShutOverrideCooldown);
+                foreach (string validentry in ValidPartModuleEmergShutDn)
+                {
+                    ESPValues tmpESPVals = new ESPValues(true, ESPPriority.MEDIUM);
+                    string tmpStr = "";
+                    if (AYsettingsNode.TryGetValue(validentry, ref tmpStr))
+                    {
+                        string[] tmpStrStrings = tmpStr.Split(',');
+                        if (tmpStrStrings.Length == 2)
+                        {
+                            bool tmpBool = false;
+                            if (bool.TryParse(tmpStrStrings[0], out tmpBool))
+                                tmpESPVals.EmergShutDnDflt = tmpBool;
+
+                            int tmpInt = 2;
+                            if (int.TryParse(tmpStrStrings[1], out tmpInt))
+                                tmpESPVals.EmergShutPriority = (ESPPriority)tmpInt;
+                        }
+                    }
+                    PartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry, tmpESPVals));
+                }
+                RSTUtils.Utilities.Log_Debug("AYSettings load complete");
+            }
+        }
+
+        public void Save(ConfigNode node)
+        {
+            ConfigNode settingsNode;
+            if (node.HasNode(configNodeName))
+            {
+                settingsNode = node.GetNode(configNodeName);
+                settingsNode.ClearData();
+            }
+            else
+            {
+                settingsNode = node.AddNode(configNodeName);
+            }
+            settingsNode.AddValue("FwindowPosX", FwindowPosX);
+            settingsNode.AddValue("FwindowPosY", FwindowPosY);
+            settingsNode.AddValue("EwindowPosX", EwindowPosX);
+            settingsNode.AddValue("EwindowPosY", EwindowPosY);
+            settingsNode.AddValue("SCwindowPosX", SCwindowPosX);
+            settingsNode.AddValue("SCwindowPosY", SCwindowPosY);
+            settingsNode.AddValue("EPLwindowPosX", EPLwindowPosX);
+            settingsNode.AddValue("EPLwindowPosY", EPLwindowPosY);
+            settingsNode.AddValue("RECHARGE_RESERVE_THRESHOLD", RECHARGE_RESERVE_THRESHOLD);
+            settingsNode.AddValue("POWER_LOW_WARNING_AMT", POWER_LOW_WARNING_AMT);
+            settingsNode.AddValue("UseAppLauncher", UseAppLauncher);
+            settingsNode.AddValue("debugging", debugging);
+            settingsNode.AddValue("TooltipsOn", TooltipsOn);
+            settingsNode.AddValue("ShowSI", showSI);
+            settingsNode.AddValue("ESPHighThreshold", ESPHighThreshold);
+            settingsNode.AddValue("ESPMediumThreshold", ESPMediumThreshold);
+            settingsNode.AddValue("ESPLowThreshold", ESPLowThreshold);
+            settingsNode.AddValue("EmgcyShutOverrideCooldown", EmgcyShutOverrideCooldown);
+            foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
+            {
+                string tmpString = validentry.Value.EmergShutDnDflt.ToString() + ',' +
+                                   (int)validentry.Value.EmergShutPriority;
+                settingsNode.AddValue(validentry.Key, tmpString);
+            }
+            RSTUtils.Utilities.Log_Debug("AYSettings save complete");
+        }
+    }
 }

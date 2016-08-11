@@ -1,26 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{AACF3579-E4E6-48BB-B278-E7B664D06F65}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AmpYear</RootNamespace>
+    <RootNamespace>AY</RootNamespace>
     <AssemblyName>AmpYear</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,33 +33,166 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>.\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\KSPDLLs - 1.1.3\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\KSPDLLs - 1.1.3\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPUtil">
+      <HintPath>..\KSPDLLs - 1.1.3\KSPUtil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>.\UnityEngine.dll</HintPath>
+      <HintPath>..\KSPDLLs - 1.1.3\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\KSPDLLs - 1.1.3\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AmpYearModule.cs" />
-    <Compile Include="AmpYearPart.cs" />
-    <Compile Include="AYGlobalSettings.cs" />
+    <Compile Include="..\REPOSoftTechKSPUtils\AppLauncherToolBarExtension.cs">
+      <Link>AppLauncherToolBarExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\REPOSoftTechKSPUtils\RectExtentions.cs">
+      <Link>RectExtentions.cs</Link>
+    </Compile>
+    <Compile Include="..\REPOSoftTechKSPUtils\RSTutilities.cs">
+      <Link>RSTutilities.cs</Link>
+    </Compile>
+    <Compile Include="..\REPOSoftTechKSPUtils\ToolBarManager.cs">
+      <Link>ToolBarManager.cs</Link>
+    </Compile>
+    <Compile Include="APIs\ALWrapper.cs" />
+    <Compile Include="AmpYear.cs" />
+    <Compile Include="APIs\DFWrapper.cs" />
+    <Compile Include="APIs\IONRCSWrapper.cs" />
+    <Compile Include="APIs\KKWrapper.cs" />
+    <Compile Include="APIs\KPBSWrapper.cs" />
+    <Compile Include="APIs\NFPWrapper.cs" />
+    <Compile Include="APIs\USILSWrapper.cs" />
+    <Compile Include="AYControllerGUI.cs" />
+    <Compile Include="AYEnums.cs" />
+    <Compile Include="AYGameSettings.cs" />
+    <Compile Include="AYProcessPartModules.cs" />
+    <Compile Include="AYPwrPartList.cs" />
+    <Compile Include="AYSController.cs" />
+    <Compile Include="AYVesselPartLists.cs" />
+    <Compile Include="EngineerReport.cs" />
+    <Compile Include="APIs\KASWrapper.cs" />
+    <Compile Include="APIs\KSPIEWrapper.cs" />
+    <Compile Include="Parts\AYPart.cs" />
+    <Compile Include="APIs\NFSWrapper.cs" />
+    <Compile Include="APIs\RTWrapper.cs" />
+    <Compile Include="APIs\ScanSatWrapper.cs" />
+    <Compile Include="APIs\TACLSWrapper.cs" />
+    <Compile Include="APIs\TeleWrapper.cs" />
+    <Compile Include="Textures.cs" />
+    <Compile Include="VesselInfo.cs" />
+    <Compile Include="Parts\AYCrewPart.cs" />
     <Compile Include="AYSettings.cs" />
-    <Compile Include="AYVesselSettings.cs" />
-    <Compile Include="FlightComputer.cs" />
-    <Compile Include="FlightComputerGUI.cs" />
-    <Compile Include="ModuleAmpYearPoweredRCS.cs" />
+    <Compile Include="AYController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RTUtils.cs" />
-    <Compile Include="StructsAndEnums.cs" />
+    <None Include="Distribution\GameData\REPOSoftTech\Agencies\Agents.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\Agencies\REPOSoftTech_scaled.truecolor" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\AmpYear.version" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\LICENSE" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\MMConfigAmpYear.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z100_ReserveBatteryPack\model.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z100_ReserveBatteryPack\model000.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z100_ReserveBatteryPack\part.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z1K_ReserveBatteryBank\model.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z1K_ReserveBatteryBank\model000.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z1K_ReserveBatteryBank\model001.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z1K_ReserveBatteryBank\part.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z400_ReserveBatteryPack\model.mu" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z400_ReserveBatteryPack\model000.dds" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Parts\ampYear_Z400_ReserveBatteryPack\part.cfg" />
+    <None Include="Distribution\GameData\REPOSoftTech\AmpYear\Resources\AmpYearResources.cfg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\ChangeLog.txt" />
+    <Content Include="Distribution\GameData\REPOSoftTech\Agencies\REPOSoftTech.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnESPInc.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnIncInCalcs.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnPriority1.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnPriority2.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnPriority3.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnRedCross.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnResize.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYbtnUnselected.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYGreenOff.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYGreenOffTB.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYGreenOn.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYGreenOnTB.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYRedOff.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYRedOffTB.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYRedOn.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYRedOnTB.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYToolTipBox.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYYellowOff.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYYellowOffTB.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYYellowOn.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYYellowOnTB.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\ReservePower.png" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC Licence.txt" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC.dll" />
+    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC.xml" />
+    <Content Include="LocalDev\7za_dir.txt" />
+    <Content Include="LocalDev\ksp_dir.txt" />
+    <Content Include="LocalDev\mono_exe.txt" />
+    <Content Include="LocalDev\pdb2mdb_exe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Distribution\GameData\REPOSoftTech\AmpYear\Plugins\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="PostBuildMacros">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="@(Targets->'%(Version)')" />
+    </ItemGroup>
+  </Target>
+  <PropertyGroup>
+    <PostBuildEventDependsOn>
+    $(PostBuildEventDependsOn);
+    PostBuildMacros;
+  </PostBuildEventDependsOn>
+    <PostBuildEvent>set /p KSP_DIR=&lt;"$(ProjectDir)LocalDev\ksp_dir.txt"
+
+set /p MONO_EXE_DIR=&lt;"$(ProjectDir)LocalDev\mono_exe.txt"
+
+set /p PDB2MDB_EXE_DIR=&lt;"$(ProjectDir)LocalDev\pdb2mdb_exe.txt"
+
+set /p ZA_DIR=&lt;"$(ProjectDir)LocalDev\7za_dir.txt"
+xcopy "$(TargetPath)" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+xcopy "$(TargetDir)$(ProjectName).pdb" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+cd "$(TargetDir)"
+"%25MONO_EXE_DIR%25" "%25PDB2MDB_EXE_DIR%25" "$(TargetFileName)"
+xcopy "$(TargetDir)$(ProjectName).dll.mdb" "$(SolutionDir)Distribution\GameData\REPOSoftTech\$(ProjectName)\Plugins\" /Y
+
+where /q %25ZA_DIR%25:7za.exe
+if %25ERRORLEVEL%25 == 1 (
+   echo Cannot find 7-zip to package build
+) else (
+   echo Packaging build
+  ) 
+if exist "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" del "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip"
+   
+%25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "$(SolutionDir)Distribution\GameData"
+cd "$(SolutionDir)Distribution\GameData\RepoSoftTech\AmpYear\Icons"
+dir /b &gt; "$(SolutionDir)IconsExclude.txt"
+c:\7za\7za d -r  -x@"$(SolutionDir)IconsExclude.txt" -x!REPOSoftTech.png "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
+xcopy /E /Y "$(SolutionDir)Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
