@@ -1,4 +1,9 @@
-﻿V1.3.5.0 "Realism Overhaul"
+﻿V1.3.6.0 "ScanSAT fixes & Dark-Side Calcs"
+	Fixes for ScanSAT v16.4 and above as scanSAT changed the way it handles EC internally. (https://github.com/JPLRepo/AmpYear/issues/40)
+	Added calculation and display for Dark-Side window for on the surface of selected CelestialBody (in addition to the current in orbit calculation). (https://github.com/JPLRepo/AmpYear/issues/39)
+	Fixed bug in Dark-Side window not showing the Deficit/Surplus correctly (which I think I messed up in V1.3.5)
+	KSPedia Pages amended for above updates.
+V1.3.5.0 "Realism Overhaul"
 	Compatible with Realism Overhaul.
 	Added Toggle Button in the top right corner of the Show Parts List window. this toggle will change the display to show Stock EC units or SI units
 	(Système international d'unités) showing EC converted to Watts, kiloWatts and megaWatts. (for better Realism Overhaul compatibility). 

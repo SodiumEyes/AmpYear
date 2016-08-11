@@ -125,7 +125,7 @@ namespace AY
         private float _totalConsPower;
         private Vector3d sun_dir;
         private double sun_dist;
-        private double darkTime, eCdifference, ECprodfordarkTime, ECreqdfordarkTime, powerSupply;
+        private double darkTime, eCdifference, ECprodfordarkTime, ECreqdfordarkTime, ECreqdfordarkTimeSurface, ECprodfordarkTimeSurface, powerSupply, rotPeriod;
         private uint tmpPartKey;
 
         #region GUIFunctions
@@ -1279,15 +1279,44 @@ namespace AY
                 //Get the distance and direction to Sun from the currently selected target body
                 Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedDarkTarget], out sun_dir, out sun_dist);
                 GUILayout.Label(new GUIContent("Sun Distance:" + sun_dist.ToString("###,###,###,###,###,##0"), _selectedDarkTarget == 0 ? "Assumes you are in orbit at 700,000km from the Sun" : "The Distance to the sun from the selected body"), Textures.PartListPartStyle, GUILayout.Width(280));
-
+                rotPeriod = _darkBodies[_selectedDarkTarget].rotationPeriod;
+                if (_darkBodies[_selectedDarkTarget].orbit != null)
+                {
+                    rotPeriod = _darkBodies[_selectedDarkTarget].orbit.period * rotPeriod / (_darkBodies[_selectedDarkTarget].orbit.period - rotPeriod);
+                }
+                GUILayout.Label( new GUIContent("Surface Darkness Time:" + KSPUtil.PrintTimeCompact((int)rotPeriod, true), "Darkness Time on the surface"), Textures.StatusStyleLeft, GUILayout.Width(300));
                 darkTime = CalculatePeriod(_bodyTarget, Orbit);
                 GUILayout.Label(new GUIContent("Dark-Side Transit Period: " + KSPUtil.PrintTimeCompact((int)darkTime, true), "The time it will take to transit the Darkside"), Textures.StatusStyleLeft, GUILayout.Width(300));
                 if (TotalPowerDrain > 0)
                 {
                     ECreqdfordarkTime = 0;
+                    ECreqdfordarkTimeSurface = 0;
                     ECprodfordarkTime = 0;
+                    ECprodfordarkTimeSurface = 0;
                     ECreqdfordarkTime = TotalPowerDrain * darkTime;
+                    ECreqdfordarkTimeSurface = TotalPowerDrain * rotPeriod;
                     ECprodfordarkTime = TotalPowerProduced * darkTime;
+                    ECprodfordarkTimeSurface = TotalPowerProduced * rotPeriod;
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(ECreqdfordarkTimeSurface, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = ECreqdfordarkTimeSurface.ToString("##########0");
+                    }
+                    GUILayout.Label(new GUIContent("EC required for Dark-Side Surface: " + tmpPrtPower, "EC required during darkside on the surface based on current EC usage"), Textures.WarningStyleLeft, GUILayout.Width(300));
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(ECprodfordarkTimeSurface, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = ECprodfordarkTimeSurface.ToString("##########0");
+                    }
+                    GUILayout.Label(new GUIContent("EC produced for Dark-Side Surface: " + tmpPrtPower, "EC produced during darkside on the surface based on current EC production"), Textures.StatusStyleLeft, GUILayout.Width(300));
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(ECreqdfordarkTime, out Units);
@@ -1308,8 +1337,10 @@ namespace AY
                         tmpPrtPower = ECprodfordarkTime.ToString("##########0");
                     }
                     GUILayout.Label(new GUIContent("EC produced for Dark-Side Transit: " + tmpPrtPower, "EC produced during darkside period based on current EC production"), Textures.StatusStyleLeft, GUILayout.Width(300));
+
                     GUILayout.BeginHorizontal();
                     _includeStoredEc = GUILayout.Toggle(_includeStoredEc, new GUIContent(" ", "Toggle to Include Stored MainPower in Dark-Side Calculation"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                    
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(TotalElectricCharge, out Units);
@@ -1336,6 +1367,14 @@ namespace AY
                     GUILayout.EndHorizontal();
                     powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTime;
                     eCdifference = 0;
+                    if (ECreqdfordarkTime > powerSupply)
+                    {
+                        eCdifference = ECreqdfordarkTime - powerSupply;
+                    }
+                    else
+                    {
+                        eCdifference = powerSupply - ECreqdfordarkTime;
+                    }
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(eCdifference, out Units);
@@ -1347,14 +1386,39 @@ namespace AY
                     }
                     if (ECreqdfordarkTime > powerSupply)
                     {
-                        eCdifference = ECreqdfordarkTime - powerSupply;
-                        
                         GUILayout.Label(new GUIContent("EC deficit for Dark-Side Transit: " + tmpPrtPower, "EC required for darkside period"), Textures.AlertStyleLeft, GUILayout.Width(300));
                     }
                     else
                     {
-                        eCdifference = powerSupply - ECreqdfordarkTime;
                         GUILayout.Label(new GUIContent("EC surplus for Dark-Side Transit: " + tmpPrtPower, "EC surplus for darkside period"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    }
+
+                    powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTimeSurface;
+                    eCdifference = 0;
+                    if (ECreqdfordarkTimeSurface > powerSupply)
+                    {
+                        eCdifference = ECreqdfordarkTimeSurface - powerSupply;
+                    }
+                    else
+                    {
+                        eCdifference = powerSupply - ECreqdfordarkTimeSurface;
+                    }
+                    if (AYsettings.showSI)
+                    {
+                        tmpPrtPowerV = Utilities.ConvertECtoSI(eCdifference, out Units);
+                        tmpPrtPower = tmpPrtPowerV.ToString("##########0") + Units;
+                    }
+                    else
+                    {
+                        tmpPrtPower = eCdifference.ToString("##########0");
+                    }
+                    if (ECreqdfordarkTimeSurface > powerSupply)
+                    {
+                        GUILayout.Label(new GUIContent("EC deficit for Dark-Side Surface: " + tmpPrtPower, "EC required for darkside at the surface"), Textures.AlertStyleLeft, GUILayout.Width(300));
+                    }
+                    else
+                    {
+                        GUILayout.Label(new GUIContent("EC surplus for Dark-Side Surface: " + tmpPrtPower, "EC surplus for darkside at the surface"), Textures.StatusStyleLeft, GUILayout.Width(300));
                     }
                 }
             }

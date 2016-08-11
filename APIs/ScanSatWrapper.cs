@@ -12,6 +12,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -75,7 +76,7 @@ namespace AY
             internal SCANsat(Object a)
             {
                 actualSCANsat = a;
-                powerField = SCANsatType.GetField("power");
+                resourceInputsField = SCANsatType.GetField("resourceInputs", BindingFlags.Public | BindingFlags.Instance);
                 ScanningField = SCANsatType.GetField("scanning", BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic);
                 startScanMethod = SCANsatType.GetMethod("startScan", BindingFlags.Public | BindingFlags.Instance);
                 stopScanMethod = SCANsatType.GetMethod("stopScan", BindingFlags.Public | BindingFlags.Instance);
@@ -83,14 +84,14 @@ namespace AY
 
             private Object actualSCANsat;
 
-            private FieldInfo powerField;
+            private FieldInfo resourceInputsField;
 
             /// <summary>
             /// How much power the scanner is using
             /// </summary>
-            public float power
+            public List<ModuleResource> resourceInputs
             {
-                get { return (float)powerField.GetValue(actualSCANsat); }
+                get { return (List<ModuleResource>)resourceInputsField.GetValue(actualSCANsat); }
             }
 
             private FieldInfo ScanningField;
