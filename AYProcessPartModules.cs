@@ -916,7 +916,7 @@ namespace AY
                 catch
                 {
                     Utilities.Log("Wrong SCANsat library version - disabled.");
-                    //ScSPresent = false;
+                    ScSPresent = false;
                 }
 
             if (TelPresent)
@@ -1282,10 +1282,25 @@ namespace AY
                     tmpPower = 0;
                     tmpSs = new ScanSatWrapper.SCANsat(psdpart);
 
-                    if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpSs.power > 0.0 && tmpSs.scanning))
+                    if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpSs.scanning))
                     {
                         prtActive = true;
-                        tmpPower = tmpSs.power;
+                        int count =tmpSs.resourceInputs.Count;
+
+                        for (int i = 0; i < count; i++)
+                        {
+                            if (tmpSs.resourceInputs[i].name == MAIN_POWER_NAME)
+                            {
+                                if (Utilities.GameModeisEditor)
+                                {
+                                    tmpPower += tmpSs.resourceInputs[i].rate;
+                                }
+                                else
+                                {
+                                    tmpPower += tmpSs.resourceInputs[i].currentAmount;
+                                }
+                            }
+                        }
                     }
                     AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
