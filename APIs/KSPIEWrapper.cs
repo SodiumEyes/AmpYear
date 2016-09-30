@@ -58,11 +58,8 @@ namespace AY
             var asm = AssemblyLoader.loadedAssemblies;
             var types = AssemblyLoader.loadedTypes;
             var types2 = AssemblyLoader.loadedAssemblies.SelectMany(a => a.assembly.GetExportedTypes()).ToList();
-                        
-            KSPIEType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "FNPlugin.PluginHelper");
+
+            KSPIEType = getType("FNPlugin.PluginHelper"); 
 
             if (KSPIEType == null)
             {
@@ -72,6 +69,24 @@ namespace AY
             LogFormatted("WarpPlugin Version:{0}", KSPIEType.Assembly.GetName().Version.ToString());
             _KSPIEWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class FNModuleCryostat

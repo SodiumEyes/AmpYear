@@ -54,10 +54,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab Near Future Propulsion Types...");
 
             //find the NFSCurvedsolarPanelType type
-            NFPVariableISPEngineType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "NearFuturePropulsion.VariableISPEngine");
+            NFPVariableISPEngineType = getType("NearFuturePropulsion.VariableISPEngine"); 
 
             if (NFPVariableISPEngineType == null)
             {
@@ -68,6 +65,24 @@ namespace AY
 
             _NFPWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class VariableISPEngine

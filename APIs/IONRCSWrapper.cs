@@ -55,10 +55,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab IONRCS Types...");
 
             //find the IONRCSTypeoduleIONPoweredRCS type
-            IONRCSType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "IONRCS.ModuleIONPoweredRCS");
+            IONRCSType = getType("IONRCS.ModuleIONPoweredRCS"); 
 
             if (IONRCSType == null)
             {
@@ -66,10 +63,7 @@ namespace AY
             }
 
             //find the ModulePPTPoweredRCS type
-            PPTRCSType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "IONRCS.ModulePPTPoweredRCS");
+            PPTRCSType = getType("IONRCS.ModulePPTPoweredRCS"); 
 
             if (PPTRCSType == null)
             {
@@ -80,6 +74,24 @@ namespace AY
 
             _IONRCSWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class ModuleIONPoweredRCS

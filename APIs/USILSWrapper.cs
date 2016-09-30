@@ -55,10 +55,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab USI LS Types...");
 
             //find the USILS part module type
-            USIMLSType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "LifeSupport.ModuleLifeSupport");
+            USIMLSType = getType("LifeSupport.ModuleLifeSupport"); 
 
             if (USIMLSType == null)
             {
@@ -66,10 +63,7 @@ namespace AY
             }
 
             //find the USILS part recycler module type
-            USIMLSRType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "LifeSupport.ModuleLifeSupportRecycler");
+            USIMLSRType = getType("LifeSupport.ModuleLifeSupportRecycler"); 
 
             if (USIMLSRType == null)
             {
@@ -80,6 +74,24 @@ namespace AY
 
             _USILSWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class ModuleLifeSupport

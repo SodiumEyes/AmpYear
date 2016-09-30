@@ -64,10 +64,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab KabinKraziness Types...");
 
             //find the Controller base type
-            KKType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName.Contains("KabinKraziness.KabinKraziness"));
+            KKType = getType("KabinKraziness.KabinKraziness"); 
 
             if (KKType == null)
             {
@@ -96,10 +93,7 @@ namespace AY
             
 
             //find the Controller base type
-            KKControllerType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName.Contains("KabinKraziness.KKController"));
+            KKControllerType = getType("KabinKraziness.KKController"); 
 
             if (KKControllerType == null)
             {
@@ -131,6 +125,24 @@ namespace AY
 
             _KKWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class KKAPI

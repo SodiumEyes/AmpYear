@@ -73,10 +73,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab TAC LS Types...");
 
             //find the base type
-            TACLSType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "Tac.TacLifeSupport");
+            TACLSType = getType("Tac.TacLifeSupport"); 
 
             if (TACLSType == null)
             {
@@ -85,30 +82,21 @@ namespace AY
 
             LogFormatted("TAC LS Version:{0}", TACLSType.Assembly.GetName().Version.ToString());
 
-            TACLSgameSettingsType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "Tac.TacGameSettings");
+            TACLSgameSettingsType = getType("Tac.TacGameSettings"); 
 
             if (TACLSgameSettingsType == null)
             {
                 return false;
             }
 
-            TACLSglobalSettingsType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "Tac.GlobalSettings");
+            TACLSglobalSettingsType = getType("Tac.GlobalSettings"); 
 
             if (TACLSgameSettingsType == null)
             {
                 return false;
             }
 
-            TACLSGenericConverterType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "Tac.TacGenericConverter");
+            TACLSGenericConverterType = getType("Tac.TacGenericConverter"); 
 
             if (TACLSGenericConverterType == null)
             {
@@ -139,6 +127,24 @@ namespace AY
 
             _TACLSWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class TACLSAPI
