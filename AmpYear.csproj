@@ -141,7 +141,6 @@
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\AYYellowOnTB.png" />
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\Icons\ReservePower.png" />
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC Licence.txt" />
-    <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC.dll" />
     <Content Include="Distribution\GameData\REPOSoftTech\AmpYear\MiniAVC.xml" />
     <Content Include="LocalDev\7za_dir.txt" />
     <Content Include="LocalDev\ksp_dir.txt" />

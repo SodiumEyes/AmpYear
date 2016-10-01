@@ -66,7 +66,7 @@ namespace AY
         private ModuleLight tmpLight;
         private ModuleDataTransmitter tmpAnt;
         private ModuleReactionWheel tmpRw;
-        private ReactionWheelPower rwp;
+        //private ReactionWheelPower rwp;
         private ModuleEngines tmpEng;
         private const float grav = 9.81f;
         private bool usesCharge = false;
@@ -501,24 +501,6 @@ namespace AY
                 }
             }
             
-            
-            if (!WheelDfltRotPowerMap.ContainsKey(prtName))
-            {
-                //Map the part's default rot power to its name
-                rwp = new ReactionWheelPower(tmpRw.RollTorque, tmpRw.PitchTorque, tmpRw.YawTorque);
-                WheelDfltRotPowerMap.Add(prtName, rwp);
-                SasAdditionalRotPower += rwp.RollTorque * SAS_POWER_TURN_TORQUE_FACTOR;
-            }
-            else
-            {
-                WheelDfltRotPowerMap.TryGetValue(prtName, out rwp);
-                if (rwp != null)
-                {
-                    SasAdditionalRotPower += rwp.RollTorque * SAS_POWER_TURN_TORQUE_FACTOR;
-                }
-            }
-            ReactionWheels.Add(currentPart);
-            //}
             AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
@@ -827,15 +809,15 @@ namespace AY
                 int count = module.resHandler.inputResources.Count;
                 for (int i = 0; i < count; i++)
                 {
-                    if (module.resHandler.inputResources[count].name == MAIN_POWER_NAME)
+                    if (module.resHandler.inputResources[i].name == MAIN_POWER_NAME)
                     {
                         if (Utilities.GameModeisEditor)
                         {
-                            ECConsumed += module.resHandler.inputResources[count].rate;
+                            ECConsumed += module.resHandler.inputResources[i].rate;
                         }
                         else
                         {
-                            ECConsumed += module.resHandler.inputResources[count].currentAmount;
+                            ECConsumed += module.resHandler.inputResources[i].currentAmount;
                         }
                     }
                 }
@@ -846,15 +828,15 @@ namespace AY
                 int count2 = module.resHandler.outputResources.Count;
                 for (int i = 0; i < count2; i++)
                 {
-                    if (module.resHandler.outputResources[count2].name == MAIN_POWER_NAME)
+                    if (module.resHandler.outputResources[i].name == MAIN_POWER_NAME)
                     {
                         if (Utilities.GameModeisEditor)
                         {
-                            ECProduced += module.resHandler.outputResources[count2].rate;
+                            ECProduced += module.resHandler.outputResources[i].rate;
                         }
                         else
                         {
-                            ECProduced += module.resHandler.outputResources[count2].currentAmount;
+                            ECProduced += module.resHandler.outputResources[i].currentAmount;
                         }
                     }
                 }

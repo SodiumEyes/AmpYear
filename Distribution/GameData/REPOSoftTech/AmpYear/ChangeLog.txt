@@ -1,6 +1,7 @@
 ﻿V1.4.0.0 "KSP 1.2"
     Changes and re-compile to work in KSP 1.2.
 	Needs much more clean-up and an optimization pass on the next version.
+	Removed the Power Turn (Turn Booster) SAS feature.
 V1.3.6.0 "ScanSAT fixes & Dark-Side Calcs"
 	Fixes for ScanSAT v16.4 and above as scanSAT changed the way it handles EC internally. (https://github.com/JPLRepo/AmpYear/issues/40)
 	Added calculation and display for Dark-Side window for on the surface of selected CelestialBody (in addition to the current in orbit calculation). (https://github.com/JPLRepo/AmpYear/issues/39)
