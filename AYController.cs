@@ -853,7 +853,7 @@ namespace AY
                         Utilities.Log_Debug("drawing main power");
                         double totalAvailable = 0f;
                         Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, desiredElectricity, true,
-                            true, out totalElecreceived, out totalAvailable);  //get power
+                            true, false, out totalElecreceived, out totalAvailable);  //get power
                         _timeLastElectricity = currentTime - (desiredElectricity - totalElecreceived) / total_manager_drain; //set time last power received
                         hasPower = (UnityEngine.Time.realtimeSinceStartup > _powerUpTime)
                         && (desiredElectricity <= 0.0 || totalElecreceived >= desiredElectricity * 0.99); //set hasPower > power up delay and we received power requested
@@ -870,7 +870,7 @@ namespace AY
                             desiredElectricity2 = manager_drain * deltaTime;
                             double totalAvailable = 0f;
                             Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, desiredElectricity2, true,
-                                true, out totalElecreceived2, out totalAvailable);  //get power
+                                true, false, out totalElecreceived2, out totalAvailable);  //get power
                             _timeLastElectricity = currentTime - (desiredElectricity2 - totalElecreceived2) / manager_drain; // set time last power received
                             HasReservePower = (UnityEngine.Time.realtimeSinceStartup > _powerUpTime)
                             && (desiredElectricity2 <= 0.0 || totalElecreceived2 >= desiredElectricity2 * 0.99); // set hasReservePower > power up delay and we received power
@@ -1444,9 +1444,9 @@ namespace AY
 
             double received = 0f;
             double available = 0f;
-            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, amount, true, true, out received, out available);
+            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, amount, true, true, false, out received, out available);
             double pushed = 0f;
-            Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, -received, true, false, out pushed, out available);
+            Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, -received, true, false, false, out pushed, out available);
         }
 
         private void TransferMainToReserve(double amount)
@@ -1460,9 +1460,9 @@ namespace AY
 
             double received = 0f;
             double available = 0f;
-            Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, amount, true, true, out received, out available);
+            Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, amount, true, true, false, out received, out available);
             double pushed = 0f;
-            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, -received, true, false, out pushed, out available);
+            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, -received, true, false, false, out pushed, out available);
         }
 
         #endregion ResourceFunctions
