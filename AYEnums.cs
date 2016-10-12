@@ -28,7 +28,6 @@ namespace AY
 {
     public enum Subsystem
     {
-        POWER_TURN,
         SAS,
         RCS,
         CLIMATE,

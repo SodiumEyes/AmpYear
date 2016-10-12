@@ -53,10 +53,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab Telemachus Types...");
 
             //find the TMPowerDrain type
-            TMPowerDrainType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "Telemachus.TelemachusPowerDrain");
+            TMPowerDrainType = getType("Telemachus.TelemachusPowerDrain"); 
 
             if (TMPowerDrainType == null)
             {
@@ -67,6 +64,24 @@ namespace AY
 
             _TMWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class TMPowerDrain

@@ -55,10 +55,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab SCANsat Types...");
 
             //find the SCANsat part module type
-            SCANsatType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "SCANsat.SCAN_PartModules.SCANsat");
+            SCANsatType = getType("SCANsat.SCAN_PartModules.SCANsat"); 
 
             if (SCANsatType == null)
             {
@@ -69,6 +66,24 @@ namespace AY
 
             _SSWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class SCANsat

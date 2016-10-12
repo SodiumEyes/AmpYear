@@ -54,10 +54,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab Near Future Solar Types...");
 
             //find the NFSCurvedsolarPanelType type
-            NFSCurvedsolarPanelType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "NearFutureSolar.ModuleCurvedSolarPanel");
+            NFSCurvedsolarPanelType = getType("NearFutureSolar.ModuleCurvedSolarPanel"); 
 
             if (NFSCurvedsolarPanelType == null)
             {
@@ -68,6 +65,24 @@ namespace AY
 
             _NFSWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class NFSCurvedPanel
@@ -115,12 +130,12 @@ namespace AY
             /// <summary>
             /// The actual State of the panel
             /// </summary>
-            public ModuleDeployableSolarPanel.panelStates State
+            public ModuleDeployablePart.DeployState State
             {
                 get
                 {
                     Object tmpObj = StateField.GetValue(actualNFSCurvedPanel);
-                    ModuleDeployableSolarPanel.panelStates tmpState = (ModuleDeployableSolarPanel.panelStates)tmpObj;
+                    ModuleDeployablePart.DeployState tmpState = (ModuleDeployablePart.DeployState)tmpObj;
                     return tmpState;
                 }
             }

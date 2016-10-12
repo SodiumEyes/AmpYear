@@ -102,26 +102,10 @@ namespace AY
         //AmpYear Properties
         internal List<Part> crewablePartList = new List<Part>();
         internal List<string> PartsToDelete = new List<string>();
-        internal List<Part> ReactionWheels = new List<Part>();
         internal List<Part> PartsModuleCommand = new List<Part>(); 
 
-        public class ReactionWheelPower
-        {
-            public float RollTorque { get; set; }
-            public float PitchTorque { get; set; }
-            public float YawTorque { get; set; }
-            public ReactionWheelPower(float roll, float pitch, float yaw)
-            {
-                RollTorque = roll;
-                PitchTorque = pitch;
-                YawTorque = yaw;
-            }
-        }
-
-        internal Dictionary<String, ReactionWheelPower> WheelDfltRotPowerMap = new Dictionary<string, ReactionWheelPower>();
         internal List<ProtoCrewMember> VslRstr = new List<ProtoCrewMember>();
-        internal float SasAdditionalRotPower = 0.0f;
-        internal double TurningFactor = 0.0;
+        
         internal double TotalElectricCharge = 0.0;
         internal double TotalElectricChargeFlowOff = 0.0;
         internal double TotalElectricChargeCapacity = 0.0;
@@ -141,7 +125,6 @@ namespace AY
         internal int MaxCrew = 0;
         private uint rootPartID;
         internal bool RT2UnderControl = true;
-        private ReactionWheelPower defaultRotPower = new ReactionWheelPower(0, 0, 0);
         private bool outhasAlternator = false;
         private bool outcurrentEngActive = false;
         private double outaltRate = 0f;
@@ -150,7 +133,6 @@ namespace AY
         private bool currentEngActive = false;
         private bool hasAlternator = false;
         private Vessel currentVessel;
-        private bool powerTurnOn;
         private double manager_drain, subsystem_drain, total_manager_drain;
 
         private double deltaTime,
@@ -162,7 +144,6 @@ namespace AY
         private string prtName, prtPower;
         private bool prtActive;
         private double tmpPower;
-        private ModuleReactionWheel reactWheelModule;
         private List<Part> vesselparts = new List<Part>();
         private double currentTime, checkVesselUpdateTime;
         private List<Vessel> allVessels = new List<Vessel>();
@@ -194,8 +175,6 @@ namespace AY
         public const double RCS_DRAIN = 1.0 / 60.0;
         public const float POWER_UP_DELAY = 10f;
         public const double SAS_BASE_DRAIN = 1.0 / 60.0;
-        public const double POWER_TURN_DRAIN_FACTOR = 1.0 / 5.0;
-        public const float SAS_POWER_TURN_TORQUE_FACTOR = 0.25f;
         public const float CLIMATE_HEAT_RATE = 1f;
         public const double CLIMATE_CAPACITY_DRAIN_FACTOR = 0.5;
         public const double RECHARGE_RESERVE_RATE = 30.0 / 60.0;
@@ -586,7 +565,6 @@ namespace AY
                 }
                 //Compile information about the vessel and its parts
                 // zero accumulators
-                SasAdditionalRotPower = 0.0f;
                 TotalElectricCharge = 0.0;
                 TotalElectricChargeFlowOff = 0.0;
                 TotalElectricChargeCapacity = 0.0;
@@ -602,7 +580,6 @@ namespace AY
                 currentPoweredRCSDrain = 0.0f;
                 crewablePartList.Clear();
                 PartsModuleCommand.Clear();
-                ReactionWheels.Clear();
                 MaxCrew = 0;
 
                 try
@@ -830,33 +807,7 @@ namespace AY
                         Utilities.Log("RCS - enabled.");
                     }
                 }
-
-                //Update command pod rot powers
-                powerTurnOn = SubsystemPowered(Subsystem.POWER_TURN);
-
-                for (int i = 0; i < ReactionWheels.Count; i++)
-                {
-                    //foreach (Part reactWheel in ReactionWheels)
-                    //{
-                    reactWheelModule = ReactionWheels[i].FindModuleImplementing<ModuleReactionWheel>();
-                    //ReactionWheelPower defaultRotPower = new ReactionWheelPower(0, 0, 0);
-                    WheelDfltRotPowerMap.TryGetValue(ReactionWheels[i].name, out defaultRotPower);
-
-                    if (powerTurnOn)
-                    {
-                        //Apply power turn rotPower
-                        reactWheelModule.RollTorque = defaultRotPower.RollTorque + SasAdditionalRotPower;
-                        reactWheelModule.PitchTorque = defaultRotPower.PitchTorque + SasAdditionalRotPower;
-                        reactWheelModule.YawTorque = defaultRotPower.YawTorque + SasAdditionalRotPower;
-                    }
-                    else //Use default rot power
-                    {
-                        reactWheelModule.RollTorque = defaultRotPower.RollTorque;
-                        reactWheelModule.PitchTorque = defaultRotPower.PitchTorque;
-                        reactWheelModule.YawTorque = defaultRotPower.YawTorque;
-                    }
-                }
-
+                
                 //Calculate total drain from subsystems
                 subsystem_drain = 0.0;
                 _subsystemDrain[(int)Subsystem.RCS] -= currentPoweredRCSDrain;
@@ -900,7 +851,9 @@ namespace AY
                     if (TotalElectricCharge >= desiredElectricity) // if main power >= power required
                     {
                         Utilities.Log_Debug("drawing main power");
-                        totalElecreceived = Utilities.RequestResource(FlightGlobals.ActiveVessel.rootPart, MAIN_POWER_NAME, desiredElectricity);  //get power
+                        double totalAvailable = 0f;
+                        Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, desiredElectricity, true,
+                            true, false, out totalElecreceived, out totalAvailable);  //get power
                         _timeLastElectricity = currentTime - (desiredElectricity - totalElecreceived) / total_manager_drain; //set time last power received
                         hasPower = (UnityEngine.Time.realtimeSinceStartup > _powerUpTime)
                         && (desiredElectricity <= 0.0 || totalElecreceived >= desiredElectricity * 0.99); //set hasPower > power up delay and we received power requested
@@ -915,7 +868,9 @@ namespace AY
                             //double managerTimestepDrain = manager_drain * TimeWarp.fixedDeltaTime; //we only drain manager function
                             //double deltaTime2 = Math.Min(currentTime - _timeLastElectricity, Math.Max(1, TimeWarp.fixedDeltaTime));
                             desiredElectricity2 = manager_drain * deltaTime;
-                            totalElecreceived2 = Utilities.RequestResource(FlightGlobals.ActiveVessel.rootPart, RESERVE_POWER_NAME, desiredElectricity2); // get power
+                            double totalAvailable = 0f;
+                            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, desiredElectricity2, true,
+                                true, false, out totalElecreceived2, out totalAvailable);  //get power
                             _timeLastElectricity = currentTime - (desiredElectricity2 - totalElecreceived2) / manager_drain; // set time last power received
                             HasReservePower = (UnityEngine.Time.realtimeSinceStartup > _powerUpTime)
                             && (desiredElectricity2 <= 0.0 || totalElecreceived2 >= desiredElectricity2 * 0.99); // set hasReservePower > power up delay and we received power
@@ -1327,9 +1282,6 @@ namespace AY
         {
             switch (subsystem)
             {
-                case Subsystem.POWER_TURN:
-                    return "Turn Booster";
-
                 case Subsystem.SAS:
                     return "SAS";
 
@@ -1439,10 +1391,7 @@ namespace AY
                 case Subsystem.RCS:
                     return RCS_DRAIN + currentPoweredRCSDrain;
                 //return RCS_DRAIN;
-
-                case Subsystem.POWER_TURN:
-                    return SasAdditionalRotPower * POWER_TURN_DRAIN_FACTOR;
-
+                
                 case Subsystem.CLIMATE:
                     if (KKPresent)
                     {
@@ -1493,14 +1442,11 @@ namespace AY
             if (amount > TotalElectricChargeCapacity - TotalElectricCharge)
                 amount = TotalElectricChargeCapacity - TotalElectricCharge;
 
-            double received = Utilities.RequestResource(cvp, RESERVE_POWER_NAME, amount);
-
-            int transferAttempts = 0;
-            while (received > 0.0 && transferAttempts < Utilities.MAX_TRANSFER_ATTEMPTS)
-            {
-                received += cvp.RequestResource(MAIN_POWER_NAME, -received);
-                transferAttempts++;
-            }
+            double received = 0f;
+            double available = 0f;
+            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, amount, true, true, false, out received, out available);
+            double pushed = 0f;
+            Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, -received, true, false, false, out pushed, out available);
         }
 
         private void TransferMainToReserve(double amount)
@@ -1512,14 +1458,11 @@ namespace AY
             if (amount > TotalReservePowerCapacity - TotalReservePower)
                 amount = TotalReservePowerCapacity - TotalReservePower;
 
-            double received = Utilities.RequestResource(cvp, MAIN_POWER_NAME, amount);
-
-            int transferAttempts = 0;
-            while (received > 0.0 && transferAttempts < Utilities.MAX_TRANSFER_ATTEMPTS)
-            {
-                received += cvp.RequestResource(RESERVE_POWER_NAME, -received);
-                transferAttempts++;
-            }
+            double received = 0f;
+            double available = 0f;
+            Utilities.requireResource(FlightGlobals.ActiveVessel, MAIN_POWER_NAME, amount, true, true, false, out received, out available);
+            double pushed = 0f;
+            Utilities.requireResource(FlightGlobals.ActiveVessel, RESERVE_POWER_NAME, -received, true, false, false, out pushed, out available);
         }
 
         #endregion ResourceFunctions

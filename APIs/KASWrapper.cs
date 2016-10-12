@@ -56,10 +56,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab KAS Types...");
 
             //find the base type
-            KASType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName.Contains("KAS"));
+            KASType = getType("KAS"); 
 
             if (KASType == null)
             {
@@ -69,10 +66,7 @@ namespace AY
             LogFormatted("KAS Version:{0}", KASType.Assembly.GetName().Version.ToString());
 
             //find the ModuleNavLight type
-            KASModuleWinchType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "KAS.KASModuleWinch");
+            KASModuleWinchType = getType("KAS.KASModuleWinch"); 
 
             if (KASModuleWinchType == null)
             {
@@ -80,10 +74,7 @@ namespace AY
             }
 
             //find the ModuleNavLight type
-            KASModuleMagnetType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "KAS.KASModuleMagnet");
+            KASModuleMagnetType = getType("KAS.KASModuleMagnet"); 
 
             if (KASModuleMagnetType == null)
             {
@@ -92,6 +83,24 @@ namespace AY
 
             _KASWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class KASModuleWinch

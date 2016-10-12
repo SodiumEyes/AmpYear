@@ -74,10 +74,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab Remote Tech Types...");
 
             //find the base type
-            RTAPIType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "RemoteTech.API.API");
+            RTAPIType = getType("RemoteTech.API.API"); 
 
             if (RTAPIType == null)
             {
@@ -87,10 +84,7 @@ namespace AY
             LogFormatted("Remote Tech Version:{0}", RTAPIType.Assembly.GetName().Version.ToString());
 
             //find the RTSettings type
-            RTSettingsType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "RemoteTech.RTSettings");
+            RTSettingsType = getType("RemoteTech.RTSettings"); 
 
             if (RTSettingsType == null)
             {
@@ -98,10 +92,7 @@ namespace AY
             }
 
             //find the Settings type
-            SettingsType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "RemoteTech.Settings");
+            SettingsType = getType("RemoteTech.Settings"); 
 
             if (SettingsType == null)
             {
@@ -109,10 +100,7 @@ namespace AY
             }
 
             //now the RTAntenna Type
-            actualRTAntennaType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetExportedTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "RemoteTech.Modules.ModuleRTAntenna");
+            actualRTAntennaType = getType("RemoteTech.Modules.ModuleRTAntenna"); 
 
             if (actualRTAntennaType == null)
             {
@@ -153,6 +141,24 @@ namespace AY
 
             _RTWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         /// <summary>

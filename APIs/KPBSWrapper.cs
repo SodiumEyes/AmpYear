@@ -55,10 +55,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab KPBS Types...");
 
             //find the KPBS Greenhouse part module type
-            KPBSGHType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "PlanetarySurfaceStructures.PlanetaryGreenhouse");
+            KPBSGHType = getType("PlanetarySurfaceStructures.PlanetaryGreenhouse"); 
 
             if (KPBSGHType == null)
             {
@@ -66,10 +63,7 @@ namespace AY
             }
 
             //find the KPBS Converter part module type
-            KPBSCnvType = AssemblyLoader.loadedAssemblies
-                .Select(a => a.assembly.GetTypes())
-                .SelectMany(t => t)
-                .FirstOrDefault(t => t.FullName == "PlanetarySurfaceStructures.ModuleKPBSConverter");
+            KPBSCnvType = getType("PlanetarySurfaceStructures.ModuleKPBSConverter"); 
 
             if (KPBSCnvType == null)
             {
@@ -80,6 +74,24 @@ namespace AY
 
             _KPBSWrapped = true;
             return true;
+        }
+
+        internal static Type getType(string name)
+        {
+            Type type = null;
+            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
+
+            {
+                if (t.FullName == name)
+                    type = t;
+            }
+            );
+
+            if (type != null)
+            {
+                return type;
+            }
+            return null;
         }
 
         public class PlanetaryGreenhouse

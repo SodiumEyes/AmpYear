@@ -37,7 +37,6 @@
  */
 using System;
 using System.Collections.Generic;
-using KSP.UI.Screens;
 using UnityEngine;
 using RSTUtils;
 using RSTUtils.Extensions;
@@ -1803,9 +1802,6 @@ namespace AY
             Vessel cv = FlightGlobals.ActiveVessel;
             switch (subsystem)
             {
-                case Subsystem.POWER_TURN:
-                    return SasAdditionalRotPower > 0.0f;
-
                 case Subsystem.RCS:
                     return HasRcs;
 
