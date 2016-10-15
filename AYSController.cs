@@ -86,6 +86,7 @@ namespace AY
         private bool _inputSdebug = _debugging;
         private bool _inputVdebug = _debugging;
         private bool _inputToolTipsOn = true;
+        private bool _inputAYMonitoringUseEC = true;
         private string _inputSESPHighThreshold = "";
         private double _inputVESPHighThreshold = 0f;
         private string _inputSESPMediumThreshold = "";
@@ -110,6 +111,7 @@ namespace AY
         private double ESPMediumThreshold = 0.1;
         private double ESPLowThreshold = 0.2;
         private double EmgcyShutOverrideCooldown = 300;
+        private bool AYMonitoringUseEC = true;
         private List<KeyValuePair<string, ESPValues>> PartModuleEmergShutDnDflt = new List<KeyValuePair<string, ESPValues>>();
         public bool Useapplauncher = false;
         private bool KKPresent = false;
@@ -235,6 +237,7 @@ namespace AY
                     _inputVESPLowThreshold = ESPLowThreshold;
                     _inputSEmgcyShutOverrideCooldown = EmgcyShutOverrideCooldown.ToString();
                     _inputVEmgcyShutOverrideCooldown = EmgcyShutOverrideCooldown;
+                    _inputAYMonitoringUseEC = AYMonitoringUseEC;
                     _inputPartModuleEmergShutDnDflt.Clear();
                     foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
                     {
@@ -271,6 +274,13 @@ namespace AY
 
             GUILayout.BeginVertical();
             _bodscrollViewVector = GUILayout.BeginScrollView(_bodscrollViewVector, GUILayout.Height(WINDOW_BASE_HEIGHT - 30), GUILayout.Width(SCWINDOW_WIDTH - 10));
+
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent("AmpYear Monitoring uses EC", "If ON AmpYear uses EC for it's monitoring functions. If Off it does not."), Textures.StatusStyle, GUILayout.Width(300));
+            _inputAYMonitoringUseEC = GUILayout.Toggle(_inputAYMonitoringUseEC, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
+            GUILayout.EndHorizontal();
+            
             GUILayout.BeginHorizontal();
             GUILayout.Box(new GUIContent("Reserve Battery Recharge Percentage", "The percentage of Main Power available before AmpYear begins recharging Reserve Batteries"), Textures.StatusStyle, GUILayout.Width(300));
             _inputSrrt = Regex.Replace(GUILayout.TextField(_inputSrrt, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
@@ -545,6 +555,7 @@ namespace AY
                 ESPMediumThreshold = _inputVESPMediumThreshold;
                 ESPLowThreshold = _inputVESPLowThreshold;
                 EmgcyShutOverrideCooldown = _inputVEmgcyShutOverrideCooldown;
+                AYMonitoringUseEC = _inputAYMonitoringUseEC;
                 PartModuleEmergShutDnDflt.Clear();
                 foreach (KeyValuePair<string, ESPValues> validentry in _inputPartModuleEmergShutDnDflt)
                 {
@@ -607,6 +618,7 @@ namespace AY
             ESPMediumThreshold = _aYsettings.ESPMediumThreshold;
             ESPLowThreshold = _aYsettings.ESPLowThreshold;
             EmgcyShutOverrideCooldown = _aYsettings.EmgcyShutOverrideCooldown;
+            AYMonitoringUseEC = _aYsettings.AYMonitoringUseEC;
             PartModuleEmergShutDnDflt.Clear();
             foreach (KeyValuePair<string, ESPValues> validentry in _aYsettings.PartModuleEmergShutDnDflt)
             {
@@ -630,6 +642,7 @@ namespace AY
             _aYsettings.ESPMediumThreshold = ESPMediumThreshold;
             _aYsettings.ESPLowThreshold = ESPLowThreshold;
             _aYsettings.EmgcyShutOverrideCooldown = EmgcyShutOverrideCooldown;
+            _aYsettings.AYMonitoringUseEC = AYMonitoringUseEC;
             _aYsettings.PartModuleEmergShutDnDflt.Clear();
             foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
             {

@@ -46,7 +46,6 @@ namespace AY
 
         public static string[] ValidPartModuleEmergShutDn = new string[]
         {
-            "Turn Booster",
             "RCS",
             "SAS",
             "AYSubsystems",
@@ -115,6 +114,8 @@ namespace AY
 
         public double EmgcyShutOverrideCooldown;
 
+        public bool AYMonitoringUseEC;
+
         public bool showSI;
 
         public AYSettings()
@@ -138,6 +139,7 @@ namespace AY
             ESPLowThreshold = 20;
             EmgcyShutOverrideCooldown = 300;
             showSI = false;
+            AYMonitoringUseEC = true;
         }
 
         //Settings Functions Follow
@@ -167,6 +169,7 @@ namespace AY
                 AYsettingsNode.TryGetValue("ESPMediumThreshold", ref ESPMediumThreshold);
                 AYsettingsNode.TryGetValue("ESPLowThreshold", ref ESPLowThreshold);
                 AYsettingsNode.TryGetValue("EmgcyShutOverrideCooldown", ref EmgcyShutOverrideCooldown);
+                AYsettingsNode.TryGetValue("AYMonitoringUseEC", ref AYMonitoringUseEC);
                 foreach (string validentry in ValidPartModuleEmergShutDn)
                 {
                     ESPValues tmpESPVals = new ESPValues(true, ESPPriority.MEDIUM);
@@ -221,6 +224,7 @@ namespace AY
             settingsNode.AddValue("ESPMediumThreshold", ESPMediumThreshold);
             settingsNode.AddValue("ESPLowThreshold", ESPLowThreshold);
             settingsNode.AddValue("EmgcyShutOverrideCooldown", EmgcyShutOverrideCooldown);
+            settingsNode.AddValue("AYMonitoringUseEC", AYMonitoringUseEC);
             foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
             {
                 string tmpString = validentry.Value.EmergShutDnDflt.ToString() + ',' +
