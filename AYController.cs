@@ -38,7 +38,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using KSP.UI.Screens;
 using UnityEngine;
 using RSTUtils;
@@ -208,8 +207,6 @@ namespace AY
             _eplPartModuleName = Mathf.Round((_epLwindowPos.width - 28f) * .4f);
             _eplec = Mathf.Round((_epLwindowPos.width - 28f) * .17f);
             _eplProdListHeight = _eplConsListHeight = Mathf.Round((_epLwindowPos.height - 170) * .5f);
-            GameEvents.OnVesselRollout.Add(OnVesselRollout);
-            GameEvents.onVesselCreate.Add(OnVesselCreate);
             AYMenuAppLToolBar = new AppLauncherToolBar("AmpYear", "AmpYear",
                 Textures.PathToolbarIconsPath + "/AYGreenOffTB",
                 ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.MAPVIEW,
@@ -429,7 +426,13 @@ namespace AY
             GameEvents.onGameSceneSwitchRequested.Add(OnGameSceneSwitch);
             GameEvents.onGameSceneLoadRequested.Add(OnGameSceneLoad);
             GameEvents.onGUIEngineersReportReady.Add(AddTests);
-            
+            GameEvents.OnVesselRollout.Add(OnVesselRollout);
+            GameEvents.onVesselCreate.Add(OnVesselCreate);
+            GameEvents.onVesselDestroy.Add(onVesselDestroy);
+            GameEvents.onVesselRecovered.Add(onVesselRecovered);
+            //Clean up the known vessels dictionary for any that don't exist any more on startup.
+            RemoveUnknownVessels();
+
             Utilities.Log_Debug("AYController Start complete"); 
         }
 
@@ -451,6 +454,8 @@ namespace AY
             GameEvents.onGUIEngineersReportReady.Remove(AddTests);
             GameEvents.OnVesselRollout.Remove(OnVesselRollout);
             GameEvents.onVesselCreate.Remove(OnVesselCreate);
+            GameEvents.onVesselDestroy.Remove(onVesselDestroy);
+            GameEvents.onVesselRecovered.Remove(onVesselRecovered);
             InputLock = false;
         }
 
@@ -606,7 +611,14 @@ namespace AY
 
                     //Begin calcs
                     if (Utilities.GameModeisFlight) // if in flight compile the vessel roster
+                    {
+                        //Work-around for stock bug in KSP 1.2
+                        if (FlightGlobals.ActiveVessel.crewedParts > 0 && FlightGlobals.ActiveVessel.GetVesselCrew().Count == 0)
+                        {
+                            FlightGlobals.ActiveVessel.RebuildCrewList();
+                        }
                         VslRstr = FlightGlobals.ActiveVessel.GetVesselCrew();
+                    }
 
                     //loop through all parts in the parts list of the vessel
                     for (int i = 0; i < vesselparts.Count; i++)
@@ -836,8 +848,11 @@ namespace AY
                         continue;
                     AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, SubsystemEnabled(LoadGlobals.SubsystemArrayCache[i]), _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
                 }
-                prtName = "AmpYear Manager";
-                AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, (float)manager_drain, false, false);
+                if (AYsettings.AYMonitoringUseEC)
+                {
+                    prtName = "AmpYear Manager";
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled,(float) manager_drain, false, false);
+                }
 
                 //Drain main power
                 //double currentTime = Planetarium.GetUniversalTime();
@@ -932,8 +947,11 @@ namespace AY
                     
                 }
                 manager_drain = ManagerCurrentDrain;
-                prtName = "AmpYear Manager";
-                AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain, false, false);
+                if (AYsettings.AYMonitoringUseEC)
+                {
+                    prtName = "AmpYear Manager";
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain,false, false);
+                }
                 hasPower = true;
                 HasReservePower = true;
             }
@@ -945,71 +963,14 @@ namespace AY
 
         private void CheckVslUpdate()
         {
-            // Called every fixed update from fixedupdate - Check for vessels that have been deleted and remove from Dictionary
+            // Called every fixed update from fixedupdate 
             // also updates current active vessel details/settings
-            // adds new vessel if current active vessel is not known and updates it's details/settings
-            //double currentTime = Planetarium.GetUniversalTime();
-            allVessels = FlightGlobals.Vessels;
-            vesselsToDelete.Clear();
-            //* Delete vessels that do not exist any more or have no crew
-            foreach (var entry in AYgameSettings.KnownVessels)
-            {
-                Utilities.Log_Debug("AYController knownvessels id = " + entry.Key + " Name = " + entry.Value.VesselName);
-                //Guid vesselId = entry.Key;
-                //VesselInfo vesselInfo = new VesselInfo(entry.Value.VesselName, currentTime);
-                //vesselInfo = entry.Value;
-                //Vessel vessel = allVessels.Find(v => v.id == entry.Key);
-                //if (vessel == null)
-                if (allVessels.FirstOrDefault(v => v.id == entry.Key) == null)
-                {
-                    Utilities.Log_Debug("Deleting vessel " + entry.Value.VesselName + " - vessel does not exist anymore");
-                    vesselsToDelete.Add(entry.Key);
-                    continue;
-                }
-                //if (vessel.loaded)
-                //{
-                //    UpdateVesselCounts(vesselInfo, vessel);
-                //    if (vesselInfo.NumCrew == 0)
-                //    {
-                //        Utilities.Log_Debug("Deleting vessel " + vesselInfo.VesselName + " - no crew parts anymore");
-                //        vesselsToDelete.Add(vesselId);
-                //        continue;
-                //    }
-                //}
-            }
-            vesselsToDelete.ForEach(id => AYgameSettings.KnownVessels.Remove(id));
-
-            /*
-            //* Add all new vessels
-            foreach (Vessel vessel in allVessels) //.Where(v => v.loaded))
-            {
-                if (vessel.loaded)
-                {
-                    Guid vesselId = vessel.id;
-                    if (!AYgameSettings.KnownVessels.ContainsKey(vesselId) && Utilities.ValidVslType(vessel))
-                    {
-                        if (vessel.FindPartModulesImplementing<ModuleCommand>().FirstOrDefault() != null)
-                        {
-                            Utilities.Log_Debug("New vessel: " + vessel.vesselName + " (" + vessel.id + ")");
-                            VesselInfo vesselInfo = new VesselInfo(vessel.vesselName, currentTime);
-                            vesselInfo.VesselType = vessel.vesselType;
-                            UpdateVesselInfo(vesselInfo);
-                            UpdateVesselCounts(vesselInfo, vessel);
-                            AYgameSettings.KnownVessels.Add(vesselId, vesselInfo);
-                        }
-                    }
-                }
-            }*/
-
             //*Update the current vessel
-            //if (currvesselInfo == null)
-            //    currvesselInfo = new VesselInfo(FlightGlobals.ActiveVessel.vesselName, currentTime);
             if (AYgameSettings.KnownVessels.TryGetValue(Currentvesselid, out currvesselInfo))
             {
                 UpdateVesselInfo(currvesselInfo);
                 UpdateVesselCounts(currvesselInfo, FlightGlobals.ActiveVessel);
                 currvesselInfo.VesselType = FlightGlobals.ActiveVessel.vesselType;
-                //AYgameSettings.KnownVessels[Currentvesselid] = currvesselInfo;
             }
         }
 
@@ -1071,24 +1032,69 @@ namespace AY
             }
         }
 
+        private void RemoveUnknownVessels()
+        {
+            allVessels = FlightGlobals.Vessels;
+            vesselsToDelete.Clear();
+            //* Delete vessels that do not exist any more or have no crew
+            foreach (var entry in AYgameSettings.KnownVessels)
+            {
+                Utilities.Log_Debug("AYController knownvessels id = " + entry.Key + " Name = " + entry.Value.VesselName);
+                
+                if (!allVessels.Exists(v => v.id == entry.Key))
+                {
+                    Utilities.Log("Deleting vessel " + entry.Value.VesselName + " - vessel does not exist anymore");
+                    vesselsToDelete.Add(entry.Key);
+                    continue;
+                }
+            }
+            vesselsToDelete.ForEach(id => AYgameSettings.KnownVessels.Remove(id));
+        }
+
+        private void onVesselDestroy(Vessel vessel)
+        {
+            Utilities.Log("AYController onVesselDestroy:{0} ({1})", vessel.name, vessel.id);
+            if (AYgameSettings.KnownVessels.ContainsKey(vessel.id))
+            {
+                AYgameSettings.KnownVessels.Remove(vessel.id);
+                Utilities.Log("AYController Vessel Removed");
+            }
+        }
+        //todo This is never called because the module is not active when the vessel is recovered.
+        //needs to be moved to a module that is never destroyed in all scenes. But in the meantime RemoveUnknownVessels() does a cleanup.
+        private void onVesselRecovered(ProtoVessel vessel, bool quick)
+        {
+            Utilities.Log("AYController onVesselRecovered:{0} ({1})", vessel.vesselName, vessel.vesselID);
+            if (AYgameSettings.KnownVessels.ContainsKey(vessel.vesselID))
+            {
+                AYgameSettings.KnownVessels.Remove(vessel.vesselID);
+                Utilities.Log("AYController Vessel Removed");
+            }
+        }
+
         private void OnVesselLoad(Vessel newvessel)
         {
-            Utilities.Log_Debug("AYController onVesselLoad:{0} ({1})" , newvessel.name , newvessel.id);
+            Utilities.Log("AYController onVesselLoad:{0} ({1})" , newvessel.name , newvessel.id);
             if (newvessel.id != FlightGlobals.ActiveVessel.id || !Utilities.ValidVslType(newvessel))
             {
-                Utilities.Log_Debug("AYController newvessel is not active vessel, or not valid type for AmpYear");
+                Utilities.Log("AYController newvessel is not active vessel, or not valid type for AmpYear");
                 return;
             }
 
             // otherwise we load the vessel settings
             Currentvesselid = newvessel.id;
             LoadVesselSettings(newvessel);
+            //Work-around for stock bug in KSP 1.2
+            if (newvessel.crewedParts > 0 && newvessel.GetVesselCrew().Count == 0)
+            {
+                newvessel.RebuildCrewList();
+            }
         }
 
         private void OnVesselChange(Vessel newvessel)
         {
-            Utilities.Log_Debug("AYController onVesselChange New:{0} ({1}) Old:{2}" , newvessel.name , newvessel.id, Currentvesselid);
-            Utilities.Log_Debug("AYController active vessel " + FlightGlobals.ActiveVessel.id);
+            Utilities.Log("AYController onVesselChange New:{0} ({1}) Old:{2}" , newvessel.name , newvessel.id, Currentvesselid);
+            Utilities.Log("AYController active vessel " + FlightGlobals.ActiveVessel.id);
             if (Currentvesselid == newvessel.id) // which would be the case if it's an EVA kerbal re-joining ship
                 return;
             //double currentTime = Planetarium.GetUniversalTime();
@@ -1131,7 +1137,7 @@ namespace AY
 
         private void OnCrewBoardVessel(GameEvents.FromToAction<Part, Part> action)
         {
-            Utilities.Log_Debug("AYController onCrewBoardVessel:{0} ({1}) Old:{2} ({3})" , action.to.vessel.name , action.to.vessel.id, action.from.vessel.name , action.from.vessel.id);
+            Utilities.Log("AYController onCrewBoardVessel:{0} ({1}) Old:{2} ({3})" , action.to.vessel.name , action.to.vessel.id, action.from.vessel.name , action.from.vessel.id);
             Utilities.Log_Debug("AYController FlightGlobals.ActiveVessel:" + FlightGlobals.ActiveVessel.id);
             Currentvesselid = action.to.vessel.id;
             LoadVesselSettings(action.to.vessel);
@@ -1188,14 +1194,14 @@ namespace AY
                 VesselInfo newvesselinfo = new VesselInfo(newvessel.name, currentTime);
                 AYgameSettings.KnownVessels.Add(newvessel.id, newvesselinfo);
                 Utilities.Log_Debug("AYController Vessel Setting Default Settings");
-                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; i++)
+                for (int i = 0; i < LoadGlobals.SubsystemArrayCache.Length; ++i)
                     // Enum.GetValues(typeof(Subsystem)).Length; i++)
                 {
                     _subsystemToggle[i] = false;
                     _subsystemDrain[i] = 0.0;
                 }
 
-                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; i++)
+                for (int i = 0; i < LoadGlobals.GuiSectionArrayCache.Length; ++i)
                     // Enum.GetValues(typeof(GUISection)).Length; i++)
                     _guiSectionEnableFlag[i] = false;
                 _managerEnabled = true;
@@ -1209,12 +1215,12 @@ namespace AY
 
                 if (!KKPresent) //KabinKraziness not present turn off settings for KabinKraziness on vessel
                 {
+                    _subsystemToggle[2] = false;
                     _subsystemToggle[3] = false;
                     _subsystemToggle[4] = false;
-                    _subsystemToggle[5] = false;
+                    _subsystemDrain[2] = 0.0;
                     _subsystemDrain[3] = 0.0;
                     _subsystemDrain[4] = 0.0;
-                    _subsystemDrain[5] = 0.0;
                     _guiSectionEnableFlag[2] = false;
                 }
                 EmgcyShutOverride = false;
@@ -1254,6 +1260,8 @@ namespace AY
         {
             get
             {
+                if (!AYsettings.AYMonitoringUseEC)
+                    return 0.0f;
                 return MANAGER_ACTIVE_DRAIN;
             }
         }
@@ -1372,10 +1380,6 @@ namespace AY
                         return SubsystemActiveDrain(subsystem);
                     else
                         return 0.0;
-
-                //case Subsystem.POWER_TURN:
-                //    return turningFactor * subsystemActiveDrain(subsystem);
-
                 default:
                     return SubsystemActiveDrain(subsystem);
             }
@@ -1386,9 +1390,13 @@ namespace AY
             switch (subsystem)
             {
                 case Subsystem.SAS:
+                    if (!AYsettings.AYMonitoringUseEC)
+                        return 0.0f;
                     return SAS_BASE_DRAIN;
 
                 case Subsystem.RCS:
+                    if (!AYsettings.AYMonitoringUseEC)
+                        return currentPoweredRCSDrain;
                     return RCS_DRAIN + currentPoweredRCSDrain;
                 //return RCS_DRAIN;
                 

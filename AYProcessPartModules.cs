@@ -390,7 +390,7 @@ namespace AY
             if (TACLPresent)
                 try
                 {
-                    checkTACL(null, currentPart, true);
+                    checkTACL(module, currentPart, true);
                 }
                 catch
                 {
@@ -414,8 +414,8 @@ namespace AY
                 prtActive = ECConsumed > 0;
                 tmpPower = ECConsumed;
             }
-
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            if (prtActive)
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
             PartsModuleCommand.Add(currentPart);
         }
         
@@ -1305,25 +1305,14 @@ namespace AY
                     tmpPower = 0;
                     tmpSs = new ScanSatWrapper.SCANsat(psdpart);
 
+                    double ECConsumed = 0f;
+                    double ECProduced = 0f;
+                    ProcessResHandler("Input", psdpart, out ECConsumed, out ECProduced);
+
                     if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && tmpSs.scanning))
                     {
                         prtActive = true;
-                        int count =tmpSs.resourceInputs.Count;
-
-                        for (int i = 0; i < count; i++)
-                        {
-                            if (tmpSs.resourceInputs[i].name == MAIN_POWER_NAME)
-                            {
-                                if (Utilities.GameModeisEditor)
-                                {
-                                    tmpPower += tmpSs.resourceInputs[i].rate;
-                                }
-                                else
-                                {
-                                    tmpPower += tmpSs.resourceInputs[i].currentAmount;
-                                }
-                            }
-                        }
+                        tmpPower = ECConsumed;
                     }
                     AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
 
@@ -1370,7 +1359,7 @@ namespace AY
             {
                 if (cmdPod)
                 {
-                    prtName = "TACL Life Support";
+                    prtName = "TAC Life Support";
                     prtPower = "";
                     prtActive = false;
                     if (Utilities.GameModeisFlight) //if in flight set maxCrew to actual crew on board. Set earlier based on maximum crew capacity of each part
@@ -1384,7 +1373,7 @@ namespace AY
 
                     prtActive = MaxCrew > 0;
 
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, (float)calcDrain, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, "LifeSupport", false, prtActive, (float)calcDrain, false, false);
                 }
                 else
                 {
@@ -1395,44 +1384,7 @@ namespace AY
                     switch (psdpart.moduleName)
                     {
                         case "TacGenericConverter":
-                            tacGC = new TACLSWrapper.TACLSGenericConverter(psdpart);
-                            if (Utilities.GameModeisFlight)
-                                prtActive = tacGC.converterEnabled;
-                            else if (Utilities.GameModeisEditor)
-                                prtActive = true;
-                            
-                            string[] arr = tacGC.inputResources.Split(',');
-                            for (int i = 0; i < arr.Length; i += 2)
-                            {
-                                resName = arr[i].Trim();
-                                if (resName == MAIN_POWER_NAME)
-                                {
-                                    double resAmt = 0;
-                                    bool prse = double.TryParse(arr[i + 1], out resAmt);
-                                    if (!prse) resAmt = 0;
-                                    tmpPower = resAmt * tacGC.conversionRate;
-                                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
-                                    break;
-                                }
-                            }
-
-                            arr = tacGC.outputResources.Split(',');
-                            for (int i = 0; i < arr.Length; i += 3)
-                            {
-                                resName = arr[i].Trim();
-                                if (resName == MAIN_POWER_NAME)
-                                {
-                                    double resAmt = 0;
-                                    bool prse = double.TryParse(arr[i + 1], out resAmt);
-                                    if (!prse) resAmt = 0;
-                                    tmpPower = resAmt * tacGC.conversionRate;
-                                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
-                                    break;
-                                }
-                            }
-
-                            ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
-
+                            ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, 0);
                             break;
                     }
                 }

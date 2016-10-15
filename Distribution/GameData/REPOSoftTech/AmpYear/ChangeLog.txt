@@ -1,4 +1,11 @@
-﻿V1.4.0.0 "KSP 1.2"
+﻿V1.4.1.0 "KSP 1.2 Fixes"
+    Fix KSPedia package errors on loading.
+	Fix TAC LS integration. https://github.com/JPLRepo/AmpYear/issues/48
+	Fix IndexOutOfRangeException on Loading new vessels. https://github.com/JPLRepo/AmpYear/issues/47
+	Added Setting to turn on/off EC monitoring usage by AmpYear. (On by default). https://github.com/JPLRepo/AmpYear/issues/46
+	Performance improvement - changed Vessel checking to now all be event driven.
+	Added Plane and Relay to tracked vessel types (woops).
+V1.4.0.0 "KSP 1.2"
     Changes and re-compile to work in KSP 1.2.
 	Needs much more clean-up and an optimization pass to take advantage of new KSP 1.2 API features in the next version.
 	Removed the Power Turn (Turn Booster) SAS feature.

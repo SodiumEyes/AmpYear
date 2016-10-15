@@ -23,8 +23,6 @@ namespace AY
     public class TACLSWrapper
     {
         public static System.Type TACLSType;
-        public static System.Type TACLSgameSettingsType;
-        public static System.Type TACLSglobalSettingsType;
         public static System.Type TACLSGenericConverterType;
         protected static Object actualTACLS;
 
@@ -81,21 +79,7 @@ namespace AY
             }
 
             LogFormatted("TAC LS Version:{0}", TACLSType.Assembly.GetName().Version.ToString());
-
-            TACLSgameSettingsType = getType("Tac.TacGameSettings"); 
-
-            if (TACLSgameSettingsType == null)
-            {
-                return false;
-            }
-
-            TACLSglobalSettingsType = getType("Tac.GlobalSettings"); 
-
-            if (TACLSgameSettingsType == null)
-            {
-                return false;
-            }
-
+            
             TACLSGenericConverterType = getType("Tac.TacGenericConverter"); 
 
             if (TACLSGenericConverterType == null)
@@ -107,7 +91,7 @@ namespace AY
             LogFormatted_DebugOnly("Got Assembly Types, grabbing Instances");
             try
             {
-                actualTACLS = TACLSType.GetMember("get_Instance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                actualTACLS = TACLSType.GetField("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null);
             }
             catch (Exception)
             {
@@ -155,68 +139,16 @@ namespace AY
             {
                 Instance = this;
                 actualTACLSAPI = a;
-                getInstanceMethod = TACLSType.GetMethod("get_Instance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                TAClifeSupport = getInstance();
-
-                getgblsettingsInstanceMethod = TACLSType.GetMethod("get_globalSettings", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                actualTACLSglobalSettings = getgblsettingsInstance();
-
-                BaseElectricityConsumptionRateMethod = TACLSglobalSettingsType.GetMethod("get_BaseElectricityConsumptionRate", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-                ElectricityConsumptionRateMethod = TACLSglobalSettingsType.GetMethod("get_ElectricityConsumptionRate", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-
-                getgameSettingsInstanceMethod = TACLSType.GetMethod("get_gameSettings", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                actualTACLSgameSettings = getgameSettingsInstance();
-                getEnabledMethod = TACLSgameSettingsType.GetMethod("get_Enabled", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                
+                getEnabledMethod = TACLSType.GetMethod("get_Enabled", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+                BaseElectricityConsumptionRateMethod = TACLSType.GetMethod("get_BaseElectricityConsumptionRate", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+                ElectricityConsumptionRateMethod = TACLSType.GetMethod("get_ElectricityConsumptionRate", BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
             }
 
             private Object actualTACLSAPI;
-            private Object TAClifeSupport;
-            private Object actualTACLSglobalSettings;
-            private Object actualTACLSgameSettings;
-
+            
+            
             #region Methods
-
-            private MethodInfo getInstanceMethod;
-
-            /// <summary>
-            /// Get the instance of TacLifeSupport class from Tac
-            /// </summary>
-            /// <returns>TacLifeSupport object</returns>
-            internal Object getInstance()
-            {
-                try
-                {
-                    return (Object)getInstanceMethod.Invoke(actualTACLSAPI, null);
-                }
-                catch (Exception ex)
-                {
-                    LogFormatted("Unable to invoke TAC LS get_Instance Method");
-                    LogFormatted("Exception: {0}", ex);
-                    return false;
-                    //throw;
-                }
-            }
-
-            private MethodInfo getgblsettingsInstanceMethod;
-
-            /// <summary>
-            /// Get the instance of TacLifeSupport class from Tac
-            /// </summary>
-            /// <returns>TacLifeSupport object</returns>
-            private Object getgblsettingsInstance()
-            {
-                try
-                {
-                    return (Object)getgblsettingsInstanceMethod.Invoke(TAClifeSupport, null);
-                }
-                catch (Exception ex)
-                {
-                    LogFormatted("Unable to invoke TAC LS get_Instance globalSettings Method");
-                    LogFormatted("Exception: {0}", ex);
-                    return false;
-                    //throw;
-                }
-            }
 
             private MethodInfo BaseElectricityConsumptionRateMethod;
 
@@ -225,7 +157,7 @@ namespace AY
             /// </summary>
             public double BaseElectricityConsumptionRate
             {
-                get { return (double)BaseElectricityConsumptionRateMethod.Invoke(actualTACLSglobalSettings, null); }
+                get { return (double)BaseElectricityConsumptionRateMethod.Invoke(actualTACLSAPI, null); }
             }
 
             private MethodInfo ElectricityConsumptionRateMethod;
@@ -235,29 +167,10 @@ namespace AY
             /// </summary>
             public double ElectricityConsumptionRate
             {
-                get { return (double)ElectricityConsumptionRateMethod.Invoke(actualTACLSglobalSettings, null); }
+                get { return (double)ElectricityConsumptionRateMethod.Invoke(actualTACLSAPI, null); }
             }
 
-            private MethodInfo getgameSettingsInstanceMethod;
-
-            /// <summary>
-            /// Get the instance of TacLifeSupport class from Tac
-            /// </summary>
-            /// <returns>TacLifeSupport object</returns>
-            private Object getgameSettingsInstance()
-            {
-                try
-                {
-                    return (Object)getgameSettingsInstanceMethod.Invoke(TAClifeSupport, null);
-                }
-                catch (Exception ex)
-                {
-                    LogFormatted("Unable to invoke TAC LS get_Instance gameSettings Method");
-                    LogFormatted("Exception: {0}", ex);
-                    return false;
-                    //throw;
-                }
-            }
+            
 
             private MethodInfo getEnabledMethod;
 
@@ -269,7 +182,7 @@ namespace AY
             {
                 try
                 {
-                    return (bool)getEnabledMethod.Invoke(actualTACLSgameSettings, null);
+                    return (bool)getEnabledMethod.Invoke(actualTACLSAPI, null);
                 }
                 catch (Exception ex)
                 {
