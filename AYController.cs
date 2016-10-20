@@ -623,8 +623,6 @@ namespace AY
                     //loop through all parts in the parts list of the vessel
                     for (int i = 0; i < vesselparts.Count; i++)
                     {
-                        //foreach (Part currentPart in parts)
-                        //{
                         if (vesselparts[i].CrewCapacity > 0)
                         {
                             crewablePartList.Add(vesselparts[i]);
@@ -637,8 +635,6 @@ namespace AY
                         //loop through all the modules in the current part
                         for (int j = 0; j < vesselparts[i].Modules.Count; j++)
                         {
-                            //foreach (PartModule module in parts[i].Modules)
-                            //{
                             //Check if the current module is a stock part module and process it.
                             //Returned values : Bool true if it was a stock module or false if it was not.
                             // hasAlternator is true if the module had an Alternator.

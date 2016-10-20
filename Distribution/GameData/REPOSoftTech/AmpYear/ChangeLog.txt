@@ -1,4 +1,8 @@
-﻿V1.4.1.0 "KSP 1.2 Fixes"
+﻿V1.4.2.0 "More Fixes"
+	Fix AVC version checking file. https://github.com/JPLRepo/AmpYear/issues/50
+	Add scanSAT ModuleSCANResourceScanner support. https://github.com/JPLRepo/AmpYear/issues/43
+	Fix conflict when AmpYear and Contract Configurator and KSP Interstellar intalled.
+V1.4.1.0 "KSP 1.2 Fixes"
     Fix KSPedia package errors on loading.
 	Fix TAC LS integration. https://github.com/JPLRepo/AmpYear/issues/48
 	Fix IndexOutOfRangeException on Loading new vessels. https://github.com/JPLRepo/AmpYear/issues/47
