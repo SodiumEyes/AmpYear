@@ -12,7 +12,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Reflection;
 
 namespace AY
@@ -55,10 +54,6 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab FNPlugin Types...");
 
             //find the FNPlugin type
-            var asm = AssemblyLoader.loadedAssemblies;
-            var types = AssemblyLoader.loadedTypes;
-            var types2 = AssemblyLoader.loadedAssemblies.SelectMany(a => a.assembly.GetExportedTypes()).ToList();
-
             KSPIEType = getType("FNPlugin.PluginHelper"); 
 
             if (KSPIEType == null)

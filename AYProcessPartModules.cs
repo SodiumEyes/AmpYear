@@ -1298,6 +1298,7 @@ namespace AY
         {
             switch (psdpart.moduleName)
             {
+                case "ModuleSCANresourceScanner":
                 case "SCANsat":
                     prtName = currentPart.name;
                     prtPower = "";
