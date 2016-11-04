@@ -21,7 +21,6 @@ namespace AY
     /// </summary>
     public class KASWrapper
     {
-        protected static System.Type KASType;
         protected static System.Type KASModuleWinchType;
         protected static System.Type KASModuleMagnetType;
 
@@ -30,7 +29,7 @@ namespace AY
         ///
         /// SET AFTER INIT
         /// </summary>
-        public static Boolean AssemblyExists { get { return KASType != null; } }
+        public static Boolean AssemblyExists { get { return KASModuleWinchType != null && KASModuleMagnetType != null; } }
 
         /// <summary>
         /// Whether we managed to wrap all the methods/functions from the instance.
@@ -54,17 +53,8 @@ namespace AY
             _KASWrapped = false;
             LogFormatted_DebugOnly("Attempting to Grab KAS Types...");
 
-            //find the base type
-            KASType = getType("KAS"); 
-
-            if (KASType == null)
-            {
-                return false;
-            }
-
-            LogFormatted("KAS Version:{0}", KASType.Assembly.GetName().Version.ToString());
-
-            //find the ModuleNavLight type
+            
+            //find the ModuleWinch type
             KASModuleWinchType = getType("KAS.KASModuleWinch"); 
 
             if (KASModuleWinchType == null)
@@ -72,7 +62,9 @@ namespace AY
                 return false;
             }
 
-            //find the ModuleNavLight type
+            LogFormatted("KAS Version:{0}", KASModuleWinchType.Assembly.GetName().Version.ToString());
+
+            //find the ModuleMagnet type
             KASModuleMagnetType = getType("KAS.KASModuleMagnet"); 
 
             if (KASModuleMagnetType == null)
