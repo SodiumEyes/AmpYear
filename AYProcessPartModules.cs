@@ -1123,9 +1123,17 @@ namespace AY
                         if (generatorState != "Offline")
                         {
                             prtActive = true;
-                            generatorStatewords = generatorState.Split(' ');
-                            if (!double.TryParse(generatorStatewords[0], out tmpPower))
-                                tmpPower = 0.0f;
+                            object objPower = null;
+                            if (Utilities.GameModeisFlight)
+                            {
+                                objPower = fieldlist.GetValue("CurrentGeneration");
+                            }
+                            if (Utilities.GameModeisEditor)
+                            {
+                                objPower = fieldlist.GetValue("PowerGeneration");
+                            }
+                            if (objPower != null)
+                                tmpPower = (float)objPower;
                         }
                         AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                     }
