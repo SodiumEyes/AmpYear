@@ -120,7 +120,7 @@ namespace AY
 
             try
             {
-                actualRTsettings = RTSettingsType.GetField("mInstance", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+                actualRTsettings = RTSettingsType.GetProperty("get_Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
             }
             catch (Exception)
             {
