@@ -1,4 +1,11 @@
-﻿V1.4.3.0 "and More Fixes"
+﻿V1.4.4.0 "KSP1.2.2"
+	Changes for KSP 1.2.2
+	Changes for ResourceConverters.
+	Fixed issue with crew list not getting correct list. https://github.com/JPLRepo/AmpYear/issues/56
+	Fixed RemoteTech integration. https://github.com/JPLRepo/AmpYear/issues/54
+	Removed partial USI LS support. - USI LS has moved to VesselModule's (an internal KSP construct) which AmpYear does not support without major
+	rework. Sorry but seeing how I don't personally use it, and the work involved to update AmpYear to support this I have decided to removed partial support for it until such time as it can be fixed. https://github.com/JPLRepo/AmpYear/issues/55	
+V1.4.3.0 "and More Fixes"
 	Fix NFE interfaces.
 	Fix KAS interfaces.
 V1.4.2.0 "More Fixes"

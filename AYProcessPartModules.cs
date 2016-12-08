@@ -103,7 +103,7 @@ namespace AY
         private KPBSWrapper.PlanetaryGreenhouse KPBSgh;
         private float currentRateConverter;
         private float currentRateGreenhouse;
-        private USILSWrapper.ModuleLifeSupport usiMLS;
+        private USILSWrapper.ModuleLifeSupportSystem usiMLS;
         private IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs;
         private IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs;
         private float IONRCSelecUse;
@@ -748,7 +748,7 @@ namespace AY
             tmpPower = 0f;
             FillAmount = recipe.FillAmount;
             if (KPBS > 0) FillAmount = KPBS;
-            var efficiency = tmpRegRc.GetHeatThrottle()*tmpRegRc.Efficiency;
+            var efficiency = tmpRegRc.GetEfficiencyMultiplier();
 
             recInputs = tmpRegRc.Recipe.Inputs;
             for (int i = recInputs.Count - 1; i >= 0; --i)
@@ -1601,12 +1601,12 @@ namespace AY
                     ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, 0);
                     break;
 
-                case "ModuleLifeSupport":
+                /*case "ModuleLifeSupport":
                     prtName = currentPart.name;
                     prtPower = "";
                     prtActive = false;
                     tmpPower = 0;
-                    usiMLS = new USILSWrapper.ModuleLifeSupport(psdpart);
+                    usiMLS = new USILSWrapper.ModuleLifeSupportSystem(psdpart);
 
                     if ((Utilities.GameModeisFlight && currentPart.protoModuleCrew.Count > 0) || Utilities.GameModeisEditor)
                     {
@@ -1641,9 +1641,9 @@ namespace AY
 
                                 AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
                             }
-                        }*/
+                        }
                     }
-                    break;
+                    break;*/
             }
         }
         

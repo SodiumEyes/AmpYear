@@ -607,19 +607,14 @@ namespace AY
                         if (!PartsToDelete.Contains(entry.Key))
                             PartsToDelete.Add(entry.Key);
                     }
-                    VslRstr.Clear(); //clear the vessel roster
+                    //VslRstr.Clear(); //clear the vessel roster
 
                     //Begin calcs
-                    if (Utilities.GameModeisFlight) // if in flight compile the vessel roster
+                    if (Utilities.GameModeisFlight && FlightGlobals.ActiveVessel != null) // if in flight compile the vessel roster
                     {
-                        //Work-around for stock bug in KSP 1.2
-                        if (FlightGlobals.ActiveVessel.crewedParts > 0 && FlightGlobals.ActiveVessel.GetVesselCrew().Count == 0)
-                        {
-                            FlightGlobals.ActiveVessel.RebuildCrewList();
-                        }
                         VslRstr = FlightGlobals.ActiveVessel.GetVesselCrew();
                     }
-
+                    
                     //loop through all parts in the parts list of the vessel
                     for (int i = 0; i < vesselparts.Count; i++)
                     {
@@ -1080,11 +1075,6 @@ namespace AY
             // otherwise we load the vessel settings
             Currentvesselid = newvessel.id;
             LoadVesselSettings(newvessel);
-            //Work-around for stock bug in KSP 1.2
-            if (newvessel.crewedParts > 0 && newvessel.GetVesselCrew().Count == 0)
-            {
-                newvessel.RebuildCrewList();
-            }
         }
 
         private void OnVesselChange(Vessel newvessel)

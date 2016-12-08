@@ -54,7 +54,7 @@ namespace AY
             LogFormatted_DebugOnly("Attempting to Grab USI LS Types...");
 
             //find the USILS part module type
-            USIMLSType = getType("LifeSupport.ModuleLifeSupport"); 
+            USIMLSType = getType("LifeSupport.ModuleLifeSupportSystem"); 
 
             if (USIMLSType == null)
             {
@@ -93,9 +93,9 @@ namespace AY
             return null;
         }
 
-        public class ModuleLifeSupport
+        public class ModuleLifeSupportSystem
         {
-            internal ModuleLifeSupport(Object a)
+            internal ModuleLifeSupportSystem(Object a)
             {
                 actualModuleLifeSupport = a;
 

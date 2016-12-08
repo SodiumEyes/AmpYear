@@ -716,6 +716,7 @@ namespace AY
                 if (_showCrew)
             {
                 GUILayout.Label("Crew", Textures.SectionTitleStyle);
+                //VslRstr = FlightGlobals.ActiveVessel.GetVesselCrew();
                 if (VslRstr.Count > 0)
                 {
                     for (int i = VslRstr.Count - 1; i >= 0; --i)
