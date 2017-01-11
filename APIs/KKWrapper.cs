@@ -78,9 +78,10 @@ namespace AY
             {
                 actualKK = KKType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 LogFormatted("No KabinKraziness Instance found");
+                LogFormatted(ex.Message);
                 //throw;
             }
 

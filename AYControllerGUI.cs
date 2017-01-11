@@ -84,7 +84,7 @@ namespace AY
         private CelestialBody _bodyTarget;
         private int _darkTargetSelection = -1;
         private int _selectedDarkTarget = -1;
-        private string _selectedHighlitePart = "";
+        //private string _selectedHighlitePart = "";
         private int _showDarkOrbit = 100;
         private List<CelestialBody> _darkBodies = new List<CelestialBody>();
         private Rect _fwindowPos = new Rect(40, Screen.height / 2 - 100, FWINDOW_WIDTH, 200); // Flight Window position and size

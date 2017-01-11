@@ -32,6 +32,7 @@ namespace AY
 {
     // This PartModule is added to EVERY part in KSP. Which is unfortunate but the only way to save/load the AmpYear settings for each part.
     // It's primary and only purpose is to save and load the AmpYear Emergency Shutdown Procedure settings for each part.
+    [KSPModule("AmpYear Part Circuitry")]
     class AYPart : PartModule
     {
         public string VesselProdPartsListConfigNodeName = "VesselProdPartsList";

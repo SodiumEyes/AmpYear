@@ -112,19 +112,21 @@ namespace AY
             {
                 actualRTAPI = RTAPIType.GetMember("HasLocalControl", BindingFlags.Public | BindingFlags.Static);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 LogFormatted("No Remote Tech isInitialised found");
+                LogFormatted(ex.Message);
                 //throw;
             }
 
             try
             {
-                actualRTsettings = RTSettingsType.GetProperty("get_Instance", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
+                actualRTsettings = RTSettingsType.GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 LogFormatted("No Remote Tech RTSettings Instance found");
+                LogFormatted(ex.Message);
                 //throw;
             }
 

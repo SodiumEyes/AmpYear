@@ -86,7 +86,7 @@ namespace AY
         //Other Mods
         private ALWrapper.ALNavLight ALtmpLight;
         private string generatorState;
-        private string[] generatorStatewords;
+        //private string[] generatorStatewords;
         private int stringlength;
         private NFSWrapper.NFSCurvedPanel NFSCPtmpGen;
         private KASWrapper.KASModuleWinch tmpKw;
@@ -94,8 +94,8 @@ namespace AY
         private RTWrapper.RTAntenna RTtmpAnt;
         private ScanSatWrapper.SCANsat tmpSs;
         private TeleWrapper.TMPowerDrain tmpTm;
-        private TACLSWrapper.TACLSGenericConverter tacGC;
-        private string resName;
+        //private TACLSWrapper.TACLSGenericConverter tacGC;
+        //private string resName;
         private KSPIEWrapper.FNModuleCryostat tmpCryo;
         private KSPIEWrapper.FNGenerator FNtmpGen;
         private DFWrapper.DeepFreezer tmpDeepFreezer;
@@ -103,7 +103,7 @@ namespace AY
         private KPBSWrapper.PlanetaryGreenhouse KPBSgh;
         private float currentRateConverter;
         private float currentRateGreenhouse;
-        private USILSWrapper.ModuleLifeSupportSystem usiMLS;
+        //private USILSWrapper.ModuleLifeSupportSystem usiMLS;
         private IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs;
         private IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs;
         private float IONRCSelecUse;
@@ -319,7 +319,19 @@ namespace AY
                     prtActive = false;
                 }
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, false);
+            //ECproduced from ResHandler is not working. Only two stock parts use this. RTG and launchclamp.
+            //This is a temporary fix.
+            int count = module.resHandler.outputResources.Count;
+            for (int i = 0; i < count; i++)
+            {
+                if (module.resHandler.outputResources[i].name == MAIN_POWER_NAME)
+                {
+                    tmpPower = module.resHandler.outputResources[i].rate * tmpGen.efficiency;
+                }
+            }
+
+            if (prtActive)
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, false);
                 
             
             if (Utilities.GameModeisEditor)
@@ -390,7 +402,8 @@ namespace AY
             if (TACLPresent)
                 try
                 {
-                    checkTACL(module, currentPart, true);
+                    if (currentPart.CrewCapacity > 0)
+                        checkTACL(module, currentPart, true);
                 }
                 catch
                 {
@@ -622,9 +635,11 @@ namespace AY
             prtPower = "";
             tmpPower = 0f;
             tmpAlt = (ModuleAlternator)module;
-            double ECConsumed = 0f;
+            //double ECConsumed = 0f;
             double ECProduced = 0f;
-            ProcessResHandler("Output", module, out ECConsumed, out ECProduced);
+            //ProcessResHandler("Output", module, out ECConsumed, out ECProduced);  //This is not working.
+            ECProduced = tmpAlt.outputRate; //This contains the output EC
+
             if (Utilities.GameModeisEditor || (Utilities.GameModeisFlight && currentEngActive))
             {
                 //Utilities.Log_Debug("totalPowerProduced ModAlt Active Power = " + r.rate + " Part = " + currentPart.name);
@@ -817,7 +832,7 @@ namespace AY
                         }
                         else
                         {
-                            ECConsumed += module.resHandler.inputResources[i].currentAmount;
+                            ECConsumed += module.resHandler.inputResources[i].currentAmount / TimeWarp.fixedDeltaTime;
                         }
                     }
                 }
@@ -836,7 +851,7 @@ namespace AY
                         }
                         else
                         {
-                            ECProduced += module.resHandler.outputResources[i].currentAmount;
+                            ECProduced += module.resHandler.outputResources[i].currentAmount / TimeWarp.fixedDeltaTime;
                         }
                     }
                 }
@@ -1371,18 +1386,19 @@ namespace AY
                     prtName = "TAC Life Support";
                     prtPower = "";
                     prtActive = false;
-                    if (Utilities.GameModeisFlight) //if in flight set maxCrew to actual crew on board. Set earlier based on maximum crew capacity of each part
-                    {
-                        MaxCrew = FlightGlobals.ActiveVessel.GetCrewCount();
-                    }
 
                     double calcDrain = 0;
-                    calcDrain = TACLSWrapper.TACactualAPI.BaseElectricityConsumptionRate * crewablePartList.Count;
-                    calcDrain += TACLSWrapper.TACactualAPI.ElectricityConsumptionRate * MaxCrew;
+                    if (currentPart.protoModuleCrew.Count > 0 && !TACLSProcessedforVessel)
+                    {
+                        calcDrain = TACLSWrapper.TACactualAPI.BaseElectricityConsumptionRate*
+                                    currentPart.vessel.crewedParts;
+                        calcDrain += TACLSWrapper.TACactualAPI.ElectricityConsumptionRate*CurrentCrewCount;
+                        prtActive = true;
+                        TACLSProcessedforVessel = true;
+                    }
 
-                    prtActive = MaxCrew > 0;
-
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, "LifeSupport", false, prtActive, (float)calcDrain, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title,
+                        "LifeSupport", false, prtActive, (float) calcDrain, false, false);
                 }
                 else
                 {
@@ -2002,8 +2018,8 @@ namespace AY
 
         private void EmergencyShutDownProcedureAmpYearSystems(bool Manager, bool Subsystems)
         {
-            string prtName = "AmpYear Subsystems-Max";
-            string prtPower = "";
+            //string prtName = "AmpYear Subsystems-Max";
+            //string prtPower = "";
             uint partId = CalcAmpYearMgrPartID();
 
             if (Manager)
