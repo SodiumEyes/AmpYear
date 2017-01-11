@@ -31,6 +31,7 @@ namespace AY
 {
     // This PartModule is added to EVERY part in KSP that DOES contain ModuleCommand.
     // It's primary and only purpose is to show Consumer of ReservePower
+    [KSPModule("AmpYear Crew Part Circuitry")]
     public class AYCrewPart : PartModule, IResourceConsumer
     {
         public List<PartResourceDefinition> GetConsumedResources()
