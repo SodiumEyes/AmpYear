@@ -38,6 +38,7 @@
 
 using System;
 using System.Collections.Generic;
+using KSP.UI;
 using KSP.UI.Screens;
 using UnityEngine;
 using RSTUtils;
@@ -122,6 +123,8 @@ namespace AY
         internal Guid Currentvesselid;
         internal int TotalClimateParts = 0;
         internal int MaxCrew = 0;
+        internal int CurrentCrewCount = 0;
+        private bool TACLSProcessedforVessel = false;
         private uint rootPartID;
         internal bool RT2UnderControl = true;
         private bool outhasAlternator = false;
@@ -508,7 +511,8 @@ namespace AY
                         Utilities.Log_Debug("Remote Tech installed but unable to check active connections, assume we have a connection");
                     }
                 }
-                //get current vessel parts list
+                
+                //get current vessel parts list and crew numbers
                 if (Utilities.GameModeisFlight)
                 {
                     try
@@ -521,6 +525,7 @@ namespace AY
                             Utilities.Log("In Flight but couldn't get parts list");
                             return;
                         }
+                        CurrentCrewCount = FlightGlobals.ActiveVessel.GetCrewCount();
                     }
                     catch (Exception ex)
                     {
@@ -554,6 +559,27 @@ namespace AY
                             Utilities.Log_Debug("In Editor but couldn't get parts list");
                             return;
                         }
+                        CrewAssignmentDialog dialog = CrewAssignmentDialog.Instance;
+                        if (dialog != null)
+                        {
+                            VesselCrewManifest manifest = dialog.GetManifest();
+                            if (manifest != null)
+                            {
+                                CurrentCrewCount = 0;
+                                List<PartCrewManifest> manifests = manifest.GetCrewableParts();
+                                for (int i = 0; i < manifests.Count; i++)
+                                {
+                                    var partCrew = manifests[i].GetPartCrew();
+                                    int partCrewCount = 0;
+                                    for (int j = 0; j < partCrew.Length; ++j)
+                                    {
+                                        if (partCrew[j] != null)
+                                            ++partCrewCount;
+                                    }
+                                    CurrentCrewCount += partCrewCount;
+                                }
+                            }
+                        }
                     }
                     catch (Exception Ex)
                     {
@@ -581,6 +607,7 @@ namespace AY
                 TotalPowerProduced = 0;
                 _sasPwrDrain = 0.0f;
                 HasRcs = false;
+                TACLSProcessedforVessel = false;
                 currentRCSThrust = 0.0f;
                 currentPoweredRCSDrain = 0.0f;
                 crewablePartList.Clear();
