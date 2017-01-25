@@ -1349,10 +1349,12 @@ namespace AY
                         cv.ActionGroups.SetGroup(KSPActionGroup.SAS, enabled);
                     //else
                     //    ScreenMessages.PostScreenMessage(cv.vesselName + " - Cannot Engage SAS - Autopilot function not available", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    _subsystemToggle[(int)subsystem] = enabled;
                     break;
 
                 case Subsystem.RCS:
                     cv.ActionGroups.SetGroup(KSPActionGroup.RCS, enabled);
+                    _subsystemToggle[(int)subsystem] = enabled;
                     break;
 
                 default:
@@ -1378,21 +1380,19 @@ namespace AY
 
         private double SubsystemCurrentDrain(Subsystem subsystem)
         {
-            if (subsystem == Subsystem.SAS)
-            {
-                if (_sasPwrDrain > 0) return SubsystemActiveDrain(subsystem) + _sasPwrDrain;
-            }
-
             if (!SubsystemActive(subsystem) || !ManagerIsActive || !hasPower)
                 return 0.0;
-
+            
             switch (subsystem)
             {
+                case Subsystem.SAS:
+                    if (_sasPwrDrain > 0)
+                        return SubsystemActiveDrain(subsystem) + _sasPwrDrain;
+                    return 0.0;
                 case Subsystem.RCS:
                     if (currentRCSThrust > 0.0f)
                         return SubsystemActiveDrain(subsystem);
-                    else
-                        return 0.0;
+                    return 0.0;
                 default:
                     return SubsystemActiveDrain(subsystem);
             }

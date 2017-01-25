@@ -1,4 +1,9 @@
-﻿V1.4.5.0 "Fix Time"
+﻿V1.4.6.0 "More Fixes"
+	Fix integration for TAC LS Generic Converter spamming log in the Editors.
+	Fix SAS & Reaction wheel processing.
+	Changed SI display units to W.s, kW.s, MW.s
+	Fix RTG reporting in Editor as previous fix to correct inflight reporting actually broken when in the editor
+V1.4.5.0 "Fix Time"
 	Fix handling of ModuleGenerator and ModuleAlternator.
 	Fixed a big bug where EC calculation/displays were not taking Unity Fixed Delta Time into consideration correctly resulting
 	in all inputs and outputs being incorrectly reported in flight.

@@ -66,6 +66,7 @@ namespace AY
         private static int _wwindowId;
         private static int _swindowId;
         private static string LOCK_ID = "AmpYear_KeyBinder";
+        private static double epsilon = 1e-4;
         private bool[] _subsystemToggle = new bool[LoadGlobals.SubsystemArrayCache.Length]; // Enum.GetValues(typeof(Subsystem)).Length];
         private double[] _subsystemDrain = new double[LoadGlobals.SubsystemArrayCache.Length]; //Enum.GetValues(typeof(Subsystem)).Length];
         private bool _managerEnabled = true;
@@ -1732,7 +1733,7 @@ namespace AY
                 default:
                     break;
             }
-            if (drain == 0.0)
+            if (Math.Abs(drain - epsilon) <= epsilon)
             {
                 drain = SubsystemActiveDrain(subsystem);
                 ConsumptionLabel(drain, true);
@@ -1743,7 +1744,7 @@ namespace AY
 
         private void ConsumptionLabel(double drain, bool greyed = false)
         {
-            if (drain == 0.0 || greyed)
+            if (Math.Abs(drain - epsilon) <= epsilon || greyed)
                 Textures.SubsystemConsumptionStyle.normal.textColor = new Color(0.5f, 0.5f, 0.5f);
             else if (drain > 0.0)
                 Textures.SubsystemConsumptionStyle.normal.textColor = Color.red;
