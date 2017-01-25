@@ -312,21 +312,21 @@ namespace AY
                     tmpPower = ECProduced;
                     //Utilities.Log_Debug("totalPowerProduced Generator Output Active Power = " + tmpPower + " Part = " + currentPart.name);
                     prtActive = true;
+                    //ECproduced from ResHandler is not working. Only two stock parts use this. RTG and launchclamp.
+                    //This is a temporary fix.
+                    int count = module.resHandler.outputResources.Count;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (module.resHandler.outputResources[i].name == MAIN_POWER_NAME)
+                        {
+                            tmpPower = module.resHandler.outputResources[i].rate * tmpGen.efficiency;
+                        }
+                    }
                 }
                 else
                 {
                     tmpPower = ECProduced;
                     prtActive = false;
-                }
-            }
-            //ECproduced from ResHandler is not working. Only two stock parts use this. RTG and launchclamp.
-            //This is a temporary fix.
-            int count = module.resHandler.outputResources.Count;
-            for (int i = 0; i < count; i++)
-            {
-                if (module.resHandler.outputResources[i].name == MAIN_POWER_NAME)
-                {
-                    tmpPower = module.resHandler.outputResources[i].rate * tmpGen.efficiency;
                 }
             }
 
@@ -492,8 +492,7 @@ namespace AY
             prtPower = "";
             tmpPower = 0f;
             tmpRw = (ModuleReactionWheel)module;
-            prtActive = tmpRw.enabled;
-
+            prtActive = (Utilities.GameModeisEditor || (tmpRw.enabled && tmpRw.stateString == "Running"));
             tmpPower = 0;
             
             if (prtActive)
@@ -504,13 +503,15 @@ namespace AY
                 if (Utilities.GameModeisEditor)
                 {
                     //tmpPower += tmpRw.inputResources[i].rate * tmpRw.PitchTorque; // rough guess for VAB
-                    tmpPower = ECConsumed*tmpRw.PitchTorque; // rough guess for VAB
+                    //tmpPower = ECConsumed*tmpRw.PitchTorque; // rough guess for VAB
+                    tmpPower = ECConsumed; // rough guess for VAB
                 }
                 else
                 {
                     //tmpPower += tmpRw.inputResources[i].currentAmount;
                     tmpPower = ECConsumed;
-                    _sasPwrDrain += ECConsumed;// tmpRw.inputResources[i].currentAmount;
+                    if (SubsystemEnabled(Subsystem.SAS))
+                        _sasPwrDrain += ECConsumed;// tmpRw.inputResources[i].currentAmount;
                 }
             }
             
@@ -746,6 +747,7 @@ namespace AY
             tmpRegRc = (ModuleResourceConverter)module;
             recipe = tmpRegRc.Recipe;
             //Utilities.Log_Debug("Resource Converter " + prtName);
+            double efficiency = 1f;
 
             if (Utilities.GameModeisFlight)
             {
@@ -753,6 +755,15 @@ namespace AY
                 if (status == Utilities.ISRUStatus.Active) prtActive = true;
                 //Utilities.Log_Debug("Inflight andIsactive = {0}, status - {1}" , prtActive , status);
                 //Utilities.Log_Debug("Status : {0}, Determined Status : {1}", tmpRegRc.status, status.ToString());
+                try
+                {
+                    efficiency = tmpRegRc.GetEfficiencyMultiplier();
+                }
+                catch (Exception ex)
+                {
+                    Utilities.Log("Exception occurred during ProcessModuleConverter GetEfficiencyMultiplier");
+                    Utilities.Log("Exception: {0}", ex);
+                }
             }
             if (Utilities.GameModeisEditor)
             {
@@ -763,8 +774,7 @@ namespace AY
             tmpPower = 0f;
             FillAmount = recipe.FillAmount;
             if (KPBS > 0) FillAmount = KPBS;
-            var efficiency = tmpRegRc.GetEfficiencyMultiplier();
-
+            
             recInputs = tmpRegRc.Recipe.Inputs;
             for (int i = recInputs.Count - 1; i >= 0; --i)
             {
