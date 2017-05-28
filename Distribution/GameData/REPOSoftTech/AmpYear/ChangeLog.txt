@@ -1,4 +1,6 @@
-﻿V1.4.6.0 "More Fixes"
+﻿V1.4.7.0 "KSP 1.3"
+	Changes for KSP 1.3.0
+V1.4.6.0 "More Fixes"
 	Fix integration for TAC LS Generic Converter spamming log in the Editors.
 	Fix SAS & Reaction wheel processing.
 	Changed SI display units to W.s, kW.s, MW.s
