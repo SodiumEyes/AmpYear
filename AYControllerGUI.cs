@@ -197,7 +197,7 @@ namespace AY
                     CheckPowerLowWarning();
                     if (_lowEcWarningWindowDisplay)
                     {
-                        PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "AmpYear Warning!",
+                        PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "AmpYear Warning!", "AmpYear Warning!",
                             "Ship Electric charge has dropped below the Warp Warning Percentage.\n This will not trigger again until Electric charge > Warning Percentage again.", "OK", false, HighLogic.UISkin);
                         _lowEcWarningWindowDisplay = false;
                     }
@@ -1251,7 +1251,7 @@ namespace AY
             string[] darkBodiesBtnNames = new string[_darkBodies.Count];
             for (int i = 0; i < _darkBodies.Count; i++)
             {
-                darkBodiesBtnNames[i] = _darkBodies[i].theName;
+                darkBodiesBtnNames[i] = _darkBodies[i].displayName;
             }
             _darkTargetSelection = _selectedDarkTarget;
             _darkTargetSelection = GUILayout.SelectionGrid(_darkTargetSelection, darkBodiesBtnNames, 1);
@@ -1276,7 +1276,7 @@ namespace AY
 
             if (_bodyTarget != null)
             {
-                GUILayout.Label(new GUIContent("Selected Body:" + _darkBodies[_selectedDarkTarget].theName, "Currently selected body for Dark-Side and Solar Panel EC production calculations"), Textures.PartListPartStyle, GUILayout.Width(280));
+                GUILayout.Label(new GUIContent("Selected Body:" + _darkBodies[_selectedDarkTarget].displayName, "Currently selected body for Dark-Side and Solar Panel EC production calculations"), Textures.PartListPartStyle, GUILayout.Width(280));
                 //Get the distance and direction to Sun from the currently selected target body
                 Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedDarkTarget], out sun_dir, out sun_dist);
                 GUILayout.Label(new GUIContent("Sun Distance:" + sun_dist.ToString("###,###,###,###,###,##0"), _selectedDarkTarget == 0 ? "Assumes you are in orbit at 700,000km from the Sun" : "The Distance to the sun from the selected body"), Textures.PartListPartStyle, GUILayout.Width(280));
