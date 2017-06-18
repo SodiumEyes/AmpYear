@@ -1,6 +1,10 @@
 ﻿
 
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+
 /**
 * AYSettings.cs
 * (C) Copyright 2015, Jamie Leighton
@@ -40,42 +44,39 @@ namespace AY
             EmergShutPriority = emergShutPriority;
         }
     }
+
+    public class ValidEmergencyPartModule : IEquatable<ValidEmergencyPartModule>, IEquatable<string>
+    {
+        public string Name;
+        public string displayName;
+
+        public ValidEmergencyPartModule(string nme, string dispnme)
+        {
+            Name = nme;
+            displayName = dispnme;
+        }
+
+        public bool Equals(ValidEmergencyPartModule other)
+        {
+            if (other != null)
+            {
+                return Name == other.Name;
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (other != null)
+            {
+                return Name == other;
+            }
+            return false;
+        }
+    }
     
     public class AYSettings
     {
-
-        public static string[] ValidPartModuleEmergShutDn = new string[]
-        {
-            "RCS",
-            "SAS",
-            "AYSubsystems",
-            "Climate Control",
-            "Smooth Jazz",
-            "Massage Chair",
-            "ModuleIONPoweredRCS",
-            "ModulePPTPoweredRCS",
-            "ModuleDeployableSolarPanel",
-            "ModuleWheel",
-            "ModuleLight",
-            "ModuleDataTransmitter",
-            "ModuleReactionWheel",
-        //   "ModuleScienceLab",
-        //   "ModuleScienceConverter",
-            "ModuleResourceHarvester",
-            "ModuleResourceConverter",
-            "ModuleNavLight", //AV Lights
-            "Curved Solar Panel", //NFS
-        //   "KASModuleWinch", //KAS
-        //   "KASModuleMagnet", //KAS
-           "ModuleRTAntenna", //Remote Tech
-           "SCANsat",  //SCANsat
-           "TacGenericConverter", //TAC-LS
-           "ModuleLimitedDataTransmitter", //Antenna Range
-           "Scrubber",  //Kerbalism
-           "Greenhouse", //Kerbalism
-           "GravityRing" //Kerbalism
-        };
-
         private const string configNodeName = "AYSettings";
 
         public float FwindowPosX ;
@@ -104,7 +105,9 @@ namespace AY
 
         public bool TooltipsOn ;
 
-        public List<KeyValuePair<string, ESPValues>> PartModuleEmergShutDnDflt  ;
+        public List<ValidEmergencyPartModule> ValidPartModuleEmergShutDn;
+
+        public List<KeyValuePair<ValidEmergencyPartModule, ESPValues>> PartModuleEmergShutDnDflt  ;
 
         public double ESPHighThreshold ;
 
@@ -117,6 +120,10 @@ namespace AY
         public bool AYMonitoringUseEC;
 
         public bool showSI;
+
+        public Color ProdPartHighlightColor;
+
+        public Color ConsPartHighlightColor;
 
         public AYSettings()
         {
@@ -133,13 +140,45 @@ namespace AY
             UseAppLauncher = true;
             debugging = true;
             TooltipsOn = true;
-            PartModuleEmergShutDnDflt = new List<KeyValuePair<string, ESPValues>>();
+            PartModuleEmergShutDnDflt = new List<KeyValuePair<ValidEmergencyPartModule, ESPValues>>();
+            ValidPartModuleEmergShutDn = new List<ValidEmergencyPartModule>();
+            SetupValidEmergencyParts();
             ESPHighThreshold = 5;
             ESPMediumThreshold = 10;
             ESPLowThreshold = 20;
             EmgcyShutOverrideCooldown = 300;
             showSI = false;
             AYMonitoringUseEC = true;
+            ProdPartHighlightColor = Color.green;
+            ConsPartHighlightColor = Color.red;
+        }
+
+        private void SetupValidEmergencyParts()
+        {
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("RCS", "#autoLOC_AmpYear_1000160"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("SAS", "#autoLOC_AmpYear_1000159"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("AYSubsystems", "#autoLOC_AmpYear_1000269"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ClimateControl", "#autoLOC_AmpYear_1000161"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("SmoothJazz", "#autoLOC_AmpYear_1000162"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("MassageChair", "#autoLOC_AmpYear_1000163"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleIONPoweredRCS", "#autoLOC_AmpYear_1000270"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModulePPTPoweredRCS", "#autoLOC_AmpYear_1000271"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleDeployableSolarPanel", "#autoLOC_AmpYear_1000272"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleWheel", "#autoLOC_AmpYear_1000273"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleLight", "#autoLOC_AmpYear_1000274"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleDataTransmitter", "#autoLOC_AmpYear_1000275"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleReactionWheel", "#autoLOC_AmpYear_1000276"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleResourceHarvester", "#autoLOC_AmpYear_1000277"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleResourceConverter", "#autoLOC_AmpYear_1000278"));
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleNavLight", "#autoLOC_AmpYear_1000279")); //AV Lights
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("CurvedSolarPanel", "#autoLOC_AmpYear_1000280")); //NFS
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleRTAntenna", "#autoLOC_AmpYear_1000281")); //Remote Tech
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("SCANsat", "#autoLOC_AmpYear_1000282")); //SCANsat
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("TacGenericConverter", "#autoLOC_AmpYear_1000283")); //TAC-LS
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("ModuleLimitedDataTransmitter","#autoLOC_AmpYear_1000284")); //Antenna Range
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("Scrubber", "#autoLOC_AmpYear_1000285")); //Kerbalism
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("Greenhouse", "#autoLOC_AmpYear_1000286")); //Kerbalism
+            ValidPartModuleEmergShutDn.Add(new ValidEmergencyPartModule("GravityRing", "#autoLOC_AmpYear_1000287")); //Kerbalism
         }
 
         //Settings Functions Follow
@@ -170,11 +209,13 @@ namespace AY
                 AYsettingsNode.TryGetValue("ESPLowThreshold", ref ESPLowThreshold);
                 AYsettingsNode.TryGetValue("EmgcyShutOverrideCooldown", ref EmgcyShutOverrideCooldown);
                 AYsettingsNode.TryGetValue("AYMonitoringUseEC", ref AYMonitoringUseEC);
-                foreach (string validentry in ValidPartModuleEmergShutDn)
+                AYsettingsNode.TryGetValue("ProdPartHighlightColor", ref ProdPartHighlightColor);
+                AYsettingsNode.TryGetValue("ConsPartHighlightColor", ref ConsPartHighlightColor);
+                foreach (ValidEmergencyPartModule validentry in ValidPartModuleEmergShutDn)
                 {
                     ESPValues tmpESPVals = new ESPValues(true, ESPPriority.MEDIUM);
                     string tmpStr = "";
-                    if (AYsettingsNode.TryGetValue(validentry, ref tmpStr))
+                    if (AYsettingsNode.TryGetValue(validentry.Name, ref tmpStr))
                     {
                         string[] tmpStrStrings = tmpStr.Split(',');
                         if (tmpStrStrings.Length == 2)
@@ -188,8 +229,9 @@ namespace AY
                                 tmpESPVals.EmergShutPriority = (ESPPriority)tmpInt;
                         }
                     }
-                    PartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry, tmpESPVals));
+                    PartModuleEmergShutDnDflt.Add(new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry, tmpESPVals));
                 }
+                Textures.SetupHighLightStyles(ProdPartHighlightColor, ConsPartHighlightColor);
                 RSTUtils.Utilities.Log_Debug("AYSettings load complete");
             }
         }
@@ -225,11 +267,13 @@ namespace AY
             settingsNode.AddValue("ESPLowThreshold", ESPLowThreshold);
             settingsNode.AddValue("EmgcyShutOverrideCooldown", EmgcyShutOverrideCooldown);
             settingsNode.AddValue("AYMonitoringUseEC", AYMonitoringUseEC);
-            foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
+            settingsNode.AddValue("ProdPartHighlightColor", ProdPartHighlightColor);
+            settingsNode.AddValue("ConsPartHighlightColor", ConsPartHighlightColor);
+            foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in PartModuleEmergShutDnDflt)
             {
                 string tmpString = validentry.Value.EmergShutDnDflt.ToString() + ',' +
                                    (int)validentry.Value.EmergShutPriority;
-                settingsNode.AddValue(validentry.Key, tmpString);
+                settingsNode.AddValue(validentry.Key.Name, tmpString);
             }
             RSTUtils.Utilities.Log_Debug("AYSettings save complete");
         }

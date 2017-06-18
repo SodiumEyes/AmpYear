@@ -41,6 +41,7 @@ using System.Linq;
 using ModuleWheels;
 using UnityEngine;
 using RSTUtils;
+using KSP.Localization;
 
 namespace AY
 {
@@ -103,7 +104,8 @@ namespace AY
         private KPBSWrapper.PlanetaryGreenhouse KPBSgh;
         private float currentRateConverter;
         private float currentRateGreenhouse;
-        //private USILSWrapper.ModuleLifeSupportSystem usiMLS;
+        private USILSWrapper.ModuleLifeSupportSystem usiMLS;
+        private USILSWrapper.ModuleSwappableConverter usiMSC;
         private IONRCSWrapper.ModuleIONPoweredRCS tmpIonPoweredRcs;
         private IONRCSWrapper.ModulePPTPoweredRCS tmpPPTPoweredRcs;
         private float IONRCSelecUse;
@@ -286,7 +288,7 @@ namespace AY
                 }
                 tmpPower = tmpSol.chargeRate * orientationFactor * multiplier;  //Does not take into account temperature curve
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, true);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, true, currentPart);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
         
@@ -331,7 +333,7 @@ namespace AY
             }
 
             if (prtActive)
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                 
             
             if (Utilities.GameModeisEditor)
@@ -352,7 +354,7 @@ namespace AY
                     prtActive = false;
                 }
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                 
         }
 
@@ -389,7 +391,7 @@ namespace AY
                         tmpPower += tmpWheel.idleDrain;
                     }
                 }
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                 ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
             //}
         }
@@ -428,7 +430,7 @@ namespace AY
                 tmpPower = ECConsumed;
             }
             if (prtActive)
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             PartsModuleCommand.Add(currentPart);
         }
         
@@ -446,7 +448,7 @@ namespace AY
                 ProcessResHandler("Input", module, out ECConsumed, out ECProduced);
                 tmpPower = ECConsumed;
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
         
@@ -461,7 +463,7 @@ namespace AY
                 prtActive = true;
                 tmpPower = tmpLight.resourceAmount;
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
         
@@ -482,7 +484,7 @@ namespace AY
                 tmpPower = 0;
                 prtActive = false;
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
         
@@ -515,7 +517,7 @@ namespace AY
                 }
             }
             
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
         
@@ -552,7 +554,7 @@ namespace AY
 
                     tmpPower = ecratio * massFlowRate / sumRd;
                 }
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             }
 
             tmpcurrentEngActive = tmpEng.isOperational && (tmpEng.currentThrottle > 0);
@@ -561,7 +563,7 @@ namespace AY
                 //Utilities.Log_Debug("totalPowerProduced ModEngine Active Power = " + altRate + " Part = " + currentPart.name);
 
                 prtActive = true;
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)altRate, true, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)altRate, true, false, currentPart);
 
             }
             return tmpcurrentEngActive;
@@ -617,7 +619,7 @@ namespace AY
                     tmpPower = 0;
                     prtActive = false;
                 }
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             }
             tmpcurrentEngActive = tmpEngFx.isOperational && (tmpEngFx.currentThrottle > 0);
             if (altRate > 0 && tmpcurrentEngActive)
@@ -625,7 +627,7 @@ namespace AY
                 //Utilities.Log_Debug("totalPowerProduced ModEngine Active Power = " + altRate + " Part = " + currentPart.name);
 
                 prtActive = true;
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)altRate, true, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)altRate, true, false, currentPart);
             }
             return tmpcurrentEngActive;
         }
@@ -649,7 +651,7 @@ namespace AY
             else
                 tmpaltRate = ECProduced;
                     
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)ECProduced, ECProduced >= 0, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, (float)ECProduced, ECProduced >= 0, false, currentPart);
                 
             return tmpaltRate;
         }
@@ -677,7 +679,7 @@ namespace AY
                 prtActive = true;
                 tmpPower += tmpLab.processResources.Where(r => r.name == MAIN_POWER_NAME).Sum(r => r.amount);
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
         }
 
         private void ProcessModuleScienceConverter(string prtName, Part currentPart, PartModule module)
@@ -702,7 +704,7 @@ namespace AY
                 prtActive = true;
                 tmpPower = tmpcnv.powerRequirement;
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
         }
 
         private void ProcessModuleResourceharvester(string prtName, Part currentPart, PartModule module)
@@ -714,10 +716,12 @@ namespace AY
             //Utilities.Log_Debug("Resource Harvester " + currentPart.name);
             ModuleResourceHarvester tmpHvstr = (ModuleResourceHarvester)module;
             List<PartResourceDefinition> rscse = tmpHvstr.GetConsumedResources();
-
+            double ratio = tmpHvstr.eInput.Ratio;
+            double efficiency = 1;
             if (Utilities.GameModeisFlight)
             {
                 prtActive = tmpHvstr.ModuleIsActive();
+                efficiency = tmpHvstr.GetEfficiencyMultiplier();
                 //Utilities.Log_Debug("Inflight andIsactive = " + prtActive);
             }
             if (Utilities.GameModeisEditor)
@@ -725,26 +729,22 @@ namespace AY
                 prtActive = true;
                 //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
             }
-            for (int i = tmpHvstr.GetConsumedResources().Count - 1; i >= 0; --i)
+            if (tmpHvstr.eInput.ResourceName == MAIN_POWER_NAME && prtActive)
             {
-                //Utilities.Log_Debug("Harvester resource = " + r.name + " cost = " + r.unitCost);
-                if (tmpHvstr.GetConsumedResources()[i].name == MAIN_POWER_NAME && prtActive)
-                {
-                    //Appears to be NO way to get to the input resources.... set to 15 for current value in distro files
-                    tmpPower += 15.0f;
-                }
+                tmpPower = ratio * efficiency;
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
         
-        private void ProcessModuleResourceConverter(string prtName, Part currentPart, PartModule module, float KPBS)
+        private void ProcessModuleResourceConverter(string prtName, Part currentPart, PartModule module, float KPBS, string mod_num = null)
         {
             prtActive = false;
             prtPower = "";
             tmpPower = 0f;
             tmpRegRc = (ModuleResourceConverter)module;
+            string longModuleName = tmpRegRc.moduleName + " " + tmpRegRc.ConverterName + " " + mod_num;
             recipe = tmpRegRc.Recipe;
             //Utilities.Log_Debug("Resource Converter " + prtName);
             double efficiency = 1f;
@@ -783,7 +783,7 @@ namespace AY
                     //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
                         tmpPower = recInputs[i].Ratio * FillAmount * efficiency;
-                    AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, longModuleName, false, prtActive, tmpPower, false, false, currentPart);
                 }
             }
 
@@ -797,7 +797,7 @@ namespace AY
                     //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                     if (prtActive)
                         tmpPower = recOutputs[i].Ratio * recipe.TakeAmount * efficiency;
-                    AYVesselPartLists.AddPart(currentPart.craftID, currentPart.partInfo.title, prtName, module.moduleName, false, prtActive, tmpPower, true, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, longModuleName, false, prtActive, tmpPower, true, false, currentPart);
                 }
             }
 
@@ -820,7 +820,7 @@ namespace AY
                 
                 //tmpPower = tmpEnvS.powerConsumption;
             }
-            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false);
+            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, module.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
             ProcessPartEmergencyShutdownProcedures(currentPart, module, prtActive);
         }
@@ -889,6 +889,7 @@ namespace AY
         private bool USILSPresent = false;
         private bool IONRCSPresent = false;
         private bool KERBALISMPresent = false;
+        private bool KopernicusPresent = false;
 
         internal void ProcessModPartModule(Part currentPart, PartModule module)
         {
@@ -1061,7 +1062,17 @@ namespace AY
                     Utilities.Log("Wrong kerbalism version - disabled.");
                     KERBALISMPresent = false;
                 }
-        
+            if (KopernicusPresent)
+                try
+                {
+                    checkKopernicus(module, currentPart);
+                }
+                catch
+                {
+                    Utilities.Log("Wrong Kopernicus library version - disabled.");
+                    KopernicusPresent = false;
+                }
+
             /*if (KKPresent)
             {
                 checkKK(module, current_part);
@@ -1082,7 +1093,7 @@ namespace AY
                     {
                         prtActive = true;
                         tmpPower = ALtmpLight.EnergyReq;
-                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                     }
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
@@ -1121,7 +1132,7 @@ namespace AY
                         {
                             //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             tmpPower = recInputs[i].Ratio;
-                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                         }
                     }
 
@@ -1134,7 +1145,7 @@ namespace AY
                         {
                             //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
                             tmpPower = recOutputs[i].Ratio;
-                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                         }
                     }
                     break;
@@ -1160,7 +1171,7 @@ namespace AY
                             if (objPower != null)
                                 tmpPower = (float)objPower;
                         }
-                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                     }
                     catch (Exception)
                     {
@@ -1182,7 +1193,7 @@ namespace AY
                         {
                             prtActive = true;
                         }
-                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                     }
                     catch (Exception)
                     {
@@ -1204,7 +1215,7 @@ namespace AY
                             generatorState = generatorState.Substring(13, stringlength);
                             if (!double.TryParse(generatorState, out tmpPower))
                                 tmpPower = 0.0f;
-                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                         }
                         if (generatorState.Contains("Recharging:"))
                         {
@@ -1213,7 +1224,7 @@ namespace AY
                             generatorState = generatorState.Substring(12, stringlength);
                             if (!double.TryParse(generatorState, out tmpPower))
                                 tmpPower = 0.0f;
-                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                         }
                     }
                     catch (Exception)
@@ -1246,7 +1257,7 @@ namespace AY
                         tmpPower = NFSCPtmpGen.TotalEnergyRate;
                         //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, true);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, "CurvedSolarPanel", false, prtActive, tmpPower, true, true, currentPart);
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
                     break;
             }
@@ -1274,7 +1285,7 @@ namespace AY
 
                         //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
                     break;
 
@@ -1288,7 +1299,7 @@ namespace AY
                         prtActive = true;
                         tmpPower = tmpKm.powerDrain;
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
                     break;
             }
@@ -1319,7 +1330,7 @@ namespace AY
                         //Utilities.Log_Debug("In VAB and editorMaxECusage is on so part active");
                         //Utilities.Log_Debug("tmpant2 energycost " + RTtmpAnt.EnergyCost);
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, "ModuleRTAntenna", false, prtActive, tmpPower, false, false, currentPart);
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
@@ -1348,7 +1359,7 @@ namespace AY
                         prtActive = true;
                         tmpPower = ECConsumed;
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
@@ -1380,7 +1391,7 @@ namespace AY
                         prtPower = "0.010";
                         //Utilities.Log_Debug("Telemachus In VAB and editorMaxECusage is on so part active");
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
 
                     break;
@@ -1407,8 +1418,7 @@ namespace AY
                         TACLSProcessedforVessel = true;
                     }
 
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title,
-                        "LifeSupport", false, prtActive, (float) calcDrain, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, "LifeSupport", false, prtActive, (float) calcDrain, false, false, currentPart);
                 }
                 else
                 {
@@ -1442,7 +1452,7 @@ namespace AY
                         prtActive = true;
                         tmpPower = tmpAnt.DataResourceCost * (1 / tmpAnt.packetInterval);
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false); ;
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart); 
 
                     ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
 
@@ -1481,7 +1491,7 @@ namespace AY
                         {
                             tmpPower = recInputs[i].Ratio;
                             //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                         }
                     }
 
@@ -1494,7 +1504,7 @@ namespace AY
                         {
                             tmpPower = recOutputs[i].Ratio;
                             //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                            AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                         }
                     }
                     break;
@@ -1527,7 +1537,7 @@ namespace AY
                     }
                     if (prtActive)
                     {
-                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                     }
                     break;
 
@@ -1549,7 +1559,7 @@ namespace AY
                     }
                     if (prtActive)
                     {
-                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
+                        AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false, currentPart);
                     }
                     break;
             }
@@ -1594,7 +1604,7 @@ namespace AY
                         }
                         
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
                     break;
             }
         }
@@ -1618,61 +1628,106 @@ namespace AY
                     break;
             }
         }
-        
+
         private void checkUSILS(PartModule psdpart, Part currentPart)
         {
+            //Only parse once if ModuleSwappableConverter is present
+            if (psdpart.moduleName != "ModuleSwappableConverter" && currentPart.Modules.Contains("ModuleSwappableConverter"))
+            {
+                return;
+            }
+
             switch (psdpart.moduleName)
             {
+                case "ModuleSwappableConverter":
+
+                    var converterList = currentPart.Modules.GetModules<BaseConverter>();
+                    var bayList = currentPart.Modules.GetModules<PartModule>();
+
+                    foreach (var bay in bayList)
+                    {
+                        if (bay.moduleName == "ModuleSwappableConverter")
+                        {
+                            usiMSC = new USILSWrapper.ModuleSwappableConverter(bay);
+                            var converter = converterList[usiMSC.currentLoadout];
+                            string bayname = usiMSC.bayName;
+                            if (converter != null)
+                            {
+                                switch (converter.moduleName)
+                                {
+                                    case "ModuleLifeSupportRecycler":
+                                    case "ModuleHabitation":
+                                    case "ModuleLifeSupportExtender":
+                                    case "ModuleResourceConverter_USI":
+                                    case "ModuleEfficiencyPart":
+                                    case "ModuleBulkConverter":
+                                        ProcessModuleResourceConverter(currentPart.name, currentPart, converter, 0, bayname);
+                                        break;
+                                    case "ModuleRessourceHarvester_USI":
+                                        ProcessModuleResourceharvester(currentPart.name, currentPart, converter);
+                                        break;
+                                    case "ModuleHeatPump":
+                                        ProcessModuleActiveRadiator(currentPart.name, currentPart, psdpart);
+                                        break;
+                                    default:
+                                        Utilities.Log("MSC: " + converter.moduleName + " (" + currentPart.name + ")");
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    break;
                 case "ModuleLifeSupportRecycler":
+                case "ModuleHabitation":
+                case "ModuleLifeSupportExtender":
+                case "ModuleResourceConverter_USI":
+                case "ModuleEfficiencyPart":
+                case "ModuleBulkConverter":
                     ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, 0);
                     break;
-
-                /*case "ModuleLifeSupport":
+                case "ModuleRessourceHarvester_USI":
+                    ProcessModuleResourceharvester(currentPart.name, currentPart, psdpart);
+                    break;
+                case "ModuleHeatPump":
+                    ProcessModuleActiveRadiator(currentPart.name, currentPart, psdpart);
+                    break;
+                case "ModuleLifeSupport":
                     prtName = currentPart.name;
                     prtPower = "";
                     prtActive = false;
                     tmpPower = 0;
-                    usiMLS = new USILSWrapper.ModuleLifeSupportSystem(psdpart);
 
-                    if ((Utilities.GameModeisFlight && currentPart.protoModuleCrew.Count > 0) || Utilities.GameModeisEditor)
+                    if (Utilities.GameModeisFlight && currentPart.protoModuleCrew.Count > 0)
+                    {
+                        if (currentPart.vessel != null)
+                            usiMLS = new USILSWrapper.ModuleLifeSupportSystem(currentPart.vessel.vesselModules.Find(x => x.GetType() == USILSWrapper.USIMLSType));
+                        if (usiMLS != null)
+                        {
+                            prtActive = true;
+                            recInputs = usiMLS.LifeSupportRecipe.Inputs;
+                            for (int i = recInputs.Count - 1; i >= 0; --i)
+                            {
+                                if (recInputs[i].ResourceName == MAIN_POWER_NAME)
+                                {
+                                    tmpPower = (recInputs[i].Ratio / currentPart.vessel.GetCrewCount()) * currentPart.protoModuleCrew.Count;
+                                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
+                                }
+                            }
+                        }
+                    }
+                    if (Utilities.GameModeisEditor)
                     {
                         prtActive = true;
+                        tmpPower = 0.01f;//default, how to get ECAmount in editor ?
+                        int maxCrew = currentPart.CrewCapacity;
+                        AYVesselPartLists.AddPart(10101010, prtName, "Kerbals", "Max", false, prtActive, tmpPower * maxCrew, false, false, currentPart);
+                        //get current crew assigned to craft
+                        //AYVesselPartLists.AddPart(10101010, prtName, "Kerbals", "Current", false, prtActive, tmpPower * curCrew, false, false);
                     }
-                    if (usiMLS != null && Utilities.GameModeisFlight)
-                    {
-                        recInputs = usiMLS.LifeSupportRecipe.Inputs;
-                        for (int i = recInputs.Count - 1; i >= 0; --i)
-                        {
-                            //Utilities.Log_Debug("Converter Input resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            if (recInputs[i].ResourceName == MAIN_POWER_NAME)
-                            {
-                                if (prtActive)
-                                    tmpPower = recInputs[i].Ratio;
-
-                                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false); ;
-                            }
-                        }
-                        /*
-                        prtPower = ""; 
-                        tmpPower = 0f;
-                        recOutputs = usiMLS.LifeSupportRecipe.Outputs;
-
-                        foreach (ResourceRatio r in recOutputs)
-                        {
-                            //Utilities.Log_Debug("Converter Output resource = " + r.ResourceName + " ratio = " + r.Ratio);
-                            if (r.ResourceName == MAIN_POWER_NAME)
-                            {
-                                if (prtActive)
-                                    tmpPower = (float)r.Ratio;
-
-                                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, true, false);
-                            }
-                        }
-                    }
-                    break;*/
+                    break;
             }
         }
-        
+
         private void checkIONRCS(PartModule psdpart, Part currentPart)
         {
             prtName = currentPart.name;
@@ -1692,7 +1747,7 @@ namespace AY
                         prtActive = true;
                         IONRCSelecUse = tmpIonPoweredRcs.powerRatio;
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, IONRCSelecUse, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, IONRCSelecUse, false, false, currentPart);
 
                     currentPoweredRCSDrain += IONRCSelecUse;
                     //Utilities.Log_Debug("AYIONRCS ElecUsage = " + IONRCSelecUse.ToString("0.00000000"));
@@ -1711,7 +1766,7 @@ namespace AY
                         prtActive = true;
                         IONRCSelecUse = tmpPPTPoweredRcs.powerRatio;
                     }
-                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, IONRCSelecUse, false, false);
+                    AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, IONRCSelecUse, false, false, currentPart);
 
                     currentPoweredRCSDrain += IONRCSelecUse;
                     //Utilities.Log_Debug("AYPPTRCS ElecUsage = " + IONRCSelecUse.ToString("0.00000000"));
@@ -1743,7 +1798,7 @@ namespace AY
                 if (prtActive)
                     tmpPower = (double) ec_rate * (double) speed;
 
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
                 ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
             }
@@ -1764,7 +1819,7 @@ namespace AY
                 if (prtActive)
                     tmpPower = (double)ec_rate * (double)lamps;
 
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
                 ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
             }
@@ -1787,7 +1842,7 @@ namespace AY
                 if (prtActive)
                     tmpPower = (double)ec_rate * (double)co2_rate;
 
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
 
                 ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
             }
@@ -1812,7 +1867,7 @@ namespace AY
                 if (prtActive)
                     tmpPower = (double)ec_rate;
 
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             }
             if (psdpart.moduleName == "VariableISPEngine")
             {
@@ -1827,9 +1882,16 @@ namespace AY
                 {
                     prtActive = true;
                 }
-                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false);
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
             }
         }
+
+        private void checkKopernicus(PartModule psdpart, Part currentPart)
+        {
+            if (psdpart.moduleName == "KopernicusSolarPanel")
+                ProcessModuleDeployableSolarPanel(prtName, currentPart, psdpart);
+        }
+          
 
         #endregion OtherMods
 
@@ -1967,7 +2029,7 @@ namespace AY
                             Emergencypowerdownreset = false;
                             EmgcyShutActive = false;
                             ScreenMessages.PostScreenMessage(
-                                    "Failure in Emergency Shutdown Process System, ESP System has been deactivated.", 5.0f,
+                                    Localizer.Format("#autoLOC_AmpYear_1000229"), 5.0f,		// #autoLOC_AmpYear_1000229 = Failure in Emergency Shutdown Process System, ESP System has been deactivated.
                                     ScreenMessageStyle.UPPER_CENTER);
                             return;
                         }
@@ -2065,10 +2127,10 @@ namespace AY
                     if (Emergencypowerdownactivated) //Emergency ShutDown Procedures
                     {
                         TimeWarp.SetRate(0, false);
-                        ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Emergency Shutdown Procedures Activated. Shutdown Subsystems.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000230", FlightGlobals.ActiveVessel.vesselName), 5.0f, ScreenMessageStyle.UPPER_CENTER);		// #autoLOC_AmpYear_1000230 =  - Emergency Shutdown Procedures Activated. Shutdown Subsystems.
                     }
                     if (Emergencypowerdownreset) //Emergency Reset Procedures
-                        ScreenMessages.PostScreenMessage(FlightGlobals.ActiveVessel.vesselName + " - Emergency Shutdown Procedures Activated. Restart Subsystems.", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000230", FlightGlobals.ActiveVessel.vesselName), 5.0f, ScreenMessageStyle.UPPER_CENTER);
 
                     //Process AmpYear Subsystems
                     for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
@@ -2192,7 +2254,7 @@ namespace AY
                         ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
                         tmpIonPoweredRcs.rcsEnabled = false;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels Critical! Disabling ION RCS!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000231"), 5.0f,		// #autoLOC_AmpYear_1000231 = Electricity Levels Critical! Disabling ION RCS!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Disabling ION RCS");
                     }
@@ -2204,7 +2266,7 @@ namespace AY
                         ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
                         tmpIonPoweredRcs.rcsEnabled = false;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels Critical! Disabling PPT RCS!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000232"), 5.0f,		// #autoLOC_AmpYear_1000232 = Electricity Levels Critical! Disabling PPT RCS!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Disabling PPT RCS");
                     }
@@ -2220,14 +2282,14 @@ namespace AY
                             ModuleDeployableSolarPanel tmpSol = (ModuleDeployableSolarPanel)module;
                             tmpSol.Extend();
                             ScreenMessages.PostScreenMessage(
-                                "Electricity Levels Critical! Extending Solar Panels!", 5.0f,
+                                Localizer.Format("#autoLOC_AmpYear_1000233"), 5.0f,		// #autoLOC_AmpYear_1000233 = Electricity Levels Critical! Extending Solar Panels!
                                 ScreenMessageStyle.UPPER_LEFT);
                             Utilities.Log("Extending solar array");
                         }
                     }
                     else
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels Critical! In Atmosphere can not Extend Solar Panels!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000234"), 5.0f,		// #autoLOC_AmpYear_1000234 = Electricity Levels Critical! In Atmosphere can not Extend Solar Panels!
                             ScreenMessageStyle.UPPER_LEFT);
                     break;
 
@@ -2237,7 +2299,7 @@ namespace AY
                         ModuleWheelMotor tmpWheel = (ModuleWheelMotor)module;
                         tmpWheel.motorEnabled = false;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels Critical! Disabling Wheel Motors!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000235"), 5.0f,		// #autoLOC_AmpYear_1000235 = Electricity Levels Critical! Disabling Wheel Motors!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Disabling Wheel motors");
                     }
@@ -2248,7 +2310,7 @@ namespace AY
                     {
                         ModuleLight tmpLight = (ModuleLight)module;
                         tmpLight.LightsOff();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Lights!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000236"),		// #autoLOC_AmpYear_1000236 = Electricity Levels Critical! Turning off Lights!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off lights");
                     }
@@ -2259,7 +2321,7 @@ namespace AY
                     {
                         ModuleDataTransmitter tmpAnt = (ModuleDataTransmitter)module;
                         tmpAnt.StopTransmission();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Transmitters!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000237"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000237 = Electricity Levels Critical! Turning off Transmitters!
                         Utilities.Log("Turning off DataTransmitter");
                     }
                     break;
@@ -2269,7 +2331,7 @@ namespace AY
                     {
                         ModuleReactionWheel tmpRw = (ModuleReactionWheel)module;
                         tmpRw.enabled = false;
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off ReactionWheel!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000238"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000238 = Electricity Levels Critical! Turning off ReactionWheel!
                         Utilities.Log("Turning off reactionwheel");
                     }
                     break;
@@ -2279,7 +2341,7 @@ namespace AY
                     {
                         ModuleResourceHarvester tmpHvstr = (ModuleResourceHarvester)module;
                         tmpHvstr.DisableModule();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Harvester!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000239"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000239 = Electricity Levels Critical! Turning off Harvester!
                         Utilities.Log("Turning off harvester");
                     }
 
@@ -2290,7 +2352,7 @@ namespace AY
                     {
                         ModuleResourceConverter tmpRegRc = (ModuleResourceConverter)module;
                         tmpRegRc.DisableModule();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Converter!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000240"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000240 = Electricity Levels Critical! Turning off Converter!
                         Utilities.Log("Turning off converter");
                     }
 
@@ -2301,7 +2363,7 @@ namespace AY
                     {
                         ModuleActiveRadiator tmpRad = (ModuleActiveRadiator)module;
                         tmpRad.Shutdown();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Radiator!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000241"),		// #autoLOC_AmpYear_1000241 = Electricity Levels Critical! Turning off Radiator!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off Radiator");
                     }
@@ -2312,7 +2374,7 @@ namespace AY
                     {
                         ModuleEnviroSensor tmpEnvS = (ModuleEnviroSensor)module;
                         if (tmpEnvS.sensorActive) tmpEnvS.Toggle();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off EnviroSensor!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000242"),		// #autoLOC_AmpYear_1000242 = Electricity Levels Critical! Turning off EnviroSensor!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off EnviroSensor");
                     }
@@ -2323,11 +2385,11 @@ namespace AY
                     {
                         ALWrapper.ALNavLight tmpLight = new ALWrapper.ALNavLight(currentPart);
                         tmpLight.navLightSwitch = 0;
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off NavLight!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000243"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000243 = Electricity Levels Critical! Turning off NavLight!
                         Utilities.Log("Turning off navlight");
                     }
                     break;
-                case "Curved Solar Panel":
+                case "CurvedSolarPanel":
                     if (!prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
                     {
                         if (FlightGlobals.ActiveVessel.atmDensity < 0.2 ||
@@ -2337,7 +2399,7 @@ namespace AY
                             NFSWrapper.NFSCurvedPanel tmpGen = new NFSWrapper.NFSCurvedPanel(currentPart);
                             tmpGen.Deploy();
                             ScreenMessages.PostScreenMessage(
-                            "Electricity Levels Critical! Extending Panels!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000244"), 5.0f,		// #autoLOC_AmpYear_1000244 = Electricity Levels Critical! Extending Panels!
                             ScreenMessageStyle.UPPER_LEFT);
                             Utilities.Log("Extending Panels");
                         }
@@ -2349,7 +2411,7 @@ namespace AY
                     {
                         RTWrapper.RTAntenna tmpAnt = new RTWrapper.RTAntenna(currentPart);
                         tmpAnt.Activated = false;
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off RTAntenna!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000245"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000245 = Electricity Levels Critical! Turning off RTAntenna!
                         Utilities.Log("Turning off RTAntenna");
                     }
                     break;
@@ -2359,7 +2421,7 @@ namespace AY
                     {
                         ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(currentPart);
                         tmpSs.stopScan();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off SCANsat!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000246"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000246 = Electricity Levels Critical! Turning off SCANsat!
                         Utilities.Log("Turning off SCANsat");
                     }
                     break;
@@ -2369,7 +2431,7 @@ namespace AY
                     {
                         TACLSWrapper.TACLSGenericConverter tacGC = new TACLSWrapper.TACLSGenericConverter(currentPart);
                         tacGC.DeactivateConverter();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off TACConverter!", 5.0f, ScreenMessageStyle.UPPER_LEFT);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000247"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000247 = Electricity Levels Critical! Turning off TACConverter!
                         Utilities.Log("Turning off TACConverter");
                     }
                     break;
@@ -2380,7 +2442,7 @@ namespace AY
 
                         BaseEventList scrubbereventlist = currentPart.Events;
                         scrubbereventlist["DeactivateEvent"].Invoke();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Scrubber!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000248"),		// #autoLOC_AmpYear_1000248 = Electricity Levels Critical! Turning off Scrubber!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off Scrubber");
                     }
@@ -2392,7 +2454,7 @@ namespace AY
 
                         BaseFieldList ghfieldlist = currentPart.Fields;
                         ghfieldlist.SetValue("lamps", 0.0f);
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off Greenhouse!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000249"),		// #autoLOC_AmpYear_1000249 = Electricity Levels Critical! Turning off Greenhouse!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off Greenhouse");
                     }
@@ -2403,7 +2465,7 @@ namespace AY
 
                         BaseFieldList grfieldlist = currentPart.Fields;
                         grfieldlist.SetValue("speed", 0.0f);
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off GravityRing!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000250"),		// #autoLOC_AmpYear_1000250 = Electricity Levels Critical! Turning off GravityRing!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off GravityRing");
                     }
@@ -2412,7 +2474,7 @@ namespace AY
                     if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
                     {
                         currentPart.deactivate();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Turning off ARAntenna!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000251"),		// #autoLOC_AmpYear_1000251 = Electricity Levels Critical! Turning off ARAntenna!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Turning off ARAntenna");
                     }
@@ -2430,7 +2492,7 @@ namespace AY
                         ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
                         tmpIonPoweredRcs.rcsEnabled = true;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable ION RCS!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000252"), 5.0f,		// #autoLOC_AmpYear_1000252 = Electricity Levels OK Enable ION RCS!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling ION RCS");
                     }
@@ -2442,7 +2504,7 @@ namespace AY
                         ModuleRCS tmpIonPoweredRcs = (ModuleRCS)module;
                         tmpIonPoweredRcs.rcsEnabled = true;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable PPT RCS!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000253"), 5.0f,		// #autoLOC_AmpYear_1000253 = Electricity Levels OK Enable PPT RCS!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling PPT RCS");
                     }
@@ -2455,7 +2517,7 @@ namespace AY
                     {
                         tmpSol.Retract();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Retracting Solar Panels!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000254"), 5.0f,		// #autoLOC_AmpYear_1000254 = Electricity Levels OK Retracting Solar Panels!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Retracting solar array");
                     }
@@ -2468,7 +2530,7 @@ namespace AY
                         ModuleWheelMotor tmpWheel = (ModuleWheelMotor)module;
                         tmpWheel.motorEnabled = true;
                             ScreenMessages.PostScreenMessage(
-                                "Electricity Levels OK Enable Wheels!", 5.0f,
+                                Localizer.Format("#autoLOC_AmpYear_1000255"), 5.0f,		// #autoLOC_AmpYear_1000255 = Electricity Levels OK Enable Wheels!
                                 ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling wheels");
                     }
@@ -2481,7 +2543,7 @@ namespace AY
                         ModuleLight tmpLight = (ModuleLight)module;
                         tmpLight.LightsOn();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable Lights!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000256"), 5.0f,		// #autoLOC_AmpYear_1000256 = Electricity Levels OK Enable Lights!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling lights");
                     }
@@ -2497,7 +2559,7 @@ namespace AY
                         ModuleReactionWheel tmpRw = (ModuleReactionWheel)module;
                         tmpRw.enabled = true;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable ReactionWheel!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000257"), 5.0f,		// #autoLOC_AmpYear_1000257 = Electricity Levels OK Enable ReactionWheel!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling reactionwheel");
                     }
@@ -2509,7 +2571,7 @@ namespace AY
                         ModuleResourceHarvester tmpHvstr = (ModuleResourceHarvester)module;
                         tmpHvstr.EnableModule();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable Harvester!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000258"), 5.0f,		// #autoLOC_AmpYear_1000258 = Electricity Levels OK Enable Harvester!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling harvester");
                     }
@@ -2522,7 +2584,7 @@ namespace AY
                         ModuleResourceConverter tmpRegRc = (ModuleResourceConverter)module;
                         tmpRegRc.EnableModule();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable Converter!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000259"), 5.0f,		// #autoLOC_AmpYear_1000259 = Electricity Levels OK Enable Converter!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling converter");
                     }
@@ -2534,7 +2596,7 @@ namespace AY
                     {
                         ModuleActiveRadiator tmpRad = (ModuleActiveRadiator) module;
                         tmpRad.Activate();
-                        ScreenMessages.PostScreenMessage("Electricity Levels OK Enable Radiator!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000260"),		// #autoLOC_AmpYear_1000260 = Electricity Levels OK Enable Radiator!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling Radiator");
                     }
@@ -2545,7 +2607,7 @@ namespace AY
                     {
                         ModuleEnviroSensor tmpEnvS = (ModuleEnviroSensor)module;
                         if (!tmpEnvS.sensorActive) tmpEnvS.Toggle();
-                        ScreenMessages.PostScreenMessage("Electricity Levels Critical! Enabling EnviroSensor!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000261"),		// #autoLOC_AmpYear_1000261 = Electricity Levels Critical! Enabling EnviroSensor!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling EnviroSensor");
                     }
@@ -2557,19 +2619,19 @@ namespace AY
                         ALWrapper.ALNavLight tmpLight = new ALWrapper.ALNavLight(currentPart);
                         tmpLight.navLightSwitch = 1;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable navLight!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000262"), 5.0f,		// #autoLOC_AmpYear_1000262 = Electricity Levels OK Enable navLight!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling navlight");
                     }
                     break;
 
-                case "Curved Solar Panel":
+                case "CurvedSolarPanel":
                     if (!partFnd.PrtPreEmergShutDnStateActive && prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
                     {
                         NFSWrapper.NFSCurvedPanel tmpGen = new NFSWrapper.NFSCurvedPanel(currentPart);
                         tmpGen.Retract();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Retracting Panels!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000263"), 5.0f,		// #autoLOC_AmpYear_1000263 = Electricity Levels OK Retracting Panels!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Retracting panels");
                     }
@@ -2581,7 +2643,7 @@ namespace AY
                         RTWrapper.RTAntenna tmpAnt = new RTWrapper.RTAntenna(currentPart);
                         tmpAnt.Activated = true;
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable RTAntenna!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000264"), 5.0f,		// #autoLOC_AmpYear_1000264 = Electricity Levels OK Enable RTAntenna!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling RTAntenna");
                     }
@@ -2593,7 +2655,7 @@ namespace AY
                         ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(currentPart);
                         tmpSs.startScan();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable SCANsat!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000265"), 5.0f,		// #autoLOC_AmpYear_1000265 = Electricity Levels OK Enable SCANsat!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling SCANsat");
                     }
@@ -2605,7 +2667,7 @@ namespace AY
                         TACLSWrapper.TACLSGenericConverter tacGC = new TACLSWrapper.TACLSGenericConverter(currentPart);
                         tacGC.ActivateConverter();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable TACConverter!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000266"), 5.0f,		// #autoLOC_AmpYear_1000266 = Electricity Levels OK Enable TACConverter!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling TACConverter");
                     }
@@ -2616,7 +2678,7 @@ namespace AY
                     {
                         currentPart.force_activate();
                         ScreenMessages.PostScreenMessage(
-                            "Electricity Levels OK Enable ARAntenna!", 5.0f,
+                            Localizer.Format("#autoLOC_AmpYear_1000267"), 5.0f,		// #autoLOC_AmpYear_1000267 = Electricity Levels OK Enable ARAntenna!
                             ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling ARAntenna");
                     }
@@ -2627,7 +2689,7 @@ namespace AY
 
                         BaseEventList gheventlist = currentPart.Events;
                         gheventlist["ActivateEvent"].Invoke();
-                        ScreenMessages.PostScreenMessage("Electricity Levels OK Enable Scrubber!",
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000268"),		// #autoLOC_AmpYear_1000268 = Electricity Levels OK Enable Scrubber!
                             5.0f, ScreenMessageStyle.UPPER_LEFT);
                         Utilities.Log("Enabling Scrubber");
                     }

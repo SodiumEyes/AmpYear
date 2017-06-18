@@ -186,7 +186,7 @@ if exist "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" del "
 %25ZA_DIR%257za.exe a -tzip -r  "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "$(SolutionDir)Distribution\GameData"
 cd "$(SolutionDir)Distribution\GameData\RepoSoftTech\AmpYear\Icons"
 dir /b &gt; "$(SolutionDir)IconsExclude.txt"
-c:\7za\7za d -r  -x@"$(SolutionDir)IconsExclude.txt" -x!REPOSoftTech.png "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png"
+c:\7za\7za d -r  -x@"$(SolutionDir)IconsExclude.txt" -x!REPOSoftTech.png "$(SolutionDir)Distribution\$(ProjectName)_V@(VersionNumber).zip" "*.ddsified" "*.pdb" "*.mdb" "*.png" "*gitignore*"
 xcopy /E /Y "$(SolutionDir)Distribution\GameData" "%25KSP_DIR%25\GameData"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

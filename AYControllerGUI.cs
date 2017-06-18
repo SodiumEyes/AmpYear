@@ -37,9 +37,11 @@
  */
 using System;
 using System.Collections.Generic;
+using Highlighting;
 using UnityEngine;
 using RSTUtils;
 using RSTUtils.Extensions;
+using KSP.Localization;
 
 namespace AY
 {
@@ -113,6 +115,8 @@ namespace AY
         private string strOrbit;
         private int tmpESPPriority;
         private bool tmpPrtConsEditorIncludeAll, tmpPrtConsEmergShutDnIncludeAll, tmpPrtConsOneAll, tmpPrtConsThreeAll, tmpPrtConsTwoAll;
+        private bool prodPartsHighlightAll = false;
+        private bool consPartsHighlightAll = false;
 
         private bool tmpPrtEditorInclude,
             tmpPrtEmergShutDnInclude,
@@ -163,7 +167,11 @@ namespace AY
         {
             try
             {
-                if (!Textures.StylesSet) Textures.SetupStyles();
+                if (!Textures.StylesSet)
+                {
+                    Textures.SetupStyles();
+                    //Textures.SetupHighLightStyles(AYsettings.ProdPartHighlightColor, AYsettings.ConsPartHighlightColor);
+                }
             }
             catch (Exception ex)
             {
@@ -188,17 +196,17 @@ namespace AY
                 try
                 {
                     _fwindowPos.ClampInsideScreen();
-                    _fwindowPos = GUILayout.Window(_fwindowId, _fwindowPos, WindowF, "AmpYear", GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+                    _fwindowPos = GUILayout.Window(_fwindowId, _fwindowPos, WindowF, Localizer.Format("#autoLOC_AmpYear_1000001"), GUILayout.Width(FWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));		// #autoLOC_AmpYear_1000001 = AmpYear
                     if (_showParts)
                     {
                         _epLwindowPos.ClampToScreen();
-                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
+                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, Localizer.Format("#autoLOC_AmpYear_1000002"), GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));		// #autoLOC_AmpYear_1000002 = AmpYear Parts List
                     }
                     CheckPowerLowWarning();
                     if (_lowEcWarningWindowDisplay)
                     {
-                        PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "AmpYear Warning!", "AmpYear Warning!",
-                            "Ship Electric charge has dropped below the Warp Warning Percentage.\n This will not trigger again until Electric charge > Warning Percentage again.", "OK", false, HighLogic.UISkin);
+                        PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "AmpYear Warning!", Localizer.Format("#autoLOC_AmpYear_1000003"),		// #autoLOC_AmpYear_1000003 = AmpYear Warning!
+                            Localizer.Format("#autoLOC_AmpYear_1000004"), Localizer.Format("#autoLOC_AmpYear_1000005"), false, HighLogic.UISkin);		// #autoLOC_AmpYear_1000004 = Ship Electric charge has dropped below the Warp Warning Percentage.\n This will not trigger again until Electric charge > Warning Percentage again.		// #autoLOC_AmpYear_1000005 = OK
                         _lowEcWarningWindowDisplay = false;
                     }
                 }
@@ -214,11 +222,11 @@ namespace AY
                 try
                 {
                     _ewindowPos.ClampInsideScreen();
-                    _ewindowPos = GUILayout.Window(_ewindowId, _ewindowPos, WindowE, "AmpYear", GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
+                    _ewindowPos = GUILayout.Window(_ewindowId, _ewindowPos, WindowE, Localizer.Format("#autoLOC_AmpYear_1000001"), GUILayout.Width(EWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                     if (_showParts)
                     {
                         _epLwindowPos.ClampToScreen();
-                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, "AmpYear Parts List", GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
+                        _epLwindowPos = GUILayout.Window(_swindowId, _epLwindowPos, WindowScrollParts, Localizer.Format("#autoLOC_AmpYear_1000002"), GUILayout.Width(_epLwindowPos.width), GUILayout.Height(_epLwindowPos.height), GUILayout.MinWidth(150), GUILayout.MinHeight(150));
                     }
                 }
                 catch (Exception ex)
@@ -233,7 +241,7 @@ namespace AY
                 try
                 {
                     _dwindowPos.ClampToScreen();
-                    _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, "AmpYear Dark-Side & Solar SOI", GUILayout.MinWidth(330), GUILayout.MinHeight(320));
+                    _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, Localizer.Format("#autoLOC_AmpYear_1000006"), GUILayout.MinWidth(330), GUILayout.MinHeight(320));		// #autoLOC_AmpYear_1000006 = AmpYear Dark-Side & Solar SOI
                 }
                 catch (Exception ex)
                 {
@@ -277,14 +285,14 @@ namespace AY
         private void WindowF(int id)
         {
             _iconAlertState = IconAlertState.GREEN;
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, Localizer.Format("#autoLOC_AmpYear_1000007"));		// #autoLOC_AmpYear_1000007 = Close Window
             Rect closeRect = new Rect(_fwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
                 AYMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
-            AYsettings.showSI = GUI.Toggle(new Rect(_fwindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
+            AYsettings.showSI = GUI.Toggle(new Rect(_fwindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, Localizer.Format("#autoLOC_AmpYear_1000008")), Textures.PartListbtnStyle);		// #autoLOC_AmpYear_1000008 = Toggle the display to use EC or SI units
 
 
             GUILayout.BeginVertical();
@@ -318,9 +326,9 @@ namespace AY
                 if (_rt2Present && !RT2UnderControl)
                 {
                     GUI.enabled = false;
-                    GUILayout.Label(new GUIContent("Remote Tech - No Control", "No Remote Tech Connection or Local Control - Unable to use AmpYear Functions."), Textures.AlertStyle);
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000009"), Localizer.Format("#autoLOC_AmpYear_1000010")), Textures.AlertStyle);		// #autoLOC_AmpYear_1000009 = Remote Tech - No Control		// #autoLOC_AmpYear_1000010 = No Remote Tech Connection or Local Control - Unable to use AmpYear Functions.
                 }
-                _managerEnabled = GUILayout.Toggle(_managerEnabled, new GUIContent("Manager", "Turn on to Enable the AmpYear Management Unit"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                _managerEnabled = GUILayout.Toggle(_managerEnabled, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000011"), Localizer.Format("#autoLOC_AmpYear_1000012")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000011 = Manager		// #autoLOC_AmpYear_1000012 = Turn on to Enable the AmpYear Management Unit
                 GUI.enabled = true;
                 if (ManagerIsActive)
                     ConsumptionLabel(ManagerCurrentDrain, false);
@@ -341,19 +349,19 @@ namespace AY
                             powerPercent = TotalElectricCharge / TotalElectricChargeCapacity * 100.0;
                             if (powerPercent < 20.00)
                             {
-                                GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.AlertStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000013", powerPercent.ToString("0.00")), Localizer.Format("#autoLOC_AmpYear_1000014")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000013 = Power: <<1>>%		// #autoLOC_AmpYear_1000014 = The Total Percentage of Main Power stored as a percentage of total capacity
                                 SetIconalertstate(IconAlertState.RED);
                             }
                             else
                             {
                                 if (powerPercent < 35.00)
                                 {
-                                    GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.WarningStyleLeft);
+                                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000013", powerPercent.ToString("0.00")), Localizer.Format("#autoLOC_AmpYear_1000014")), Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000013 = Power: <<1>>%		// #autoLOC_AmpYear_1000014 = The Total Percentage of Main Power stored as a percentage of total capacity
 
                                     SetIconalertstate(IconAlertState.YELLOW);
                                 }
                                 else
-                                    GUILayout.Label(new GUIContent("Power: " + powerPercent.ToString("0.00") + '%', "The Total Percentage of Main Power stored as a percentage of total capacity"), Textures.StatusStyleLeft);
+                                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000013", powerPercent.ToString("0.00")), Localizer.Format("#autoLOC_AmpYear_1000014")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000013 = Power: <<1>>%		// #autoLOC_AmpYear_1000014 = The Total Percentage of Main Power stored as a percentage of total capacity
                             }
                             if (AYsettings.showSI)
                             {
@@ -366,11 +374,11 @@ namespace AY
                             }
                             if (TotalPowerDrain > TotalPowerProduced)
                             {
-                                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.AlertStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000015", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000016")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000015 = Power Drain : 		// #autoLOC_AmpYear_1000016 = The Total Power Drain on this vessel
                                 SetIconalertstate(IconAlertState.RED);
                             }
                             else
-                                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.StatusStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000015", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000016")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000015 = Power Drain : 		// #autoLOC_AmpYear_1000016 = The Total Power Drain on this vessel
 
                             if (AYsettings.showSI)
                             {
@@ -382,10 +390,10 @@ namespace AY
                                 tmpPrtPower = TotalPowerProduced.ToString("0.##");
                             }
                             if (TotalPowerProduced > 0)
-                                GUILayout.Label(new GUIContent("Power Prod : " + tmpPrtPower, "The Total Power Production of this vessel"), Textures.StatusStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000017", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000018")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000017 = Power Prod : 		// #autoLOC_AmpYear_1000018 = The Total Power Production of this vessel
                             else
                             {
-                                GUILayout.Label(new GUIContent("Power Prod : " + tmpPrtPower, "The Total Power Production of this vessel"), Textures.AlertStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000017", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000018")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000017 = Power Prod : 		// #autoLOC_AmpYear_1000018 = The Total Power Production of this vessel
                                 SetIconalertstate(IconAlertState.YELLOW);
                             }
 
@@ -394,31 +402,31 @@ namespace AY
                             timeRemainMains = TotalElectricCharge / TotalPowerDrain;
                             if (timeRemainMains < 300) //5 mins
                             {
-                                GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.AlertStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000019", KSPUtil.PrintTimeCompact((int)timeRemainMains, false)), Localizer.Format("#autoLOC_AmpYear_1000020")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000019 = Mains Time: 		// #autoLOC_AmpYear_1000020 = Time remaining in Main Power Batteries
                                 SetIconalertstate(IconAlertState.RED);
                             }
                             else
                             {
                                 if (timeRemainMains < 1800) //30 mins
                                 {
-                                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.WarningStyleLeft);
+                                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000019", KSPUtil.PrintTimeCompact((int)timeRemainMains, false)), Localizer.Format("#autoLOC_AmpYear_1000020")), Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000019 = Mains Time: 		// #autoLOC_AmpYear_1000020 = Time remaining in Main Power Batteries
                                     SetIconalertstate(IconAlertState.YELLOW);
                                 }
                                 else
-                                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "Time remaining in Main Power Batteries"), Textures.StatusStyleLeft);
+                                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000019", KSPUtil.PrintTimeCompact((int)timeRemainMains, false)), Localizer.Format("#autoLOC_AmpYear_1000020")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000019 = Mains Time: 		// #autoLOC_AmpYear_1000020 = Time remaining in Main Power Batteries
                             }
 
                             //Time Remaining in Reserver Batteries
                             timeRemainReserve = TotalReservePower / TotalPowerDrain;
                             GUILayout.Label(
                                     new GUIContent(
-                                        "Reserve Time: " + KSPUtil.PrintTimeCompact((int) timeRemainReserve, false),
-                                        "Time remaining in Reserve Power Batteries"),
+                                        Localizer.Format("#autoLOC_AmpYear_1000021", KSPUtil.PrintTimeCompact((int) timeRemainReserve, false)),		// #autoLOC_AmpYear_1000021 = Reserve Time: 
+                                        Localizer.Format("#autoLOC_AmpYear_1000022")),		// #autoLOC_AmpYear_1000022 = Time remaining in Reserve Power Batteries
                                     timeRemainReserve < 30 ? Textures.AlertStyle : Textures.StatusStyleLeft);
 
                             
                             if (_lockReservePower)
-                                GUILayout.Label(new GUIContent("Reserve Power Isolated","Reserve Power Isolation Switch is ON"),Textures.WarningStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000023"), Localizer.Format("#autoLOC_AmpYear_1000024")),Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000023 = Reserve Power Isolated		// #autoLOC_AmpYear_1000024 = Reserve Power Isolation Switch is ON
 
                             if (TotalElectricChargeFlowOff > 0)
                             {
@@ -431,7 +439,7 @@ namespace AY
                                 {
                                     tmpPrtPower = TotalElectricChargeFlowOff.ToString("0.##");
                                 }
-                                GUILayout.Label(new GUIContent("Disabled EC: " + tmpPrtPower, "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.WarningStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000025", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000026")), Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000025 = Disabled EC: 		// #autoLOC_AmpYear_1000026 = You still have Main EC power, but you have disabled it in the part right click menu.
                             }
                             if (TotalReservePowerFlowOff > 0)
                             {
@@ -444,13 +452,13 @@ namespace AY
                                 {
                                     tmpPrtPower = TotalReservePowerFlowOff.ToString("0.##");
                                 }
-                                GUILayout.Label(new GUIContent("Disabled ReservePower: " + tmpPrtPower, "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.WarningStyleLeft);
+                                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000027", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000028")), Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000027 = Disabled ReservePower: 		// #autoLOC_AmpYear_1000028 = You still have ReservePower, but you have disabled it in the part right click menu.
                             }
                         }
                     }
                     else
                     {
-                        GUILayout.Label(new GUIContent("Running on Reserve Power!", "Main EC power is exhausted, we are running on Reserve Power. Until that runs out..."), Textures.AlertStyleLeft);
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000029"), Localizer.Format("#autoLOC_AmpYear_1000030")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000029 = Running on Reserve Power!		// #autoLOC_AmpYear_1000030 = Main EC power is exhausted, we are running on Reserve Power. Until that runs out...
                         if (TotalElectricChargeFlowOff > 0)
                         {
                             if (AYsettings.showSI)
@@ -462,7 +470,7 @@ namespace AY
                             {
                                 tmpPrtPower = TotalElectricChargeFlowOff.ToString("0.##");
                             }
-                            GUILayout.Label(new GUIContent("Disabled EC: " + tmpPrtPower, "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
+                            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000027", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000028")), Textures.AlertStyleLeft);        // #autoLOC_AmpYear_1000027 = Disabled ReservePower: 		// #autoLOC_AmpYear_1000028 = You still have ReservePower, but you have disabled it in the part right click menu.
                         }
                         if (TotalReservePowerFlowOff > 0)
                         {
@@ -475,7 +483,7 @@ namespace AY
                             {
                                 tmpPrtPower = TotalReservePowerFlowOff.ToString("0.##");
                             }
-                            GUILayout.Label(new GUIContent("Disabled ReservePower: " + tmpPrtPower, "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
+                            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000027", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000028")), Textures.AlertStyleLeft);        // #autoLOC_AmpYear_1000027 = Disabled ReservePower: 		// #autoLOC_AmpYear_1000028 = You still have ReservePower, but you have disabled it in the part right click menu.
                         }
                         SetIconalertstate(IconAlertState.RED);
                     }
@@ -484,18 +492,18 @@ namespace AY
                 {
                     if (TimewarpIsValid)
                     {
-                        GUILayout.Label(new GUIContent("Manager Disabled", "The AmpYear Power Management Unit has been disabled"), Textures.WarningStyleLeft);
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000031"), Localizer.Format("#autoLOC_AmpYear_1000032")), Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000031 = Manager Disabled		// #autoLOC_AmpYear_1000032 = The AmpYear Power Management Unit has been disabled
                         SetIconalertstate(IconAlertState.GRAY);
                     }
                     else
                     {
-                        GUILayout.Label(new GUIContent("Auto-Hibernation", "AmpYear functions are disabled at High rates of Time Warp"), Textures.StatusStyleLeft);
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000033"), Localizer.Format("#autoLOC_AmpYear_1000034")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000033 = Auto-Hibernation		// #autoLOC_AmpYear_1000034 = AmpYear functions are disabled at High rates of Time Warp
                     }
                 }
             }
             else
             {
-                GUILayout.Label(new GUIContent("Insufficient Power", "There is insufficient Power to run ANY of the vessels systems"), Textures.AlertStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000035"), Localizer.Format("#autoLOC_AmpYear_1000036")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000035 = Insufficient Power		// #autoLOC_AmpYear_1000036 = There is insufficient Power to run ANY of the vessels systems
                 if (TotalElectricChargeFlowOff > 0)
                 {
                     if (AYsettings.showSI)
@@ -507,7 +515,7 @@ namespace AY
                     {
                         tmpPrtPower = TotalElectricChargeFlowOff.ToString("0.##");
                     }
-                    GUILayout.Label(new GUIContent("Disabled EC: " + tmpPrtPower, "You still have Main EC power, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000025", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000026")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000025 = Disabled EC: 		// #autoLOC_AmpYear_1000026 = You still have Main EC power, but you have disabled it in the part right click menu.
                 }
                 if (TotalReservePowerFlowOff > 0)
                 {
@@ -520,7 +528,7 @@ namespace AY
                     {
                         tmpPrtPower = TotalReservePowerFlowOff.ToString("0.##");
                     }
-                    GUILayout.Label(new GUIContent("Disabled ReservePower: " + tmpPrtPower, "You still have ReservePower, but you have disabled it in the part right click menu."), Textures.AlertStyleLeft);
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000027", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000028")), Textures.AlertStyleLeft);        // #autoLOC_AmpYear_1000027 = Disabled ReservePower: 		// #autoLOC_AmpYear_1000028 = You still have ReservePower, but you have disabled it in the part right click menu.
                 }
                 SetIconalertstate(IconAlertState.RED);
             }
@@ -535,7 +543,7 @@ namespace AY
             //Subsystems
             if (ManagerIsActive && GuiSectionEnabled(GUISection.SUBSYSTEM))
             {
-                GUILayout.Label("Subsystems", Textures.SectionTitleStyle);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000037"), Textures.SectionTitleStyle);		// #autoLOC_AmpYear_1000037 = Subsystems
                 for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
                     if (!SubsystemIsLuxury(LoadGlobals.SubsystemArrayCache[i]) && SubsystemVisible(LoadGlobals.SubsystemArrayCache[i]))
@@ -552,51 +560,51 @@ namespace AY
             {
                 if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
-                _showCrew = GUILayout.Toggle(_showCrew, new GUIContent("ShowCrew", "Show a list of crew on board the current vessel"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                _showCrew = GUILayout.Toggle(_showCrew, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000038"), Localizer.Format("#autoLOC_AmpYear_1000039")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000038 = ShowCrew		// #autoLOC_AmpYear_1000039 = Show a list of crew on board the current vessel
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
-                EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, new GUIContent("Emergency SP Auto Active","Activate Automatic Emergency Shutdown Procedures"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                EmgcyShutActive = GUILayout.Toggle(EmgcyShutActive, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000040"), Localizer.Format("#autoLOC_AmpYear_1000041")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000040 = Emergency SP Auto Active		// #autoLOC_AmpYear_1000041 = Activate Automatic Emergency Shutdown Procedures
                 GUILayout.EndHorizontal();
                 if (Emergencypowerdownactivated || Emergencypowerdownreset)  //Do a status if Auto ESP is processing
                 {
                     ststext = "";
                     if (Emergencypowerdownactivated)
                     {
-                        ststext = "PwrDown ";
+                        ststext = Localizer.Format("#autoLOC_AmpYear_1000042");		// #autoLOC_AmpYear_1000042 = PwrDown 
                     }
                     else
                     {
-                        ststext = "PwrUp ";
+                        ststext = Localizer.Format("#autoLOC_AmpYear_1000043");		// #autoLOC_AmpYear_1000043 = PwrUp 
                     }
                     switch (_espPriority)
                     {
                         case ESPPriority.HIGH:
-                            ststext += "High";
+                            ststext += Localizer.Format("#autoLOC_AmpYear_1000044");		// #autoLOC_AmpYear_1000044 = High
                             break;
                         case ESPPriority.MEDIUM:
-                            ststext += "Medium";
+                            ststext += Localizer.Format("#autoLOC_AmpYear_1000045");		// #autoLOC_AmpYear_1000045 = Medium
                             break;
                         case ESPPriority.LOW:
-                            ststext += "Low";
+                            ststext += Localizer.Format("#autoLOC_AmpYear_1000046");		// #autoLOC_AmpYear_1000046 = Low
                             break;
                     }
-                    GUILayout.Label(new GUIContent("Auto ESP Active: " + ststext, "Automatic ESP is Actively processing"), Textures.AlertStyleLeft);
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000047", ststext), Localizer.Format("#autoLOC_AmpYear_1000048")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000047 = Auto ESP Active: 		// #autoLOC_AmpYear_1000048 = Automatic ESP is Actively processing
                 }
                 GUILayout.BeginHorizontal();
-                GUIContent btntext = new GUIContent("Emerg. SP Manual",
+                GUIContent btntext = new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000049"),		// #autoLOC_AmpYear_1000049 = Emerg. SP Manual
                             EmgcyShutActive
-                                ? "Manually Activate Emergency Shutdown Procedures right now."
-                                : "Automatic ESP (above) must be turned on first for manual override to become available.");
+                                ? Localizer.Format("#autoLOC_AmpYear_1000050")		// #autoLOC_AmpYear_1000050 = Manually Activate Emergency Shutdown Procedures right now.
+                                : Localizer.Format("#autoLOC_AmpYear_1000051"));		// #autoLOC_AmpYear_1000051 = Automatic ESP (above) must be turned on first for manual override to become available.
                 if (!EmgcyShutActive || EmgcyShutOverride || EmgcyShutOverrideTmeStarted > 0)
                 {
                     GUI.enabled = false;
                     if (EmgcyShutOverride)
-                        btntext = new GUIContent("Emerg. SP Manual", "Manual Emergency Shutdown Process has been activated.");
+                        btntext = new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000049"), Localizer.Format("#autoLOC_AmpYear_1000052")); // #autoLOC_AmpYear_1000049 = Emerg. SP Manual		// #autoLOC_AmpYear_1000052 = Manual Emergency Shutdown Process has been activated.
                     if (EmgcyShutOverrideTmeStarted > 0)
                     {
                         double tmeRemaining = AYsettings.EmgcyShutOverrideCooldown - (Planetarium.GetUniversalTime() - EmgcyShutOverrideTmeStarted);
                         string tmeRemStr = KSPUtil.PrintTimeCompact(tmeRemaining, true);
-                        btntext = new GUIContent("Manual CoolDown Rem:\n" + tmeRemStr, "Manual Emergency Shutdown Process is in cooldown mode.");
+                        btntext = new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000053", tmeRemStr), Localizer.Format("#autoLOC_AmpYear_1000054"));		// #autoLOC_AmpYear_1000053 = Manual CoolDown Rem:\n		// #autoLOC_AmpYear_1000054 = Manual Emergency Shutdown Process is in cooldown mode.
                     }
                 }
                 if (GUILayout.Button(btntext))
@@ -614,7 +622,7 @@ namespace AY
                         EmgcyShutActive = false;
                         EmgcyShutOverride = false;
                         ScreenMessages.PostScreenMessage(
-                                "You must activate the Automatic ESP system before you can activate the manual override button", 5.0f,
+                                Localizer.Format("#autoLOC_AmpYear_1000055"), 5.0f,		// #autoLOC_AmpYear_1000055 = You must activate the Automatic ESP system before you can activate the manual override button
                                 ScreenMessageStyle.UPPER_CENTER);
                     }
                     
@@ -622,11 +630,11 @@ namespace AY
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
-                _showParts = GUILayout.Toggle(_showParts, new GUIContent("ShowParts", "Show all the Parts and PartModules list in the current vessel"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                _showParts = GUILayout.Toggle(_showParts, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000056"), Localizer.Format("#autoLOC_AmpYear_1000057")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000056 = ShowParts		// #autoLOC_AmpYear_1000057 = Show all the Parts and PartModules list in the current vessel
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
                 tmpShowDarkSideWindow = ShowDarkSideWindow;
-                ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent("Dark-Side & Solar Calcs", "Open the Dark-Side and Solar Panel SOI Calculator"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000058"), Localizer.Format("#autoLOC_AmpYear_1000059")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000058 = Dark-Side & Solar Calcs		// #autoLOC_AmpYear_1000059 = Open the Dark-Side and Solar Panel SOI Calculator
                 if (tmpShowDarkSideWindow != ShowDarkSideWindow)
                 {
                     AYVesselPartLists.ResetSolarPartToggles();
@@ -637,7 +645,7 @@ namespace AY
             //Luxury
             if (ManagerIsActive && GuiSectionEnabled(GUISection.LUXURY))
             {
-                GUILayout.Label("Luxury", Textures.SectionTitleStyle);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000060"), Textures.SectionTitleStyle);		// #autoLOC_AmpYear_1000060 = Luxury
                 if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 for (int i = LoadGlobals.SubsystemArrayCache.Length - 1; i >= 0; --i)
                 {
@@ -655,7 +663,7 @@ namespace AY
             //Reserve
             if (ManagerIsActive && GuiSectionEnabled(GUISection.RESERVE))
             {
-                GUILayout.Label("Reserve Power", Textures.SectionTitleStyle);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000061"), Textures.SectionTitleStyle);		// #autoLOC_AmpYear_1000061 = Reserve Power
 
                 //Reserve status label
                 if (TotalReservePowerCapacity > 0.0)
@@ -664,40 +672,40 @@ namespace AY
                     {
                         reservePercent = TotalReservePower / TotalReservePowerCapacity * 100.0;
                         if (reservePercent < 20.0)
-                            GUILayout.Label(new GUIContent("Reserve Power: " + reservePercent.ToString("0.00") + '%', "Percentage of Reserve Power Available"), Textures.AlertStyleLeft);
+                            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000062", reservePercent.ToString("0.00")), Localizer.Format("#autoLOC_AmpYear_1000063")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000062 = Reserve Power: 		// #autoLOC_AmpYear_1000063 = Percentage of Reserve Power Available
                         else
                         {
                             GUILayout.Label(
-                                new GUIContent("Reserve Power: " + reservePercent.ToString("0.00") + '%',
-                                    "Percentage of Reserve Power Available"),
+                                new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000062", reservePercent.ToString("0.00")), // #autoLOC_AmpYear_1000062 = Reserve Power: 
+                                    Localizer.Format("#autoLOC_AmpYear_1000063")), // #autoLOC_AmpYear_1000063 = Percentage of Reserve Power Available
                                 reservePercent < 40.0 ? Textures.WarningStyle : Textures.StatusStyleLeft);
                         }
                     }
                     else
-                        GUILayout.Label("Reserve Power Depleted", Textures.AlertStyleLeft);
+                        GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000064"), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000064 = Reserve Power Depleted
                 }
                 else
-                    GUILayout.Label("Reserve Power not Found!", Textures.AlertStyleLeft);
+                    GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000065"), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000065 = Reserve Power not Found!
 
                 //Reserve transfer
                 //String[] incrementPercentString = new String[_reserveTransferIncrements.Length];
                 //if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(new GUIContent("XFer Reserve to Main", "Transfer a percentage of Reserve Power to Mains Power"));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000066"), Localizer.Format("#autoLOC_AmpYear_1000067")));		// #autoLOC_AmpYear_1000066 = XFer Reserve to Main		// #autoLOC_AmpYear_1000067 = Transfer a percentage of Reserve Power to Mains Power
                 for (int i = 0; i < _reserveTransferIncrements.Length; i++)
                 {
                     incrementPercentString[i] = (_reserveTransferIncrements[i] * 100).ToString("F0") + '%';
-                    if (GUILayout.Button(new GUIContent(incrementPercentString[i], "Transfer " + incrementPercentString[i] + " of Reserve Power to Mains EC")))
+                    if (GUILayout.Button(new GUIContent(incrementPercentString[i], Localizer.Format("#autoLOC_AmpYear_1000068", incrementPercentString[i]))))		// #autoLOC_AmpYear_1000068 = Transfer <<1>> of Reserve Power to Mains EC
                         TransferReserveToMain(TotalReservePowerCapacity * _reserveTransferIncrements[i]);
                 }
 
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(new GUIContent("XFer Main to Reserve", "Transfer a percentage of Main Power to Reserve Power"));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000069"), Localizer.Format("#autoLOC_AmpYear_1000070")));		// #autoLOC_AmpYear_1000069 = XFer Main to Reserve		// #autoLOC_AmpYear_1000070 = Transfer a percentage of Main Power to Reserve Power
                 for (int i = 0; i < _reserveTransferIncrements.Length; i++)
                 {
-                    if (GUILayout.Button(new GUIContent(incrementPercentString[i], "Transfer " + incrementPercentString[i] + " of Mains EC to Reserve Power")))
+                    if (GUILayout.Button(new GUIContent(incrementPercentString[i], Localizer.Format("#autoLOC_AmpYear_1000071", incrementPercentString[i]))))		// #autoLOC_AmpYear_1000071 = Transfer <<1>> of Mains EC to Reserve Power 
                         TransferMainToReserve(TotalReservePowerCapacity * _reserveTransferIncrements[i]);
                 }
                 GUILayout.EndHorizontal();
@@ -708,7 +716,7 @@ namespace AY
             {
                 //if (_rt2Present && !RT2UnderControl) GUI.enabled = false;
                 GUILayout.BeginHorizontal();
-                _lockReservePower = GUILayout.Toggle(_lockReservePower, new GUIContent("Isolate Reserve Power", "Isolation Switch for Reserve Power, ReservePower will not be used if this switch is on"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                _lockReservePower = GUILayout.Toggle(_lockReservePower, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000072"), Localizer.Format("#autoLOC_AmpYear_1000073")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000072 = Isolate Reserve Power		// #autoLOC_AmpYear_1000073 = Isolation Switch for Reserve Power, ReservePower will not be used if this switch is on
                 GUILayout.EndHorizontal();
                 GUI.enabled = true;
             }
@@ -716,7 +724,7 @@ namespace AY
             //ShowCrew
                 if (_showCrew)
             {
-                GUILayout.Label("Crew", Textures.SectionTitleStyle);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000074"), Textures.SectionTitleStyle);		// #autoLOC_AmpYear_1000074 = Crew
                 //VslRstr = FlightGlobals.ActiveVessel.GetVesselCrew();
                 if (VslRstr.Count > 0)
                 {
@@ -726,7 +734,7 @@ namespace AY
                     }
                 }
                 else //if (timewarpIsValid)
-                    GUILayout.Label("No Crew OnBoard", Textures.WarningStyleLeft);
+                    GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000075"), Textures.WarningStyleLeft);		// #autoLOC_AmpYear_1000075 = No Crew OnBoard
             }
 
             GUILayout.EndVertical();
@@ -738,27 +746,27 @@ namespace AY
         private void WindowE(int id)
         {
             _iconAlertState = IconAlertState.GREEN;
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, Localizer.Format("#autoLOC_AmpYear_1000007"));		// #autoLOC_AmpYear_1000007 = Close Window
             Rect closeRect = new Rect(_ewindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
                 AYMenuAppLToolBar.onAppLaunchToggle();
                 return;
             }
-            AYsettings.showSI = GUI.Toggle(new Rect(_ewindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
+            AYsettings.showSI = GUI.Toggle(new Rect(_ewindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, Localizer.Format("#autoLOC_AmpYear_1000008")), Textures.PartListbtnStyle);		// #autoLOC_AmpYear_1000008 = Toggle the display to use EC or SI units
             GUILayout.BeginVertical();
 
             //Manager status+drain
             GUILayout.BeginHorizontal();
-            _managerEnabled = GUILayout.Toggle(_managerEnabled, new GUIContent("Manager", "Turn on to activate the AmpYear Power Management Unit"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+            _managerEnabled = GUILayout.Toggle(_managerEnabled, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000011"), Localizer.Format("#autoLOC_AmpYear_1000012")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000011 = Manager		// #autoLOC_AmpYear_1000012 = Turn on to Enable the AmpYear Management Unit
             if (ManagerIsActive)
                 ConsumptionLabel(ManagerCurrentDrain, false);
             else
                 ConsumptionLabel(managerActiveDrain, true);
             GUILayout.EndHorizontal();
-            _showParts = GUILayout.Toggle(_showParts, new GUIContent("ShowParts", "Show all the Parts and PartModules list in the current vessel"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+            _showParts = GUILayout.Toggle(_showParts, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000056"), Localizer.Format("#autoLOC_AmpYear_1000057")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);   // #autoLOC_AmpYear_1000056 = ShowParts		// #autoLOC_AmpYear_1000057 = Show all the Parts and PartModules list in the current vessel
             tmpShowDarkSideWindow = ShowDarkSideWindow;
-            ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent("Dark-Side & Solar Calcs", "Open the Dark-Side and Solar Panel SOI Calculator"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+            ShowDarkSideWindow = GUILayout.Toggle(ShowDarkSideWindow, new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000058"), Localizer.Format("#autoLOC_AmpYear_1000059")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000058 = Dark-Side & Solar Calcs		// #autoLOC_AmpYear_1000059 = Open the Dark-Side and Solar Panel SOI Calculator
             if (tmpShowDarkSideWindow != ShowDarkSideWindow)
             {
                 AYVesselPartLists.ResetSolarPartToggles();
@@ -774,7 +782,7 @@ namespace AY
             {
                 tmpPrtPower = TotalElectricChargeCapacity.ToString("0.00");
             }
-            GUILayout.Label(new GUIContent("Power Capacity: " + tmpPrtPower, "Total Power Capacity of this vessel"), Textures.StatusStyleLeft);
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000076", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000077")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000076 = Power Capacity: 		// #autoLOC_AmpYear_1000077 = Total Power Capacity of this vessel
             if (AYsettings.showSI)
             {
                 tmpPrtPowerV = Utilities.ConvertECtoSI(TotalPowerDrain, out Units);
@@ -786,11 +794,11 @@ namespace AY
             }
             if (TotalPowerDrain > TotalPowerProduced)
             {
-                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.AlertStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000015", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000016")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000015 = Power Drain : 		// #autoLOC_AmpYear_1000016 = The Total Power Drain on this vessel
                 SetIconalertstate(IconAlertState.RED);
             }
             else
-                GUILayout.Label(new GUIContent("Power Drain : " + tmpPrtPower, "The Total Power Drain on this vessel"), Textures.StatusStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000015", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000016")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000015 = Power Drain : 		// #autoLOC_AmpYear_1000016 = The Total Power Drain on this vessel
             if (AYsettings.showSI)
             {
                 tmpPrtPowerV = Utilities.ConvertECtoSI(TotalPowerProduced, out Units);
@@ -801,10 +809,10 @@ namespace AY
                 tmpPrtPower = TotalPowerProduced.ToString("0.00");
             }
             if (TotalPowerProduced > 0)
-                GUILayout.Label("Power Prod : " + tmpPrtPower, Textures.StatusStyleLeft);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000017", tmpPrtPower), Textures.StatusStyleLeft);   //#autoLOC_AmpYear_1000017 = Power Prod : <<1>>
             else
             {
-                GUILayout.Label(new GUIContent("Power Prod : " + tmpPrtPower, "The Total Power Production of this vessel"), Textures.AlertStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000017", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000018")), Textures.AlertStyleLeft);		// #autoLOC_AmpYear_1000017 = Power Prod : 		// #autoLOC_AmpYear_1000018 = The Total Power Production of this vessel
                 SetIconalertstate(IconAlertState.YELLOW);
             }
 
@@ -812,32 +820,32 @@ namespace AY
             double timeRemainMains = TotalElectricCharge / TotalPowerDrain;
             if (timeRemainMains < 300) //5 mins
             {
-                GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.AlertStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000019", KSPUtil.PrintTimeCompact((int)timeRemainMains, false)), Localizer.Format("#autoLOC_AmpYear_1000078")), Textures.AlertStyleLeft);  //#autoLOC_AmpYear_1000019 = Mains Time: <<1>>		// #autoLOC_AmpYear_1000078 = The time remaining of Main EC stored based on current power production and usage
                 SetIconalertstate(IconAlertState.RED);
             }
             else
             {
                 if (timeRemainMains < 1800) //30 mins
                 {
-                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.WarningStyleLeft);
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000019", KSPUtil.PrintTimeCompact((int)timeRemainMains, false)), Localizer.Format("#autoLOC_AmpYear_1000078")), Textures.WarningStyleLeft);    //#autoLOC_AmpYear_1000019 = Mains Time: <<1>>    // #autoLOC_AmpYear_1000078 = The time remaining of Main EC stored based on current power production and usage
                     SetIconalertstate(IconAlertState.YELLOW);
                 }
                 else
-                    GUILayout.Label(new GUIContent("Mains Time: " + KSPUtil.PrintTimeCompact((int)timeRemainMains, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.StatusStyleLeft);
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000019", KSPUtil.PrintTimeCompact((int)timeRemainMains, false)), Localizer.Format("#autoLOC_AmpYear_1000078")), Textures.StatusStyleLeft);   //#autoLOC_AmpYear_1000019 = Mains Time: <<1>>    // #autoLOC_AmpYear_1000078 = The time remaining of Main EC stored based on current power production and usage
             }
 
             //Time Remaining in Reserver Batteries
             double timeRemainReserve = TotalReservePower / TotalPowerDrain;
             if (timeRemainReserve < 30)
             {
-                GUILayout.Label(new GUIContent("Reserve Time: " + KSPUtil.PrintTimeCompact((int)timeRemainReserve, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.AlertStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000021", KSPUtil.PrintTimeCompact((int)timeRemainReserve, false)), Localizer.Format("#autoLOC_AmpYear_1000079")), Textures.AlertStyleLeft);    //#autoLOC_AmpYear_1000021 = Reserve Time: <<1>>		// #autoLOC_AmpYear_1000079 = The time remaining of Main EC stored based on current power production and usage
                 SetIconalertstate(IconAlertState.YELLOW);
             }
             else
-                GUILayout.Label(new GUIContent("Reserve Time: " + KSPUtil.PrintTimeCompact((int)timeRemainReserve, false), "The time remaining of Main EC stored based on current power production and usage"), Textures.StatusStyleLeft);
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000021", KSPUtil.PrintTimeCompact((int)timeRemainReserve, false)), Localizer.Format("#autoLOC_AmpYear_1000079")), Textures.StatusStyleLeft);   //#autoLOC_AmpYear_1000021 = Reserve Time: <<1>>      // #autoLOC_AmpYear_1000079 = The time remaining of Main EC stored based on current power production and usage
 
             //Reserve
-            GUILayout.Label("Reserve Power", Textures.SectionTitleStyle);
+            GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000061"), Textures.SectionTitleStyle);       //#autoLOC_AmpYear_1000061 = Reserve Power
             //Reserve status label
             if (AYsettings.showSI)
             {
@@ -848,7 +856,7 @@ namespace AY
             {
                 tmpPrtPower = TotalReservePowerCapacity.ToString("0.00");
             }
-            GUILayout.Label(new GUIContent("Reserve Capacity: " + tmpPrtPower, "The total capacity of ReservePower of the current vessel"), Textures.StatusStyleLeft);
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000080", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000081")), Textures.StatusStyleLeft);		// #autoLOC_AmpYear_1000080 = Reserve Capacity: 		// #autoLOC_AmpYear_1000081 = The total capacity of ReservePower of the current vessel
             GUILayout.EndVertical();
             if (AYsettings.TooltipsOn)
                 Utilities.SetTooltipText();
@@ -857,7 +865,7 @@ namespace AY
 
         private void WindowScrollParts(int id)
         {
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, Localizer.Format("#autoLOC_AmpYear_1000007"));     //#autoLOC_AmpYear_1000007 = Close Window
             Rect closeRect = new Rect(_epLwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
@@ -865,23 +873,23 @@ namespace AY
                 return;
             }
             //Rect showSIRect = new Rect(_epLwindowPos.width - 45, 4, 16, 16);
-            AYsettings.showSI = GUI.Toggle(new Rect(_epLwindowPos.width - 45, 4, 16, 16), AYsettings.showSI,  new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
+            AYsettings.showSI = GUI.Toggle(new Rect(_epLwindowPos.width - 45, 4, 16, 16), AYsettings.showSI,  new GUIContent(Textures.BtnIS, Localizer.Format("#autoLOC_AmpYear_1000008")), Textures.PartListbtnStyle);		// #autoLOC_AmpYear_1000008 = Toggle the display to use EC or SI units
             GUILayout.BeginVertical();
-            GUILayout.Label("Power Production Parts", Textures.PartListStyle);
+            GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000082"), Textures.PartListStyle);		// #autoLOC_AmpYear_1000082 = Power Production Parts
             GUILayout.BeginHorizontal();
             GUILayout.Label("", Textures.PartListpartHeadingStyle, GUILayout.Width(5));
-            GUILayout.Label(new GUIContent("Calc", "If on, this PartModule will be Included in AmpYear Power Calculations"), Textures.PartListpartHeadingStyle, GUILayout.Width(28));
-            GUILayout.Label(new GUIContent("ESP", "If on, this PartModule will be Included in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(24));
-            GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(80));
-            GUILayout.Label(new GUIContent("PartTitle", "The Title of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
-            GUILayout.Label(new GUIContent("Module", "The name of the PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000083"), Localizer.Format("#autoLOC_AmpYear_1000084")), Textures.PartListpartHeadingStyle, GUILayout.Width(28));		// #autoLOC_AmpYear_1000083 = Calc		// #autoLOC_AmpYear_1000084 = If on, this PartModule will be Included in AmpYear Power Calculations
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000085"), Localizer.Format("#autoLOC_AmpYear_1000086")), Textures.PartListpartHeadingStyle, GUILayout.Width(24));		// #autoLOC_AmpYear_1000085 = ESP		// #autoLOC_AmpYear_1000086 = If on, this PartModule will be Included in Emergency Shutdown Procedures
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000087"), Localizer.Format("#autoLOC_AmpYear_1000088")), Textures.PartListpartHeadingStyle, GUILayout.Width(80));		// #autoLOC_AmpYear_1000087 = Priority		// #autoLOC_AmpYear_1000088 = PartModule Priority in Emergency Shutdown Procedures
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000089"), Localizer.Format("#autoLOC_AmpYear_1000090")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));		// #autoLOC_AmpYear_1000089 = PartTitle		// #autoLOC_AmpYear_1000090 = The Title of the Part
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000091"), Localizer.Format("#autoLOC_AmpYear_1000092")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));		// #autoLOC_AmpYear_1000091 = Module		// #autoLOC_AmpYear_1000092 = The name of the PartModule
             if (!AYsettings.showSI)
             {
-                GUILayout.Label(new GUIContent("EC", "Electric Charge produced by this PartModule"),Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000093"), Localizer.Format("#autoLOC_AmpYear_1000094")),Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));		// #autoLOC_AmpYear_1000093 = EC		// #autoLOC_AmpYear_1000094 = Electric Charge produced by this PartModule
             }
             else
             {
-                GUILayout.Label(new GUIContent("SI", "Electric Charge produced by this PartModule, in Système international Units"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000095"), Localizer.Format("#autoLOC_AmpYear_1000096")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));		// #autoLOC_AmpYear_1000095 = SI		// #autoLOC_AmpYear_1000096 = Electric Charge produced by this PartModule, in Système international Units
             }
             //AYsettings.showSI = GUILayout.Toggle(AYsettings.showSI, new GUIContent("Units", "Toggle the display to use EC or SI units"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
 
@@ -890,7 +898,7 @@ namespace AY
             _plProdscrollViewVector = GUILayout.BeginScrollView(_plProdscrollViewVector, true, true, GUILayout.Height(_eplProdListHeight));
             // Put something inside the ScrollView
             if (AYVesselPartLists.VesselProdPartsList.Count == 0)
-                GUILayout.Label("No Power Producing Parts", Textures.PartListPartStyle);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000097"), Textures.PartListPartStyle);		// #autoLOC_AmpYear_1000097 = No Power Producing Parts
             _totalProdPower = 0f;
             foreach (var entry in AYVesselPartLists.VesselProdPartsList)
             {
@@ -905,15 +913,15 @@ namespace AY
                     entry.Value.PrtEditorInclude = false;
                     GUILayout.BeginHorizontal();
                     bool tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
-                        new GUIContent(Textures.BtnIncInCalcs, "Include this PartModule in AmpYear Calcs"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                        new GUIContent(Textures.BtnIncInCalcs, Localizer.Format("#autoLOC_AmpYear_1000098")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000098 = Include this PartModule in AmpYear Calcs
                     entry.Value.PrtEditorInclude = tmpPrtEditorInclude;
                     bool tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
-                        new GUIContent(Textures.BtnEspInc, "Include this PartModule in Emergency Shutdown Procedures"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                        new GUIContent(Textures.BtnEspInc, Localizer.Format("#autoLOC_AmpYear_1000099")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000099 = Include this PartModule in Emergency Shutdown Procedures
                     entry.Value.PrtEmergShutDnInclude = tmpPrtEmergShutDnInclude;
                     List<GUIContent> tmpList = new List<GUIContent>();
-                    tmpList.Add(new GUIContent(Textures.BtnPriority1, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority One" : "Part not Supported by Emergency Shutdown Procedure"));
-                    tmpList.Add(new GUIContent(Textures.BtnPriority2, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority Two" : "Part not Supported by Emergency Shutdown Procedure"));
-                    tmpList.Add(new GUIContent(Textures.BtnPriority3, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority Three" : "Part not Supported by Emergency Shutdown Procedure"));
+                    tmpList.Add(new GUIContent(Textures.BtnPriority1, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000100") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000100 = Emergency Shutdown Procedures - Priority One		// #autoLOC_AmpYear_1000101 = Part not Supported by Emergency Shutdown Procedure
+                    tmpList.Add(new GUIContent(Textures.BtnPriority2, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000102") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000102 = Emergency Shutdown Procedures - Priority Two
+                    tmpList.Add(new GUIContent(Textures.BtnPriority3, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000103") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000103 = Emergency Shutdown Procedures - Priority Three
                     GUIContent[] tmpToggles = tmpList.ToArray();
                     List<GUIStyle> tmpStylesList = new List<GUIStyle>();
                     tmpStylesList.Add(Textures.PartListbtnStyle);
@@ -923,7 +931,23 @@ namespace AY
                     int tmpESPPriority = Utilities.ToggleList((int)entry.Value.PrtEmergShutDnPriority - 1, tmpToggles, tmpStylesToggles, 20);
                     entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                     GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
-                    GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
+                    if (GUILayout.Button(partModuleName, entry.Value.HighlightOn ? Textures.PartListProdPartHighlightStyle :
+                            entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle,
+                        GUILayout.Width(_eplPartModuleName)))
+                    {
+                        if (entry.Value.PrtReference == null)
+                        {
+                            findPartReference(entry.Value);
+                        }
+                        if (entry.Value.PrtReference != null)
+                        {
+                            togglePartHighlight(entry.Value);
+                        }
+                    }
+                    if (entry.Value.PrtReference != null)
+                    {
+                        setPartHighlight(entry.Value, true); //Set Part Highlight
+                    }
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(entry.Value.PrtPowerF, out Units);
@@ -941,17 +965,17 @@ namespace AY
                 {
                     GUILayout.BeginHorizontal();
                     tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
-                        new GUIContent(Textures.BtnIncInCalcs, "Include this PartModule in AmpYear Calcs"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                        new GUIContent(Textures.BtnIncInCalcs, Localizer.Format("#autoLOC_AmpYear_1000104")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000104 = Include this PartModule in AmpYear Calcs
                     entry.Value.PrtEditorInclude = tmpPrtEditorInclude;
                     if (!entry.Value.ValidprtEmergShutDn)
                         GUI.enabled = false;
                     tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
-                        new GUIContent(Textures.BtnEspInc, GUI.enabled ? "Include this PartModule in Emergency Shutdown Procedures" : "Part not Supported by Emergency Shutdown Procedure"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                        new GUIContent(Textures.BtnEspInc, GUI.enabled ? Localizer.Format("#autoLOC_AmpYear_1000099") : Localizer.Format("#autoLOC_AmpYear_1000101")), Textures.PartListbtnStyle, GUILayout.Width(20));   // #autoLOC_AmpYear_1000099 = Include this PartModule in Emergency Shutdown Procedures  // #autoLOC_AmpYear_1000101 = Part not Supported by Emergency Shutdown Procedure
                     entry.Value.PrtEmergShutDnInclude = tmpPrtEmergShutDnInclude;
                     List<GUIContent> tmpList = new List<GUIContent>();
-                    tmpList.Add(new GUIContent(Textures.BtnPriority1, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority One" : "Part not Supported by Emergency Shutdown Procedure"));
-                    tmpList.Add(new GUIContent(Textures.BtnPriority2, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority Two" : "Part not Supported by Emergency Shutdown Procedure"));
-                    tmpList.Add(new GUIContent(Textures.BtnPriority3, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority Three" : "Part not Supported by Emergency Shutdown Procedure"));
+                    tmpList.Add(new GUIContent(Textures.BtnPriority1, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000100") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000100 = Emergency Shutdown Procedures - Priority One		// #autoLOC_AmpYear_1000101 = Part not Supported by Emergency Shutdown Procedure
+                    tmpList.Add(new GUIContent(Textures.BtnPriority2, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000102") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000102 = Emergency Shutdown Procedures - Priority Two
+                    tmpList.Add(new GUIContent(Textures.BtnPriority3, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000103") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000103 = Emergency Shutdown Procedures - Priority Three
                     GUIContent[] tmpToggles = tmpList.ToArray();
                     List<GUIStyle> tmpStylesList = new List<GUIStyle>();
                     tmpStylesList.Add(Textures.PartListbtnStyle);
@@ -962,7 +986,23 @@ namespace AY
                     entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                     GUI.enabled = true;
                     GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
-                    GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
+                    if (GUILayout.Button(partModuleName, entry.Value.HighlightOn ? Textures.PartListProdPartHighlightStyle :
+                        entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle,
+                        GUILayout.Width(_eplPartModuleName)))
+                    {
+                        if (entry.Value.PrtReference == null)
+                        {
+                            findPartReference(entry.Value);
+                        }
+                        if (entry.Value.PrtReference != null)
+                        {
+                            togglePartHighlight(entry.Value);
+                        }
+                    }
+                    if (entry.Value.PrtReference != null)
+                    {
+                        setPartHighlight(entry.Value, true); //Set Part Highlight
+                    }
                     //GUILayout.Label(entry.Value.PrtPower, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplec));
                     if (AYsettings.showSI)
                     {
@@ -985,7 +1025,7 @@ namespace AY
                 GUILayout.BeginHorizontal();
                 tmpPrtProdEditorIncludeAll = false;
                 tmpPrtProdEditorIncludeAll = GUILayout.Toggle(PrtProdEditorIncludeAll,
-                    new GUIContent(Textures.BtnIncInCalcs, "Toggle Include in AmpYear Calcs for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnIncInCalcs, Localizer.Format("#autoLOC_AmpYear_1000105")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000105 = Toggle Include in AmpYear Calcs for all listed part modules above
                 if (tmpPrtProdEditorIncludeAll != PrtProdEditorIncludeAll)
                 {
                     PrtProdEditorIncludeAll = !PrtProdEditorIncludeAll;
@@ -996,7 +1036,7 @@ namespace AY
                 }
                 tmpPrtProdEmergShutDnIncludeAll = false;
                 tmpPrtProdEmergShutDnIncludeAll = GUILayout.Toggle(PrtProdESPIncludeAll,
-                    new GUIContent(Textures.BtnEspInc, "Toggle Include in Emergency Shutdown Procedures for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnEspInc, Localizer.Format("#autoLOC_AmpYear_1000106")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000106 = Toggle Include in Emergency Shutdown Procedures for all listed part modules above
                 if (tmpPrtProdEmergShutDnIncludeAll != PrtProdESPIncludeAll)
                 {
                     PrtProdESPIncludeAll = !PrtProdESPIncludeAll;
@@ -1008,7 +1048,7 @@ namespace AY
                 }
                 tmpPrtProdOneAll = false;
                 tmpPrtProdOneAll = GUILayout.Toggle(tmpPrtProdOneAll,
-                    new GUIContent(Textures.BtnPriority1, "Emergency Shutdown Procedures - Set all parts to Priority One"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnPriority1, Localizer.Format("#autoLOC_AmpYear_1000107")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000107 = Emergency Shutdown Procedures - Set all parts to Priority One
                 if (tmpPrtProdOneAll)
                 {
                     foreach (var entry in AYVesselPartLists.VesselProdPartsList)
@@ -1019,7 +1059,7 @@ namespace AY
                 }
                 tmpPrtProdTwoAll = false;
                 tmpPrtProdTwoAll = GUILayout.Toggle(tmpPrtProdTwoAll,
-                    new GUIContent(Textures.BtnPriority2, "Emergency Shutdown Procedures - Set all parts to Priority Two"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnPriority2, Localizer.Format("#autoLOC_AmpYear_1000108")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000108 = Emergency Shutdown Procedures - Set all parts to Priority Two
                 if (tmpPrtProdTwoAll)
                 {
                     foreach (var entry in AYVesselPartLists.VesselProdPartsList)
@@ -1030,7 +1070,7 @@ namespace AY
                 }
                 tmpPrtProdThreeAll = false;
                 tmpPrtProdThreeAll = GUILayout.Toggle(tmpPrtProdThreeAll,
-                    new GUIContent(Textures.BtnPriority3, "Emergency Shutdown Procedures - Set all parts to Priority Three"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnPriority3, Localizer.Format("#autoLOC_AmpYear_1000109")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000109 = Emergency Shutdown Procedures - Set all parts to Priority Three
                 if (tmpPrtProdThreeAll)
                 {
                     foreach (var entry in AYVesselPartLists.VesselProdPartsList)
@@ -1039,8 +1079,22 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.LOW;
                     }
                 }
-                GUILayout.Label("   ", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                GUILayout.Label("Total Produced", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000110"), Textures.PartListPartStyle, GUILayout.Width(_eplPartName));		// #autoLOC_AmpYear_1000110 = Total Produced
+                if (GUILayout.Button(Localizer.Format("#autoLOC_AmpYear_1000111"),		// #autoLOC_AmpYear_1000111 = Highlight All
+                    prodPartsHighlightAll ? Textures.PartListProdPartHighlightStyle : Textures.PartListPartStyle,
+                    GUILayout.Width(_eplPartModuleName)))
+                {
+                    if (prodPartsHighlightAll)
+                    {
+                        toggleOffPartHighLights(AYVesselPartLists.VesselProdPartsList);
+                    }
+                    else
+                    {
+                        toggleOnPartHighLights(AYVesselPartLists.VesselProdPartsList);
+                    }
+                    prodPartsHighlightAll = !prodPartsHighlightAll;
+                }
+                //    GUILayout.Label("Total Produced", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
                 //GUILayout.Label(new GUIContent(_totalProdPower.ToString("####0.###"), "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
                 if (AYsettings.showSI)
                 {
@@ -1051,7 +1105,7 @@ namespace AY
                 {
                     tmpPrtPower = _totalProdPower.ToString("####0.###");
                 }
-                GUILayout.Label(new GUIContent(tmpPrtPower, "Total Production Power"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(tmpPrtPower, Localizer.Format("#autoLOC_AmpYear_1000112")), Textures.PartListPartStyle, GUILayout.Width(_eplec));		// #autoLOC_AmpYear_1000112 = Total Production Power
                 GUILayout.EndHorizontal();
             }
                 
@@ -1066,21 +1120,21 @@ namespace AY
             HandleResizeHeightScrl1Events(resizeProdHeightRect, _eplProdlistbox);
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label("Power Consumer Parts", Textures.PartListStyle);
+            GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000113"), Textures.PartListStyle);		// #autoLOC_AmpYear_1000113 = Power Consumer Parts
             GUILayout.BeginHorizontal();
             GUILayout.Label("", Textures.PartListpartHeadingStyle, GUILayout.Width(5));
-            GUILayout.Label(new GUIContent("Calc", "If on, this PartModule will be Included in AmpYear Power Calculations"), Textures.PartListpartHeadingStyle, GUILayout.Width(28));
-            GUILayout.Label(new GUIContent("ESP", "If on, this PartModule will be Included in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(24));
-            GUILayout.Label(new GUIContent("Priority", "PartModule Priority in Emergency Shutdown Procedures"), Textures.PartListpartHeadingStyle, GUILayout.Width(80));
-            GUILayout.Label(new GUIContent("PartTitle", "The Title of the Part"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));
-            GUILayout.Label(new GUIContent("Module", "The name of the PartModule"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000083"), Localizer.Format("#autoLOC_AmpYear_1000084")), Textures.PartListpartHeadingStyle, GUILayout.Width(28));		// #autoLOC_AmpYear_1000083 = Calc		// #autoLOC_AmpYear_1000084 = If on, this PartModule will be Included in AmpYear Power Calculations
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000085"), Localizer.Format("#autoLOC_AmpYear_1000086")), Textures.PartListpartHeadingStyle, GUILayout.Width(24));		// #autoLOC_AmpYear_1000085 = ESP		// #autoLOC_AmpYear_1000086 = If on, this PartModule will be Included in Emergency Shutdown Procedures
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000087"), Localizer.Format("#autoLOC_AmpYear_1000088")), Textures.PartListpartHeadingStyle, GUILayout.Width(80));		// #autoLOC_AmpYear_1000087 = Priority		// #autoLOC_AmpYear_1000088 = PartModule Priority in Emergency Shutdown Procedures
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000089"), Localizer.Format("#autoLOC_AmpYear_1000090")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartName));		// #autoLOC_AmpYear_1000089 = PartTitle		// #autoLOC_AmpYear_1000090 = The Title of the Part
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000091"), Localizer.Format("#autoLOC_AmpYear_1000092")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplPartModuleName));		// #autoLOC_AmpYear_1000091 = Module		// #autoLOC_AmpYear_1000092 = The name of the PartModule
             if (!AYsettings.showSI)
             {
-                GUILayout.Label(new GUIContent("EC", "Electric Charge Used by this PartModule"),Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000093"), Localizer.Format("#autoLOC_AmpYear_1000094")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));		// #autoLOC_AmpYear_1000093 = EC		// #autoLOC_AmpYear_1000094 = Electric Charge produced by this PartModule
             }
             else
             {
-                GUILayout.Label(new GUIContent("SI", "Electric Charge produced by this PartModule, in Système international Units"), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000095"), Localizer.Format("#autoLOC_AmpYear_1000096")), Textures.PartListpartHeadingStyle, GUILayout.Width(_eplec));		// #autoLOC_AmpYear_1000095 = SI		// #autoLOC_AmpYear_1000096 = Electric Charge produced by this PartModule, in Système international Units
             }
 
             GUILayout.EndHorizontal();
@@ -1091,7 +1145,7 @@ namespace AY
             _plConsscrollViewVector = GUILayout.BeginScrollView(_plConsscrollViewVector, true, true, GUILayout.Height(_eplConsListHeight));
             // Put something inside the ScrollView
             if (AYVesselPartLists.VesselConsPartsList.Count == 0)
-                GUILayout.Label("No Power Consuming Parts", Textures.PartListPartStyle);
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000114"), Textures.PartListPartStyle);		// #autoLOC_AmpYear_1000114 = No Power Consuming Parts
             _totalConsPower = 0f;
             foreach (var entry in AYVesselPartLists.VesselConsPartsList)
             {
@@ -1102,17 +1156,17 @@ namespace AY
                     _totalConsPower += entry.Value.PrtPowerF;
                 GUILayout.BeginHorizontal();
                 tmpPrtEditorInclude = GUILayout.Toggle(entry.Value.PrtEditorInclude, 
-                    new GUIContent(Textures.BtnIncInCalcs, "Include this PartModule in AmpYear Calcs"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnIncInCalcs, Localizer.Format("#autoLOC_AmpYear_1000098")), Textures.PartListbtnStyle, GUILayout.Width(20));        //#autoLOC_AmpYear_1000098 = Include this PartModule in AmpYear Calcs
                 entry.Value.PrtEditorInclude = tmpPrtEditorInclude;
                 if (!entry.Value.ValidprtEmergShutDn)
                     GUI.enabled = false;
-                tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude, 
-                    new GUIContent(Textures.BtnEspInc, GUI.enabled ? "Include this PartModule in Emergency Shutdown Procedures" : "Part not Supported by Emergency Shutdown Procedure"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                tmpPrtEmergShutDnInclude = GUILayout.Toggle(entry.Value.PrtEmergShutDnInclude,
+                    new GUIContent(Textures.BtnEspInc, GUI.enabled ? Localizer.Format("#autoLOC_AmpYear_1000099") : Localizer.Format("#autoLOC_AmpYear_1000101")), Textures.PartListbtnStyle, GUILayout.Width(20));   // #autoLOC_AmpYear_1000099 = Include this PartModule in Emergency Shutdown Procedures  // #autoLOC_AmpYear_1000101 = Part not Supported by Emergency Shutdown Procedure
                 entry.Value.PrtEmergShutDnInclude = tmpPrtEmergShutDnInclude;
                 List<GUIContent> tmpList = new List<GUIContent>();
-                tmpList.Add(new GUIContent(Textures.BtnPriority1, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority One" : "Part not Supported by Emergency Shutdown Procedure"));
-                tmpList.Add(new GUIContent(Textures.BtnPriority2, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority Two" : "Part not Supported by Emergency Shutdown Procedure"));
-                tmpList.Add(new GUIContent(Textures.BtnPriority3, entry.Value.ValidprtEmergShutDn ? "Emergency Shutdown Procedures - Priority Three" : "Part not Supported by Emergency Shutdown Procedure"));
+                tmpList.Add(new GUIContent(Textures.BtnPriority1, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000100") : Localizer.Format("#autoLOC_AmpYear_1000101")));      // #autoLOC_AmpYear_1000100 = Emergency Shutdown Procedures - Priority One		// #autoLOC_AmpYear_1000101 = Part not Supported by Emergency Shutdown Procedure
+                tmpList.Add(new GUIContent(Textures.BtnPriority2, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000102") : Localizer.Format("#autoLOC_AmpYear_1000101")));      // #autoLOC_AmpYear_1000102 = Emergency Shutdown Procedures - Priority Two
+                tmpList.Add(new GUIContent(Textures.BtnPriority3, entry.Value.ValidprtEmergShutDn ? Localizer.Format("#autoLOC_AmpYear_1000103") : Localizer.Format("#autoLOC_AmpYear_1000101")));		// #autoLOC_AmpYear_1000103 = Emergency Shutdown Procedures - Priority Three
                 GUIContent[] tmpToggles = tmpList.ToArray();
                 List<GUIStyle> tmpStylesList = new List<GUIStyle>();
                 tmpStylesList.Add(Textures.PartListbtnStyle);
@@ -1123,7 +1177,23 @@ namespace AY
                 entry.Value.PrtEmergShutDnPriority = (ESPPriority)(tmpESPPriority + 1);
                 GUI.enabled = true;
                 GUILayout.Label(entry.Value.PrtTitle, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartName));
-                GUILayout.Label(partModuleName, entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle, GUILayout.Width(_eplPartModuleName));
+                if (GUILayout.Button(partModuleName, entry.Value.HighlightOn ? Textures.PartListConsPartHighlightStyle :
+                    entry.Value.PrtEditorInclude ? Textures.PartListPartStyle : Textures.PartListPartGrayStyle,
+                    GUILayout.Width(_eplPartModuleName)))
+                {
+                    if (entry.Value.PrtReference == null)
+                    {
+                        findPartReference(entry.Value);
+                    }
+                    if (entry.Value.PrtReference != null)
+                    {
+                        togglePartHighlight(entry.Value);
+                    }
+                }
+                if (entry.Value.PrtReference != null)
+                {
+                    setPartHighlight(entry.Value, false); //Set Part Highlight
+                }
                 if (AYsettings.showSI)
                 {
                     tmpPrtPowerV = Utilities.ConvertECtoSI(entry.Value.PrtPowerF, out Units);
@@ -1142,7 +1212,7 @@ namespace AY
                 GUILayout.BeginHorizontal();
                 tmpPrtConsEditorIncludeAll = false;
                 tmpPrtConsEditorIncludeAll = GUILayout.Toggle(PrtConsEditorIncludeAll,
-                    new GUIContent(Textures.BtnIncInCalcs, "Toggle Include in AmpYear Calcs for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnIncInCalcs, Localizer.Format("#autoLOC_AmpYear_1000105")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000105 = Toggle Include in AmpYear Calcs for all listed part modules above
                 if (tmpPrtConsEditorIncludeAll != PrtConsEditorIncludeAll)
                 {
                     PrtConsEditorIncludeAll = !PrtConsEditorIncludeAll;
@@ -1153,7 +1223,7 @@ namespace AY
                 }
                 tmpPrtConsEmergShutDnIncludeAll = false;
                 tmpPrtConsEmergShutDnIncludeAll = GUILayout.Toggle(PrtConsESPIncludeAll,
-                    new GUIContent(Textures.BtnEspInc, "Toggle Include in Emergency Shutdown Procedures for all listed part modules above"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnEspInc, Localizer.Format("#autoLOC_AmpYear_1000106")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000106 = Toggle Include in Emergency Shutdown Procedures for all listed part modules above
                 if (tmpPrtConsEmergShutDnIncludeAll != PrtConsESPIncludeAll)
                 {
                     PrtConsESPIncludeAll = !PrtConsESPIncludeAll;
@@ -1165,7 +1235,7 @@ namespace AY
                 }
                 tmpPrtConsOneAll = false;
                 tmpPrtConsOneAll = GUILayout.Toggle(tmpPrtConsOneAll,
-                    new GUIContent(Textures.BtnPriority1, "Emergency Shutdown Procedures - Set all parts to Priority One"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnPriority1, Localizer.Format("#autoLOC_AmpYear_1000107")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000107 = Emergency Shutdown Procedures - Set all parts to Priority One
                 if (tmpPrtConsOneAll)
                 {
                     foreach (var entry in AYVesselPartLists.VesselConsPartsList)
@@ -1176,7 +1246,7 @@ namespace AY
                 }
                 tmpPrtConsTwoAll = false;
                 tmpPrtConsTwoAll = GUILayout.Toggle(tmpPrtConsTwoAll,
-                    new GUIContent(Textures.BtnPriority2, "Emergency Shutdown Procedures - Set all parts to Priority Two"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnPriority2, Localizer.Format("#autoLOC_AmpYear_1000108")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000108 = Emergency Shutdown Procedures - Set all parts to Priority Two
                 if (tmpPrtConsTwoAll)
                 {
                     foreach (var entry in AYVesselPartLists.VesselConsPartsList)
@@ -1187,7 +1257,7 @@ namespace AY
                 }
                 tmpPrtConsThreeAll = false;
                 tmpPrtConsThreeAll = GUILayout.Toggle(tmpPrtConsThreeAll,
-                    new GUIContent(Textures.BtnPriority3, "Emergency Shutdown Procedures - Set all parts to Priority Three"), Textures.PartListbtnStyle, GUILayout.Width(20));
+                    new GUIContent(Textures.BtnPriority3, Localizer.Format("#autoLOC_AmpYear_1000109")), Textures.PartListbtnStyle, GUILayout.Width(20));		// #autoLOC_AmpYear_1000109 = Emergency Shutdown Procedures - Set all parts to Priority Three
                 if (tmpPrtConsThreeAll)
                 {
                     foreach (var entry in AYVesselPartLists.VesselConsPartsList)
@@ -1196,8 +1266,22 @@ namespace AY
                             entry.Value.PrtEmergShutDnPriority = ESPPriority.LOW;
                     }
                 }
-                GUILayout.Label(" ", Textures.PartListPartStyle, GUILayout.Width(_eplPartName));
-                GUILayout.Label("Total Consumed", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
+                GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000115"), Textures.PartListPartStyle, GUILayout.Width(_eplPartName));		// #autoLOC_AmpYear_1000115 = Total Consumed
+                if (GUILayout.Button(Localizer.Format("#autoLOC_AmpYear_1000111"),		// #autoLOC_AmpYear_1000111 = Highlight All
+                    consPartsHighlightAll ? Textures.PartListConsPartHighlightStyle : Textures.PartListPartStyle,
+                    GUILayout.Width(_eplPartModuleName)))
+                {
+                    if (consPartsHighlightAll)
+                    {
+                        toggleOffPartHighLights(AYVesselPartLists.VesselConsPartsList);
+                    }
+                    else
+                    {
+                        toggleOnPartHighLights(AYVesselPartLists.VesselConsPartsList);
+                    }
+                    consPartsHighlightAll = !consPartsHighlightAll;
+                }
+                //GUILayout.Label("Total Consumed", Textures.PartListPartStyle, GUILayout.Width(_eplPartModuleName));
                 if (AYsettings.showSI)
                 {
                     tmpPrtPowerV = Utilities.ConvertECtoSI(_totalConsPower, out Units);
@@ -1207,7 +1291,7 @@ namespace AY
                 {
                     tmpPrtPower = _totalConsPower.ToString("####0.###");
                 }
-                GUILayout.Label(new GUIContent(tmpPrtPower, "Total Power Consumption"), Textures.PartListPartStyle, GUILayout.Width(_eplec));
+                GUILayout.Label(new GUIContent(tmpPrtPower, Localizer.Format("#autoLOC_AmpYear_1000116")), Textures.PartListPartStyle, GUILayout.Width(_eplec));		// #autoLOC_AmpYear_1000116 = Total Power Consumption
                 GUILayout.EndHorizontal();
             }
             // End the ScrollView
@@ -1217,12 +1301,12 @@ namespace AY
             GUILayout.EndVertical();
             GUILayout.Space(14);
 
-            GUIContent resizeConsHeightContent = new GUIContent(Textures.BtnResizeHeight, "Resize Consumer List Height");
+            GUIContent resizeConsHeightContent = new GUIContent(Textures.BtnResizeHeight, Localizer.Format("#autoLOC_AmpYear_1000117"));		// #autoLOC_AmpYear_1000117 = Resize Consumer List Height
             Rect resizeConsHeightRect = new Rect(_epLwindowPos.width - 20, _epLwindowPos.height - 19, 16, 16);
             GUI.Label(resizeConsHeightRect, resizeConsHeightContent, Textures.ResizeStyle);
             HandleResizeHeightScrl2Events(resizeConsHeightRect, _eplConslistbox);
 
-            GUIContent resizeContent = new GUIContent(Textures.BtnResizeWidth, "Resize Window Width");
+            GUIContent resizeContent = new GUIContent(Textures.BtnResizeWidth, Localizer.Format("#autoLOC_AmpYear_1000118"));		// #autoLOC_AmpYear_1000118 = Resize Window Width
             Rect resizeRect = new Rect(_epLwindowPos.width - 40, _epLwindowPos.height - 19, 16, 16);
             GUI.Label(resizeRect, resizeContent, Textures.ResizeStyle);
             HandleResizeWidthEvents(resizeRect);
@@ -1231,10 +1315,86 @@ namespace AY
                 Utilities.SetTooltipText();
             GUI.DragWindow();
         }
-        
+
+        private void findPartReference(PwrPartList pwrpart)
+        {
+            if (pwrpart.PrtName == "AmpYear SubSystems" || pwrpart.PrtName == "AmpYear Manager" 
+                || pwrpart.PrtName == "AmpYear SubSystems-Max")
+            {
+                if (HighLogic.LoadedSceneIsFlight)
+                {
+                    pwrpart.PrtReference = FlightGlobals.ActiveVessel.rootPart;
+                }
+                else if (HighLogic.LoadedSceneIsEditor)
+                {
+                    if (EditorLogic.RootPart != null)
+                    {
+                        pwrpart.PrtReference = EditorLogic.RootPart;
+                    }
+                }
+            }
+        }
+
+        #region Highlighting
+        private void toggleOnPartHighLights(Dictionary<string, PwrPartList> partlist)
+        {
+            foreach (KeyValuePair<string, PwrPartList> entry in partlist)
+            {
+                if (entry.Value.PrtReference == null)
+                {
+                    findPartReference(entry.Value);
+                }
+                entry.Value.HighlightOn = true;
+            }
+        }
+
+        private void toggleOffPartHighLights(Dictionary<string, PwrPartList> partlist)
+        {
+            foreach (KeyValuePair<string, PwrPartList> entry in partlist)
+            {
+                if (entry.Value.PrtReference == null)
+                {
+                    findPartReference(entry.Value);
+                }
+                entry.Value.HighlightOn = false;
+                setPartHighlightOff(entry.Value);
+            }
+        }
+
+        private void togglePartHighlight(PwrPartList pwrpart)
+        {
+            pwrpart.HighlightOn = !pwrpart.HighlightOn;
+            if (!pwrpart.HighlightOn)
+            {
+                setPartHighlightOff(pwrpart);
+            }
+        }
+
+        private void setPartHighlightOff(PwrPartList pwrpart)
+        {
+            pwrpart.PrtReference.SetHighlightDefault();
+        }
+
+        private void setPartHighlight(PwrPartList pwrpart, bool producer)
+        {
+            if (pwrpart.HighlightOn)
+            {
+                if (producer)
+                {
+                    pwrpart.PrtReference.SetHighlightColor(AYsettings.ProdPartHighlightColor);
+                }
+                else
+                {
+                    pwrpart.PrtReference.SetHighlightColor(AYsettings.ConsPartHighlightColor);
+                }
+                pwrpart.PrtReference.SetHighlightType(Part.HighlightType.AlwaysOn);
+                pwrpart.PrtReference.SetHighlight(true, false);
+            }
+        }
+        #endregion
         private void WindowD(int windowId)
         {
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, Localizer.Format("#autoLOC_AmpYear_1000007"));         //#autoLOC_AmpYear_1000007 = Close Window
             Rect closeRect = new Rect(_dwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
@@ -1242,16 +1402,16 @@ namespace AY
                 ShowDarkSideWindow = false;
                 return;
             }
-            AYsettings.showSI = GUI.Toggle(new Rect(_dwindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, "Toggle the display to use EC or SI units"), Textures.PartListbtnStyle);//, SubsystemButtonOptions);
+            AYsettings.showSI = GUI.Toggle(new Rect(_dwindowPos.width - 45, 4, 16, 16), AYsettings.showSI, new GUIContent(Textures.BtnIS, Localizer.Format("#autoLOC_AmpYear_1000008")), Textures.PartListbtnStyle);		// #autoLOC_AmpYear_1000008 = Toggle the display to use EC or SI units
 
 
             GUILayout.BeginVertical();
-            GUILayout.Label(new GUIContent("Select Body", "Select the body for darkside period and Solar Panel usage EC calculations"), Textures.SectionTitleStyle, GUILayout.Width(280));
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000119"), Localizer.Format("#autoLOC_AmpYear_1000120")), Textures.SectionTitleStyle, GUILayout.Width(280));		// #autoLOC_AmpYear_1000119 = Select Body		// #autoLOC_AmpYear_1000120 = Select the body for darkside period and Solar Panel usage EC calculations
             _dSscrollViewVector = GUILayout.BeginScrollView(_dSscrollViewVector, GUILayout.Height(300), GUILayout.Width(320));
             string[] darkBodiesBtnNames = new string[_darkBodies.Count];
             for (int i = 0; i < _darkBodies.Count; i++)
             {
-                darkBodiesBtnNames[i] = _darkBodies[i].displayName;
+                darkBodiesBtnNames[i] = _darkBodies[i].displayName.LocalizeRemoveGender();
             }
             _darkTargetSelection = _selectedDarkTarget;
             _darkTargetSelection = GUILayout.SelectionGrid(_darkTargetSelection, darkBodiesBtnNames, 1);
@@ -1265,29 +1425,29 @@ namespace AY
             GUILayout.Space(10);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(new GUIContent("Enter Orbit height: ", "The orbit height to use in Kilometers"), Textures.StatusStyleLeft, GUILayout.Width(140));
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000121"), Localizer.Format("#autoLOC_AmpYear_1000122")), Textures.StatusStyleLeft, GUILayout.Width(140));		// #autoLOC_AmpYear_1000121 = Enter Orbit height: 		// #autoLOC_AmpYear_1000122 = The orbit height to use in Kilometers
             strOrbit = _showDarkOrbit.ToString();
             Orbit = _showDarkOrbit;
             strOrbit = GUILayout.TextField(strOrbit, GUILayout.Width(40));
-            GUILayout.Label("(Km)", GUILayout.Width(30));
+            GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000123"), GUILayout.Width(30));		// #autoLOC_AmpYear_1000123 = (Km)
             GUILayout.EndHorizontal();
             if (int.TryParse(strOrbit, out Orbit))
                 _showDarkOrbit = Orbit;
 
             if (_bodyTarget != null)
             {
-                GUILayout.Label(new GUIContent("Selected Body:" + _darkBodies[_selectedDarkTarget].displayName, "Currently selected body for Dark-Side and Solar Panel EC production calculations"), Textures.PartListPartStyle, GUILayout.Width(280));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000124", _darkBodies[_selectedDarkTarget].displayName), Localizer.Format("#autoLOC_AmpYear_1000125")), Textures.PartListPartStyle, GUILayout.Width(280));		// #autoLOC_AmpYear_1000124 = Selected Body:		// #autoLOC_AmpYear_1000125 = Currently selected body for Dark-Side and Solar Panel EC production calculations
                 //Get the distance and direction to Sun from the currently selected target body
                 Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedDarkTarget], out sun_dir, out sun_dist);
-                GUILayout.Label(new GUIContent("Sun Distance:" + sun_dist.ToString("###,###,###,###,###,##0"), _selectedDarkTarget == 0 ? "Assumes you are in orbit at 700,000km from the Sun" : "The Distance to the sun from the selected body"), Textures.PartListPartStyle, GUILayout.Width(280));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000126", sun_dist.ToString("###,###,###,###,###,##0")), _selectedDarkTarget == 0 ? Localizer.Format("#autoLOC_AmpYear_1000127") : Localizer.Format("#autoLOC_AmpYear_1000128")), Textures.PartListPartStyle, GUILayout.Width(280));		// #autoLOC_AmpYear_1000126 = Sun Distance:		// #autoLOC_AmpYear_1000127 = Assumes you are in orbit at 700,000km from the Sun		// #autoLOC_AmpYear_1000128 = The Distance to the sun from the selected body
                 rotPeriod = _darkBodies[_selectedDarkTarget].rotationPeriod;
                 if (_darkBodies[_selectedDarkTarget].orbit != null)
                 {
                     rotPeriod = _darkBodies[_selectedDarkTarget].orbit.period * rotPeriod / (_darkBodies[_selectedDarkTarget].orbit.period - rotPeriod);
                 }
-                GUILayout.Label( new GUIContent("Surface Darkness Time:" + KSPUtil.PrintTimeCompact((int)rotPeriod, true), "Darkness Time on the surface"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                GUILayout.Label( new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000129", KSPUtil.PrintTimeCompact((int)rotPeriod, true)), Localizer.Format("#autoLOC_AmpYear_1000130")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000129 = Surface Darkness Time:		// #autoLOC_AmpYear_1000130 = Darkness Time on the surface
                 darkTime = CalculatePeriod(_bodyTarget, Orbit);
-                GUILayout.Label(new GUIContent("Dark-Side Transit Period: " + KSPUtil.PrintTimeCompact((int)darkTime, true), "The time it will take to transit the Darkside"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000131", KSPUtil.PrintTimeCompact((int)darkTime, true)), Localizer.Format("#autoLOC_AmpYear_1000132")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000131 = Dark-Side Transit Period: 		// #autoLOC_AmpYear_1000132 = The time it will take to transit the Darkside
                 if (TotalPowerDrain > 0)
                 {
                     ECreqdfordarkTime = 0;
@@ -1307,7 +1467,7 @@ namespace AY
                     {
                         tmpPrtPower = ECreqdfordarkTimeSurface.ToString("##########0");
                     }
-                    GUILayout.Label(new GUIContent("EC required for Dark-Side Surface: " + tmpPrtPower, "EC required during darkside on the surface based on current EC usage"), Textures.WarningStyleLeft, GUILayout.Width(300));
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000133", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000134")), Textures.WarningStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000133 = EC required for Dark-Side Surface: 		// #autoLOC_AmpYear_1000134 = EC required during darkside on the surface based on current EC usage
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(ECprodfordarkTimeSurface, out Units);
@@ -1317,7 +1477,7 @@ namespace AY
                     {
                         tmpPrtPower = ECprodfordarkTimeSurface.ToString("##########0");
                     }
-                    GUILayout.Label(new GUIContent("EC produced for Dark-Side Surface: " + tmpPrtPower, "EC produced during darkside on the surface based on current EC production"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000135", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000136")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000135 = EC produced for Dark-Side Surface: 		// #autoLOC_AmpYear_1000136 = EC produced during darkside on the surface based on current EC production
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(ECreqdfordarkTime, out Units);
@@ -1327,7 +1487,7 @@ namespace AY
                     {
                         tmpPrtPower = ECreqdfordarkTime.ToString("##########0");
                     }
-                    GUILayout.Label(new GUIContent("EC required for Dark-Side Transit: " + tmpPrtPower, "EC required during darkside period based on current EC usage"), Textures.WarningStyleLeft, GUILayout.Width(300));
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000137", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000138")), Textures.WarningStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000137 = EC required for Dark-Side Transit: 		// #autoLOC_AmpYear_1000138 = EC required during darkside period based on current EC usage
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(ECprodfordarkTime, out Units);
@@ -1337,10 +1497,10 @@ namespace AY
                     {
                         tmpPrtPower = ECprodfordarkTime.ToString("##########0");
                     }
-                    GUILayout.Label(new GUIContent("EC produced for Dark-Side Transit: " + tmpPrtPower, "EC produced during darkside period based on current EC production"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000139", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000140")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000139 = EC produced for Dark-Side Transit: 		// #autoLOC_AmpYear_1000140 = EC produced during darkside period based on current EC production
 
                     GUILayout.BeginHorizontal();
-                    _includeStoredEc = GUILayout.Toggle(_includeStoredEc, new GUIContent(" ", "Toggle to Include Stored MainPower in Dark-Side Calculation"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                    _includeStoredEc = GUILayout.Toggle(_includeStoredEc, new GUIContent(" ", Localizer.Format("#autoLOC_AmpYear_1000141")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000141 = Toggle to Include Stored MainPower in Dark-Side Calculation
                     
                     if (AYsettings.showSI)
                     {
@@ -1351,10 +1511,10 @@ namespace AY
                     {
                         tmpPrtPower = TotalElectricCharge.ToString("##########0");
                     }
-                    GUILayout.Label(new GUIContent("Total Stored EC: " + tmpPrtPower, "Total Stored EC on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000142", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000143")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000142 = Total Stored EC: 		// #autoLOC_AmpYear_1000143 = Total Stored EC on-board.
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
-                    _includeSoredRp = GUILayout.Toggle(_includeSoredRp, new GUIContent(" ", "Toggle to include Stored ReservePower in Dark-Side Calculation"), Textures.SubsystemButtonStyle, SubsystemButtonOptions);
+                    _includeSoredRp = GUILayout.Toggle(_includeSoredRp, new GUIContent(" ", Localizer.Format("#autoLOC_AmpYear_1000144")), Textures.SubsystemButtonStyle, SubsystemButtonOptions);		// #autoLOC_AmpYear_1000144 = Toggle to include Stored ReservePower in Dark-Side Calculation
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(TotalReservePower, out Units);
@@ -1364,7 +1524,7 @@ namespace AY
                     {
                         tmpPrtPower = TotalReservePower.ToString("##########0");
                     }
-                    GUILayout.Label(new GUIContent("Total Stored ReservePower: " + tmpPrtPower, "Total Stored ReservePower on-board."), Textures.StatusStyleLeft, GUILayout.Width(300));
+                    GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000145", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000146")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000145 = Total Stored ReservePower: 		// #autoLOC_AmpYear_1000146 = Total Stored ReservePower on-board.
                     GUILayout.EndHorizontal();
                     powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTime;
                     eCdifference = 0;
@@ -1387,11 +1547,11 @@ namespace AY
                     }
                     if (ECreqdfordarkTime > powerSupply)
                     {
-                        GUILayout.Label(new GUIContent("EC deficit for Dark-Side Transit: " + tmpPrtPower, "EC required for darkside period"), Textures.AlertStyleLeft, GUILayout.Width(300));
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000147", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000148")), Textures.AlertStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000147 = EC deficit for Dark-Side Transit: 		// #autoLOC_AmpYear_1000148 = EC required for darkside period
                     }
                     else
                     {
-                        GUILayout.Label(new GUIContent("EC surplus for Dark-Side Transit: " + tmpPrtPower, "EC surplus for darkside period"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000149", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000150")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000149 = EC surplus for Dark-Side Transit: 		// #autoLOC_AmpYear_1000150 = EC surplus for darkside period
                     }
 
                     powerSupply = (_includeStoredEc ? TotalElectricCharge : 0) + (_includeSoredRp ? TotalReservePower : 0) + ECprodfordarkTimeSurface;
@@ -1415,18 +1575,18 @@ namespace AY
                     }
                     if (ECreqdfordarkTimeSurface > powerSupply)
                     {
-                        GUILayout.Label(new GUIContent("EC deficit for Dark-Side Surface: " + tmpPrtPower, "EC required for darkside at the surface"), Textures.AlertStyleLeft, GUILayout.Width(300));
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000151", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000152")), Textures.AlertStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000151 = EC deficit for Dark-Side Surface: 		// #autoLOC_AmpYear_1000152 = EC required for darkside at the surface
                     }
                     else
                     {
-                        GUILayout.Label(new GUIContent("EC surplus for Dark-Side Surface: " + tmpPrtPower, "EC surplus for darkside at the surface"), Textures.StatusStyleLeft, GUILayout.Width(300));
+                        GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000153", tmpPrtPower), Localizer.Format("#autoLOC_AmpYear_1000154")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000153 = EC surplus for Dark-Side Surface: 		// #autoLOC_AmpYear_1000154 = EC surplus for darkside at the surface
                     }
                 }
             }
 
             GUILayout.Space(10);
             tmpShowDarkSideWindow = ShowDarkSideWindow;
-            ShowDarkSideWindow = !GUILayout.Button("Close");
+            ShowDarkSideWindow = !GUILayout.Button(Localizer.Format("#autoLOC_AmpYear_1000155"));		// #autoLOC_AmpYear_1000155 = Close
             if (tmpShowDarkSideWindow != ShowDarkSideWindow)
             {
                 AYVesselPartLists.ResetSolarPartToggles();
@@ -1700,17 +1860,17 @@ namespace AY
         private string tmpToolTipSS;
         private void SubsystemButton(Subsystem subsystem)
         {
-            tmpToolTipSS = "Enable/Disable " + SubsystemName(subsystem);
+            tmpToolTipSS = Localizer.Format("#autoLOC_AmpYear_1000156", SubsystemName(subsystem));		// #autoLOC_AmpYear_1000156 = Enable/Disable 
             if (subsystem == Subsystem.SAS)
             {
                 if (!FlightGlobals.ActiveVessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.StabilityAssist))
                 {
                     GUI.enabled = false;
-                    tmpToolTipSS = "Vessel has no SAS modules";
+                    tmpToolTipSS = Localizer.Format("#autoLOC_AmpYear_1000157");		// #autoLOC_AmpYear_1000157 = Vessel has no SAS modules
                 }
                 else
                 {
-                    tmpToolTipSS = "Toggle SAS on or off";
+                    tmpToolTipSS = Localizer.Format("#autoLOC_AmpYear_1000158");		// #autoLOC_AmpYear_1000158 = Toggle SAS on or off
                 }
             }
             SetSubsystemEnabled(
@@ -1759,25 +1919,12 @@ namespace AY
             {
                 tmpPrtPower = drain.ToString("0.###");
             }
-            GUILayout.Label(new GUIContent(tmpPrtPower + "/s", "The current EC drain per second if enabled"), Textures.SubsystemConsumptionStyle);
+            GUILayout.Label(new GUIContent(tmpPrtPower + Localizer.Format("#autoLOC_AmpYear_1000167"), Localizer.Format("#autoLOC_AmpYear_1000168")), Textures.SubsystemConsumptionStyle);		// #autoLOC_AmpYear_1000167 = /s		// #autoLOC_AmpYear_1000168 = The current EC drain per second if enabled
         }
 
         private static string GuiSectionName(GUISection section)
         {
-            switch (section)
-            {
-                case GUISection.SUBSYSTEM:
-                    return "Subsys";
-
-                case GUISection.RESERVE:
-                    return "Reserve";
-
-                case GUISection.LUXURY:
-                    return "Luxury";
-
-                default:
-                    return String.Empty;
-            }
+            return Localizer.Format(section.displayDescription());
         }
 
         private bool GuiSectionEnabled(GUISection section)

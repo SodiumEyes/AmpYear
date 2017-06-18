@@ -38,6 +38,7 @@
 
 using System;
 using System.Collections.Generic;
+using KSP.Localization;
 using KSP.UI;
 using KSP.UI.Screens;
 using UnityEngine;
@@ -250,6 +251,7 @@ namespace AY
             USILSPresent = Utilities.IsModInstalled("USILifeSupport");
             IONRCSPresent = Utilities.IsModInstalled("IONRCS");
             KERBALISMPresent = Utilities.IsModInstalled("Kerbalism");
+            KopernicusPresent = Utilities.IsModInstalled("Kopernicus");
             Utilities.Log_Debug(KKPresent ? "KabinKraziness present" : "KabinKraziness NOT present");
             //if (KKPresent)  //Moved to FixedUpdate
             //{
@@ -864,12 +866,12 @@ namespace AY
                 {
                     if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, SubsystemEnabled(LoadGlobals.SubsystemArrayCache[i]), _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, SubsystemEnabled(LoadGlobals.SubsystemArrayCache[i]), _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false, currentVessel.rootPart);
                 }
                 if (AYsettings.AYMonitoringUseEC)
                 {
                     prtName = "AmpYear Manager";
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled,(float) manager_drain, false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled,(float) manager_drain, false, false, currentVessel.rootPart);
                 }
 
                 //Drain main power
@@ -961,14 +963,14 @@ namespace AY
                     subsystem_drain += _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]];
                     if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false, currentVessel.rootPart);
                     
                 }
                 manager_drain = ManagerCurrentDrain;
                 if (AYsettings.AYMonitoringUseEC)
                 {
                     prtName = "AmpYear Manager";
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain,false, false);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain,false, false, currentVessel.rootPart);
                 }
                 hasPower = true;
                 HasReservePower = true;
@@ -1301,26 +1303,7 @@ namespace AY
 
         private static string SubsystemName(Subsystem subsystem)
         {
-            switch (subsystem)
-            {
-                case Subsystem.SAS:
-                    return "SAS";
-
-                case Subsystem.RCS:
-                    return "RCS";
-
-                case Subsystem.CLIMATE:
-                    return "Climate Control";
-
-                case Subsystem.MUSIC:
-                    return "Smooth Jazz";
-
-                case Subsystem.MASSAGE:
-                    return "Massage Chair";
-
-                default:
-                    return String.Empty;
-            }
+            return Localizer.Format(subsystem.displayDescription());
         }
 
         private bool SubsystemEnabled(Subsystem subsystem)

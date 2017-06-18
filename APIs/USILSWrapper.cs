@@ -21,8 +21,8 @@ namespace AY
     /// </summary>
     public class USILSWrapper
     {
-        protected static System.Type USIMLSType;
-        protected static System.Type USIMLSRType;
+        internal static System.Type USIMLSType;
+        internal static System.Type USIMLSRType;
 
         /// <summary>
         /// Whether we found the USILS assembly in the loadedassemblies.
@@ -62,7 +62,7 @@ namespace AY
             }
 
             //find the USILS part recycler module type
-            USIMLSRType = getType("LifeSupport.ModuleLifeSupportRecycler"); 
+            USIMLSRType = getType("USITools.ModuleSwappableConverter"); 
 
             if (USIMLSRType == null)
             {
@@ -93,16 +93,69 @@ namespace AY
             return null;
         }
 
+        public class ModuleSwappableConverter : PartModule
+        {
+            internal ModuleSwappableConverter(Object a)
+            {
+                actualModuleLifeSupport = a;
+                SwappableConverterCurrentLoadoutField = USIMLSRType.GetField("currentLoadout");
+                SwappableConverterBayNameField = USIMLSRType.GetField("bayName");
+            }
+
+            private Object actualModuleLifeSupport;
+
+            private FieldInfo SwappableConverterCurrentLoadoutField;
+
+            /// <summary>
+            /// Get the Resource Converter Load out
+            /// </summary>
+            /// <returns>Amount or zero</returns>
+            public int currentLoadout
+            {
+                get
+                {
+                    try
+                    {
+                        return (int)SwappableConverterCurrentLoadoutField.GetValue(actualModuleLifeSupport);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogFormatted("SwappableConverter current loadout Field failed: {0}", ex.Message);
+                        return 0;
+                    }
+                }
+            }
+
+            private FieldInfo SwappableConverterBayNameField;
+
+            public string bayName
+            {
+                get
+                {
+                    try
+                    {
+                        return (string)SwappableConverterBayNameField.GetValue(actualModuleLifeSupport);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogFormatted("SwappableConverter bayName Field failed: {0}", ex.Message);
+                        return null;
+                    }
+                }
+            }
+
+        }
+
         public class ModuleLifeSupportSystem
         {
             internal ModuleLifeSupportSystem(Object a)
             {
-                actualModuleLifeSupport = a;
+                actualModuleLifeSupportSystem = a;
 
                 LifeSupportRecipeMethod = USIMLSType.GetMethod("get_ECRecipe", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             }
 
-            private Object actualModuleLifeSupport;
+            private Object actualModuleLifeSupportSystem;
 
             private MethodInfo LifeSupportRecipeMethod;
 
@@ -116,69 +169,12 @@ namespace AY
                 {
                     try
                     {
-                        return (ConversionRecipe)LifeSupportRecipeMethod.Invoke(actualModuleLifeSupport, null);
+                        return (ConversionRecipe)LifeSupportRecipeMethod.Invoke(actualModuleLifeSupportSystem, null);
                     }
                     catch (Exception ex)
                     {
-                        LogFormatted("Invoke LifeSupportRecipe Method failed: {0}", ex.Message);
+                        LogFormatted("Invoke LifeSupportRecipeField failed: {0}", ex.Message);
                         return null;
-                    }
-                }
-            }
-        }
-
-        public class ModuleLifeSupportRecycler
-        {
-            internal ModuleLifeSupportRecycler(Object a)
-            {
-                actualModuleLifeSupportRecycler = a;
-
-                RecyclerIsActiveField = USIMLSRType.GetField("RecyclerIsActive", BindingFlags.Public | BindingFlags.Instance);
-                RecyclePercentField = USIMLSRType.GetField("RecyclePercent", BindingFlags.Public | BindingFlags.Instance);
-            }
-
-            private Object actualModuleLifeSupportRecycler;
-
-            private FieldInfo RecyclerIsActiveField;
-
-            /// <summary>
-            /// Get the Recycler Active Status
-            /// </summary>
-            /// <returns>Bool indicating if recycler is active or not</returns>
-            public bool RecyclerIsActive
-            {
-                get
-                {
-                    try
-                    {
-                        return (bool)RecyclerIsActiveField.GetValue(actualModuleLifeSupportRecycler); 
-                    }
-                    catch (Exception ex)
-                    {
-                        LogFormatted("Invoke LifeSupportRecycler RecyclerisActive Field failed: {0}", ex.Message);
-                        return false;
-                    }
-                }
-            }
-
-            private FieldInfo RecyclePercentField;
-
-            /// <summary>
-            /// Get the Recycler Percentage
-            /// </summary>
-            /// <returns>float value from module or zero</returns>
-            public float RecyclePercent
-            {
-                get
-                {
-                    try
-                    {
-                        return (float)RecyclePercentField.GetValue(actualModuleLifeSupportRecycler);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogFormatted("Invoke LifeSupportRecycler RecyclePercent Field failed: {0}", ex.Message);
-                        return 0;
                     }
                 }
             }

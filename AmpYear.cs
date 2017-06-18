@@ -125,9 +125,9 @@ namespace AY
     {
         public static AmpYear Instance { get; private set; }
 
-        public AYGameSettings AYgameSettings { get;  }
+        public AYGameSettings AYgameSettings { get; private set; }
 
-        public AYSettings AYsettings { get;  }
+        public AYSettings AYsettings { get; private set; }
 
         private readonly string _globalConfigFilename;
 
