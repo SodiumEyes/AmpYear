@@ -104,6 +104,17 @@ namespace AY
                                 }
                                 else
                                 {
+                                    if (prodPartInfo.PrtName == "AmpYear SubSystems" || prodPartInfo.PrtName == "AmpYear Manager" || prodPartInfo.PrtName == "AmpYear SubSystems-Max")
+                                    {
+                                        if (part.vessel != null && part.vessel.rootPart != null)
+                                        {
+                                            prodPartInfo.PrtReference = part.vessel.rootPart;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        prodPartInfo.PrtReference = part;
+                                    }
                                     AYVesselPartLists.VesselProdPartsList.Add(id, prodPartInfo);
                                 }
                             }
@@ -126,6 +137,17 @@ namespace AY
                                 }
                                 else
                                 {
+                                    if (consPartInfo.PrtName == "AmpYear SubSystems" || consPartInfo.PrtName == "AmpYear Manager" || consPartInfo.PrtName == "AmpYear SubSystems-Max")
+                                    {
+                                        if (part.vessel != null && part.vessel.rootPart != null)
+                                        {
+                                            consPartInfo.PrtReference = part.vessel.rootPart;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        consPartInfo.PrtReference = part;
+                                    }
                                     AYVesselPartLists.VesselConsPartsList.Add(id, consPartInfo);
                                 }
                             }

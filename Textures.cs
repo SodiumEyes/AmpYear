@@ -50,16 +50,19 @@ namespace AY
         internal static Texture2D BtnResizeHeight = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnResizeWidth = new Texture2D(16, 16, TextureFormat.ARGB32, false);
         internal static Texture2D BtnIS = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+        internal static Texture2D BtnHighlightBG = new Texture2D(10, 10, TextureFormat.ARGB32, false);
 
         internal static String PathIconsPath = System.IO.Path.Combine(AmpYear.AssemblyFolder.Substring(0, AmpYear.AssemblyFolder.IndexOf("/AmpYear/") + 9), "Icons").Replace("\\", "/");
         internal static String PathToolbarIconsPath = PathIconsPath.Substring(PathIconsPath.ToLower().IndexOf("/gamedata/") + 10);
-        
+
+        internal static Color ProdpartHighlightColor = Color.green;
+        internal static Color ConspartHighlightColor = Color.red;
 
         internal static void LoadIconAssets()
         {
             try
             {
-                LoadImageFromFile(ref IconGreenOff, "AYGreenOff.png", PathIconsPath);  
+                LoadImageFromFile(ref IconGreenOff, "AYGreenOff.png", PathIconsPath);
                 LoadImageFromFile(ref IconGreenOn, "AYGreenOn.png", PathIconsPath);
                 LoadImageFromFile(ref IconRedOff, "AYRedOff.png", PathIconsPath);
                 LoadImageFromFile(ref IconRedOn, "AYRedOn.png", PathIconsPath);
@@ -88,6 +91,7 @@ namespace AY
                 LoadImageFromFile(ref BtnResizeHeight, "AYbtnResizeHeight.png", PathIconsPath);
                 LoadImageFromFile(ref BtnResizeWidth, "AYbtnResizeWidth.png", PathIconsPath);
                 LoadImageFromFile(ref BtnIS, "AYbtnIS.png", PathIconsPath);
+                LoadImageFromFile(ref BtnHighlightBG, "AYPartHighlightBG.png", PathIconsPath);
             }
             catch (Exception)
             {
@@ -96,7 +100,7 @@ namespace AY
         }
 
         public static Boolean LoadImageFromFile(ref Texture2D tex, String fileName, String folderPath = "")
-        {            
+        {
             Boolean blnReturn = false;
             try
             {
@@ -106,7 +110,7 @@ namespace AY
                 if (System.IO.File.Exists(String.Format("{0}/{1}", folderPath, fileName)))
                 {
                     try
-                    {                        
+                    {
                         tex.LoadImage(System.IO.File.ReadAllBytes(String.Format("{0}/{1}", folderPath, fileName)));
                         blnReturn = true;
                     }
@@ -118,7 +122,7 @@ namespace AY
                 }
                 else
                 {
-                    RSTUtils.Utilities.Log("AmpYear Cannot find texture to load:" + folderPath + "(" + fileName + ")");                    
+                    RSTUtils.Utilities.Log("AmpYear Cannot find texture to load:" + folderPath + "(" + fileName + ")");
                 }
 
 
@@ -126,13 +130,13 @@ namespace AY
             catch (Exception ex)
             {
                 RSTUtils.Utilities.Log("AmpYear Failed to load (are you missing a file):" + folderPath + "(" + fileName + ")");
-                RSTUtils.Utilities.Log(ex.Message);                
+                RSTUtils.Utilities.Log(ex.Message);
             }
             return blnReturn;
         }
 
         internal static GUIStyle SectionTitleStyle, SectionTitleStyleLeft, SubsystemButtonStyle, SubsystemConsumptionStyle, StatusStyle, WarningStyle,
-            AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListPartRightStyle, PartListPartGrayStyle, PartListPartRightGrayStyle,
+            AlertStyle, PowerSinkStyle, PartListStyle, PartListpartHeadingStyle, PartListPartStyle, PartListProdPartHighlightStyle, PartListConsPartHighlightStyle, PartListPartRightStyle, PartListPartGrayStyle, PartListPartRightGrayStyle,
             ResizeStyle, StatusStyleLeft, WarningStyleLeft, AlertStyleLeft, PartListbtnStyle, PrioritybtnStyle;
 
         internal static bool StylesSet = false;
@@ -188,7 +192,7 @@ namespace AY
             {
                 alignment = TextAnchor.MiddleCenter,
                 stretchWidth = true,
-                normal = { textColor = Color.white }
+                normal = {textColor = Color.white}
             };
 
             WarningStyle = new GUIStyle(GUI.skin.label)
@@ -196,7 +200,7 @@ namespace AY
                 alignment = TextAnchor.MiddleCenter,
                 stretchWidth = true,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.yellow }
+                normal = {textColor = Color.yellow}
             };
 
             AlertStyle = new GUIStyle(GUI.skin.label)
@@ -204,14 +208,14 @@ namespace AY
                 alignment = TextAnchor.MiddleCenter,
                 stretchWidth = true,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.red }
+                normal = {textColor = Color.red}
             };
 
             StatusStyleLeft = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
-                normal = { textColor = Color.white }
+                normal = {textColor = Color.white}
             };
 
             WarningStyleLeft = new GUIStyle(GUI.skin.label)
@@ -219,7 +223,7 @@ namespace AY
                 alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.yellow }
+                normal = {textColor = Color.yellow}
             };
 
             AlertStyleLeft = new GUIStyle(GUI.skin.label)
@@ -227,7 +231,7 @@ namespace AY
                 alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.red }
+                normal = {textColor = Color.red}
             };
 
             SubsystemButtonStyle = new GUIStyle(GUI.skin.toggle)
@@ -248,42 +252,58 @@ namespace AY
             {
                 alignment = TextAnchor.MiddleCenter,
                 stretchWidth = true,
-                normal = { textColor = Color.yellow }
+                normal = {textColor = Color.yellow}
             };
 
             PartListpartHeadingStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
-                normal = { textColor = Color.yellow }
+                normal = {textColor = Color.yellow}
             };
 
             PartListPartStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
-                normal = { textColor = Color.white }
+                normal = {textColor = Color.white}
             };
+            
+            PartListProdPartHighlightStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                stretchWidth = true,
+                normal = { textColor = AmpYear.Instance.AYsettings.ProdPartHighlightColor }
+            };
+            PartListProdPartHighlightStyle.normal.background = BtnHighlightBG;
+
+            PartListConsPartHighlightStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                stretchWidth = true,
+                normal = { textColor = AmpYear.Instance.AYsettings.ConsPartHighlightColor }
+            };
+            PartListConsPartHighlightStyle.normal.background = BtnHighlightBG;
 
             PartListPartRightStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleRight,
                 stretchWidth = true,
-                normal = { textColor = Color.white }
+                normal = {textColor = Color.white}
             };
 
             PartListPartGrayStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
                 stretchWidth = true,
-                normal = { textColor = Color.black }
+                normal = {textColor = Color.black}
             };
 
             PartListPartRightGrayStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleRight,
                 stretchWidth = true,
-                normal = { textColor = Color.black }
+                normal = {textColor = Color.black}
             };
 
             PartListbtnStyle = new GUIStyle(GUI.skin.button)
@@ -313,6 +333,20 @@ namespace AY
 
             StylesSet = true;
 
+        }
+
+        internal static void SetupHighLightStyles(Color prodcolor, Color conscolor)
+        {
+            ProdpartHighlightColor = prodcolor;
+            ConspartHighlightColor = conscolor;
+            if (PartListProdPartHighlightStyle != null)
+            {
+                PartListProdPartHighlightStyle.normal.textColor = prodcolor;
+            }
+            if (PartListConsPartHighlightStyle != null)
+            {
+                PartListConsPartHighlightStyle.normal.textColor = conscolor;
+            }
         }
     }
 }

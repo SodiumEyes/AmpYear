@@ -1,4 +1,10 @@
-﻿V1.4.7.0 "KSP 1.3"
+﻿V1.4.8.0 "Do you Speaka my Language?"
+    Localization ready - All languages appear in English. But looking for volunteers to translate. ;)
+	(This also means the Planet names now don't show the language tags in the DarkSide UI windows.)
+	Added Part highlighting Functionality. Part Highlight Colors can be set in the Settings window at the KSC.
+	Clicking on a PartModule Name in the ShowParts List in the VAB/SPH or in Flight will highlight that part (until you click it again).
+	Added support for Kopernicus Solar Panels.
+V1.4.7.0 "KSP 1.3"
 	Changes for KSP 1.3.0
 V1.4.6.0 "More Fixes"
 	Fix integration for TAC LS Generic Converter spamming log in the Editors.

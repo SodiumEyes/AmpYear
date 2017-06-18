@@ -24,22 +24,25 @@
  *
  */
 
+using System;
+using System.ComponentModel;
+
 namespace AY
 {
     public enum Subsystem
     {
-        SAS,
-        RCS,
-        CLIMATE,
-        MUSIC,
-        MASSAGE
+        [Description("#autoLOC_AmpYear_1000159")] SAS,
+        [Description("#autoLOC_AmpYear_1000160")] RCS,
+        [Description("#autoLOC_AmpYear_1000161")] CLIMATE,
+        [Description("#autoLOC_AmpYear_1000162")] MUSIC,
+        [Description("#autoLOC_AmpYear_1000163")] MASSAGE
     }
 
     public enum GUISection
     {
-        SUBSYSTEM,
-        RESERVE,
-        LUXURY
+        [Description("#autoLOC_AmpYear_1000164")] SUBSYSTEM,
+        [Description("#autoLOC_AmpYear_1000165")] RESERVE,
+        [Description("#autoLOC_AmpYear_1000166")] LUXURY
     }
 
     public enum GameState
@@ -69,5 +72,4 @@ namespace AY
         Increasing = 1,
         Decreasing = 2
     }
-
 }

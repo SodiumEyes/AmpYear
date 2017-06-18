@@ -43,6 +43,8 @@ using UnityEngine;
 using RSTUtils;
 using RSTUtils.Extensions;
 using System.Linq;
+using System.Threading;
+using KSP.Localization;
 
 namespace AY
 {
@@ -87,13 +89,15 @@ namespace AY
         private bool _inputVdebug = _debugging;
         private bool _inputToolTipsOn = true;
         private bool _inputAYMonitoringUseEC = true;
+        private Color _inputProdPartHighlightColor = Color.green;
+        private Color _inputConsPartHighlightColor = Color.red;
         private string _inputSESPHighThreshold = "";
         private double _inputVESPHighThreshold = 0f;
         private string _inputSESPMediumThreshold = "";
         private double _inputVESPMediumThreshold = 0f;
         private string _inputSESPLowThreshold = "";
         private double _inputVESPLowThreshold = 0f;
-        private List<KeyValuePair<string, ESPValues>> _inputPartModuleEmergShutDnDflt = new List<KeyValuePair<string, ESPValues>>();
+        private List<KeyValuePair<ValidEmergencyPartModule, ESPValues>> _inputPartModuleEmergShutDnDflt = new List<KeyValuePair<ValidEmergencyPartModule, ESPValues>>();
         private bool LoadSettingsSC = true;
         public double CLIMATE_BASE_DRAIN_FACTOR = 1.0;
         public float CLIMATE_TARGET_TEMP = 20.0f;
@@ -112,12 +116,23 @@ namespace AY
         private double ESPLowThreshold = 0.2;
         private double EmgcyShutOverrideCooldown = 300;
         private bool AYMonitoringUseEC = true;
-        private List<KeyValuePair<string, ESPValues>> PartModuleEmergShutDnDflt = new List<KeyValuePair<string, ESPValues>>();
+        private Color ProdPartHighlightColor = Color.green;
+        private Color ConsPartHighlightColor = Color.red;
+        private List<KeyValuePair<ValidEmergencyPartModule, ESPValues>> PartModuleEmergShutDnDflt = new List<KeyValuePair<ValidEmergencyPartModule, ESPValues>>();
         public bool Useapplauncher = false;
         private bool KKPresent = false;
         private Vector2 _bodscrollViewVector = Vector2.zero;
         private static string LOCK_ID = "AmpYear_KeyBinder";
         private string tmpToolTip;
+        float prodPartRedValue = 1f;
+        float prodPartGreenValue = 1f;
+        float prodPartBlueValue = 1f;
+        private Texture2D prodPartstyleTexture;
+        private Texture2D consPartstyleTexture;
+        float consPartRedValue = 1f;
+        float consPartGreenValue = 1f;
+        float consPartBlueValue = 1f;
+        
 
         //AmpYear Savable settings
         private AYSettings _aYsettings;
@@ -148,7 +163,7 @@ namespace AY
         public void Awake()
         {
             _aYsettings = AmpYear.Instance.AYsettings;
-            AYSCMenuAppLToolBar = new AppLauncherToolBar("AmpYear", "AmpYear",
+            AYSCMenuAppLToolBar = new AppLauncherToolBar(Localizer.Format("#autoLOC_AmpYear_1000001"), Localizer.Format("#autoLOC_AmpYear_1000001"), //#autoLOC_AmpYear_1000001 = AmpYear
                 Textures.PathToolbarIconsPath + "/AYGreenOffTB",
                 ApplicationLauncher.AppScenes.SPACECENTER,
                 (Texture)Textures.IconGreenOn, (Texture)Textures.IconGreenOff,
@@ -178,6 +193,9 @@ namespace AY
             }
 
             AYSCMenuAppLToolBar.Start(_aYsettings.UseAppLauncher);
+
+            prodPartstyleTexture = new Texture2D(1, 1);
+            consPartstyleTexture = new Texture2D(1, 1);
 
             Utilities.Log_Debug("AYController Start complete");
         }
@@ -238,16 +256,18 @@ namespace AY
                     _inputSEmgcyShutOverrideCooldown = EmgcyShutOverrideCooldown.ToString();
                     _inputVEmgcyShutOverrideCooldown = EmgcyShutOverrideCooldown;
                     _inputAYMonitoringUseEC = AYMonitoringUseEC;
+                    _inputProdPartHighlightColor = ProdPartHighlightColor;
+                    _inputConsPartHighlightColor = ConsPartHighlightColor;
                     _inputPartModuleEmergShutDnDflt.Clear();
-                    foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
+                    foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in PartModuleEmergShutDnDflt)
                     {
-                        _inputPartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry.Key, validentry.Value));
+                        _inputPartModuleEmergShutDnDflt.Add(new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry.Key, validentry.Value));
                     }
                     LoadSettingsSC = false;
                 }
                 GUI.skin = HighLogic.Skin;
                 SCwindowPos.ClampInsideScreen();
-                SCwindowPos = GUILayout.Window(_windowId, SCwindowPos, WindowSc, "AmpYear Power Manager Settings",
+                SCwindowPos = GUILayout.Window(_windowId, SCwindowPos, WindowSc, Localizer.Format("#autoLOC_AmpYear_1000169"),		// #autoLOC_AmpYear_1000169 = AmpYear Power Manager Settings
                     GUILayout.Width(SCWINDOW_WIDTH), GUILayout.Height(WINDOW_BASE_HEIGHT));
                 if (_toolTipsOn)
                     Utilities.DrawToolTip();
@@ -263,7 +283,7 @@ namespace AY
             Utilities._TooltipStyle.normal.textColor = new Color32(207, 207, 207, 255);
             Utilities._TooltipStyle.hover.textColor = Color.blue;
 
-            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, "Close Window");
+            GUIContent closeContent = new GUIContent(Textures.BtnRedCross, Localizer.Format("#autoLOC_AmpYear_1000007"));     //#autoLOC_AmpYear_1000007 = Close Window
             Rect closeRect = new Rect(SCwindowPos.width - 21, 4, 16, 16);
             if (GUI.Button(closeRect, closeContent, Textures.PartListbtnStyle))
             {
@@ -277,69 +297,69 @@ namespace AY
 
             
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("AmpYear Monitoring uses EC", "If ON AmpYear uses EC for it's monitoring functions. If Off it does not."), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000170"), Localizer.Format("#autoLOC_AmpYear_1000171")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000170 = AmpYear Monitoring uses EC		// #autoLOC_AmpYear_1000171 = If ON AmpYear uses EC for it's monitoring functions. If Off it does not.
             _inputAYMonitoringUseEC = GUILayout.Toggle(_inputAYMonitoringUseEC, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
             
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Reserve Battery Recharge Percentage", "The percentage of Main Power available before AmpYear begins recharging Reserve Batteries"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000172"), Localizer.Format("#autoLOC_AmpYear_1000173")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000172 = Reserve Battery Recharge Percentage		// #autoLOC_AmpYear_1000173 = The percentage of Main Power available before AmpYear begins recharging Reserve Batteries
             _inputSrrt = Regex.Replace(GUILayout.TextField(_inputSrrt, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Power Low Warning Percentage", "A Warning window will open when the percentage of Main Power Available reaches this percentage value"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000174"), Localizer.Format("#autoLOC_AmpYear_1000175")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000174 = Power Low Warning Percentage		// #autoLOC_AmpYear_1000175 = A Warning window will open when the percentage of Main Power Available reaches this percentage value
             _inputSplw = Regex.Replace(GUILayout.TextField(_inputSplw, 3, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             if (KKPresent)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Climate Control Elec. Drain", "The amount of EC the Climate Control system will use per second"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000176"), Localizer.Format("#autoLOC_AmpYear_1000177")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000176 = Climate Control Elec. Drain		// #autoLOC_AmpYear_1000177 = The amount of EC the Climate Control system will use per second
                 _inputSccbdf = Regex.Replace(GUILayout.TextField(_inputSccbdf, 2, GUILayout.MinWidth(10.0F)), "[^.0-9]", ""); //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Climate Control Target Temp.", "The temperature in Celcius the Climate Control System will try to maintain in teh cabin"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000178"), Localizer.Format("#autoLOC_AmpYear_1000179")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000178 = Climate Control Target Temp.		// #autoLOC_AmpYear_1000179 = The temperature in Celcius the Climate Control System will try to maintain in teh cabin
                 _inputSctt = Regex.Replace(GUILayout.TextField(_inputSctt, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", ""); //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Massage Electrical Drain", "The amount of EC the Massage Chair system will use per second"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000180"), Localizer.Format("#autoLOC_AmpYear_1000181")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000180 = Massage Electrical Drain		// #autoLOC_AmpYear_1000181 = The amount of EC the Massage Chair system will use per second
                 _inputSmbdf = Regex.Replace(GUILayout.TextField(_inputSmbdf, 2, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Kraziness Base Growth Amount", "The percentage amount that Kraziness will grow per second"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000182"), Localizer.Format("#autoLOC_AmpYear_1000183")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000182 = Kraziness Base Growth Amount		// #autoLOC_AmpYear_1000183 = The percentage amount that Kraziness will grow per second
                 _inputScbdf = Regex.Replace(GUILayout.TextField(_inputScbdf, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Temp Uncomfortable Kraziness", "The degrees Celcius where the actual cabin temperature is < less than or > greater than the target temperature. If this occurs Kraziness will go up faster"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000184"), Localizer.Format("#autoLOC_AmpYear_1000185")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000184 = Temp Uncomfortable Kraziness		// #autoLOC_AmpYear_1000185 = The degrees Celcius where the actual cabin temperature is < less than or > greater than the target temperature. If this occurs Kraziness will go up faster
                 _inputSccuf = Regex.Replace(GUILayout.TextField(_inputSccuf, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Climate Kraziness Reduction", "The percentage amount that Climate Control system will reduce Kraziness per second"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000186"), Localizer.Format("#autoLOC_AmpYear_1000187")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000186 = Climate Kraziness Reduction		// #autoLOC_AmpYear_1000187 = The percentage amount that Climate Control system will reduce Kraziness per second
                 _inputSccrf = Regex.Replace(GUILayout.TextField(_inputSccrf, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Music Kraziness Reduction", "The percentage amount that the music system will reduce Kraziness per second"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000188"), Localizer.Format("#autoLOC_AmpYear_1000189")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000188 = Music Kraziness Reduction		// #autoLOC_AmpYear_1000189 = The percentage amount that the music system will reduce Kraziness per second
                 _inputScrrf = Regex.Replace(GUILayout.TextField(_inputScrrf, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Massage Kraziness Reduction", "The percentage amount that the Massage chairs will reduce Kraziness per second"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000190"), Localizer.Format("#autoLOC_AmpYear_1000191")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000190 = Massage Kraziness Reduction		// #autoLOC_AmpYear_1000191 = The percentage amount that the Massage chairs will reduce Kraziness per second
                 _inputScmrf = Regex.Replace(GUILayout.TextField(_inputScmrf, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Kraziness Minor Problem Limit", "The percentage amount of Kraziness where minor bad things will start happening"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000192"), Localizer.Format("#autoLOC_AmpYear_1000193")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000192 = Kraziness Minor Problem Limit		// #autoLOC_AmpYear_1000193 = The percentage amount of Kraziness where minor bad things will start happening
                 _inputScMinL = Regex.Replace(GUILayout.TextField(_inputScMinL, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(new GUIContent("Kraziness Major Problem Limit", "The percentage amount of Kraziness where major bad things will start happening"), Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000194"), Localizer.Format("#autoLOC_AmpYear_1000195")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000194 = Kraziness Major Problem Limit		// #autoLOC_AmpYear_1000195 = The percentage amount of Kraziness where major bad things will start happening
                 _inputScMajL = Regex.Replace(GUILayout.TextField(_inputScMajL, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
                 GUILayout.EndHorizontal();
             }
@@ -347,67 +367,102 @@ namespace AY
             if (!ToolbarManager.ToolbarAvailable)
             {
                 GUI.enabled = false;
-                tmpToolTip = "Not available unless ToolBar mod is installed";
+                tmpToolTip = Localizer.Format("#autoLOC_AmpYear_1000196");		// #autoLOC_AmpYear_1000196 = Not available unless ToolBar mod is installed
             }
             else
             {
                 tmpToolTip =
-                    "If ON Icon will appear in the stock Applauncher, if OFF Icon will appear in ToolBar mod";
+                    Localizer.Format("#autoLOC_AmpYear_1000197");		// #autoLOC_AmpYear_1000197 = If ON Icon will appear in the stock Applauncher, if OFF Icon will appear in ToolBar mod
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Use Application Launcher Button", tmpToolTip), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000198"), tmpToolTip), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000198 = Use Application Launcher Button
             _inputAppL = GUILayout.Toggle(_inputAppL, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             GUI.enabled = true;
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Debug Mode", "Creates logs of logging messages to help when there are problems, but will slow KSP down"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000199"), Localizer.Format("#autoLOC_AmpYear_1000200")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000199 = Debug Mode		// #autoLOC_AmpYear_1000200 = Creates logs of logging messages to help when there are problems, but will slow KSP down
             _inputSdebug = GUILayout.Toggle(_inputSdebug, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             _inputVdebug = _inputSdebug;
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ToolTips On", "If On then you will see ToolTips like this one, If off - well you won't"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000201"), Localizer.Format("#autoLOC_AmpYear_1000202")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000201 = ToolTips On		// #autoLOC_AmpYear_1000202 = If On then you will see ToolTips like this one, If off - well you won't
             _inputToolTipsOn = GUILayout.Toggle(_inputToolTipsOn, "", GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000203"), Localizer.Format("#autoLOC_AmpYear_1000204")), Textures.StatusStyle);		// #autoLOC_AmpYear_1000203 = EC Producer Module Highlight Color:		// #autoLOC_AmpYear_1000204 = The color that EC production modules will be highlighted with.\nMove the sliders to set the Color.
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ESP High Threshold", "The percentage of Main Power where Emergency Shutdow Procedure will shutdown/restart High priority modules. Must be >= 1%"), Textures.StatusStyle, GUILayout.Width(300));
+            prodPartRedValue = _inputProdPartHighlightColor.r * 255f;
+            prodPartGreenValue = _inputProdPartHighlightColor.g * 255f;
+            prodPartBlueValue = _inputProdPartHighlightColor.b * 255f;
+            prodPartRedValue = GUILayout.HorizontalSlider(prodPartRedValue, 0f, 255f);
+            prodPartGreenValue = GUILayout.HorizontalSlider(prodPartGreenValue, 0f, 255f);
+            prodPartBlueValue = GUILayout.HorizontalSlider(prodPartBlueValue, 0f, 255f);
+            GUILayout.EndHorizontal();
+
+            GUIStyle prodPartstyle = new GUIStyle();
+            _inputProdPartHighlightColor = new Color(prodPartRedValue / 255f, prodPartGreenValue / 255f, prodPartBlueValue / 255f);
+            prodPartstyleTexture.SetPixel(0, 0, _inputProdPartHighlightColor);
+            prodPartstyleTexture.Apply();
+            prodPartstyle.normal.background = prodPartstyleTexture;
+            GUILayout.Box(new GUIContent(""), prodPartstyle, GUILayout.Height(20));
+
+
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000205"), Localizer.Format("#autoLOC_AmpYear_1000206")), Textures.StatusStyle);		// #autoLOC_AmpYear_1000205 = EC Consumer Module Highlight Color:		// #autoLOC_AmpYear_1000206 = The color that EC consumer modules will be highlighted with.\nMove the sliders to set the Color.
+            GUILayout.BeginHorizontal();
+            consPartRedValue = _inputConsPartHighlightColor.r * 255f;
+            consPartGreenValue = _inputConsPartHighlightColor.g * 255f;
+            consPartBlueValue = _inputConsPartHighlightColor.b * 255f;
+            consPartRedValue = GUILayout.HorizontalSlider(consPartRedValue, 0f, 255f);
+            consPartGreenValue = GUILayout.HorizontalSlider(consPartGreenValue, 0f, 255f);
+            consPartBlueValue = GUILayout.HorizontalSlider(consPartBlueValue, 0f, 255f);
+            GUILayout.EndHorizontal();
+
+            GUIStyle consPartstyle = new GUIStyle();
+            _inputConsPartHighlightColor = new Color(consPartRedValue / 255f, consPartGreenValue / 255f, consPartBlueValue / 255f);
+            consPartstyleTexture.SetPixel(0, 0, _inputConsPartHighlightColor);
+            consPartstyleTexture.Apply();
+            consPartstyle.normal.background = consPartstyleTexture;
+            GUILayout.Box(new GUIContent(""), consPartstyle, GUILayout.Height(20));
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000207"), Localizer.Format("#autoLOC_AmpYear_1000208")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000207 = ESP High Threshold		// #autoLOC_AmpYear_1000208 = The percentage of Main Power where Emergency Shutdow Procedure will shutdown/restart High priority modules. Must be >= 1%
             _inputSESPHighThreshold = Regex.Replace(GUILayout.TextField(_inputSESPHighThreshold, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ESP Medium Threshold", "The percentage of Main Power where Emergency Shutdow Procedure will shutdown/restart Medium priority modules. Must be >= High Threshold + 1%"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000209"), Localizer.Format("#autoLOC_AmpYear_1000210")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000209 = ESP Medium Threshold		// #autoLOC_AmpYear_1000210 = The percentage of Main Power where Emergency Shutdow Procedure will shutdown/restart Medium priority modules. Must be >= High Threshold + 1%
             _inputSESPMediumThreshold = Regex.Replace(GUILayout.TextField(_inputSESPMediumThreshold, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("ESP Low Threshold", "The percentage of Main Power where Emergency Shutdow Procedure will shutdown/restart Low priority modules. Must be >= Medium Threshold + 1%"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000211"), Localizer.Format("#autoLOC_AmpYear_1000212")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000211 = ESP Low Threshold		// #autoLOC_AmpYear_1000212 = The percentage of Main Power where Emergency Shutdow Procedure will shutdown/restart Low priority modules. Must be >= Medium Threshold + 1%
             _inputSESPLowThreshold = Regex.Replace(GUILayout.TextField(_inputSESPLowThreshold, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Box(new GUIContent("Emergency Shutdown Cooldown Period", "The Cooldown period of time in seconds after an Emergency Shutdown is performed"), Textures.StatusStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000213"), Localizer.Format("#autoLOC_AmpYear_1000214")), Textures.StatusStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000213 = Emergency Shutdown Cooldown Period		// #autoLOC_AmpYear_1000214 = The Cooldown period of time in seconds after an Emergency Shutdown is performed
             _inputSEmgcyShutOverrideCooldown = Regex.Replace(GUILayout.TextField(_inputSEmgcyShutOverrideCooldown, 5, GUILayout.MinWidth(30.0F)), "[^.0-9]", "");  //you can play with the width of the text box
             GUILayout.EndHorizontal();
 
-            GUILayout.Box(new GUIContent("Emergency Shutdown Procedures - Module Defaults", "Default values for ESP system"), Textures.SectionTitleStyle, GUILayout.Width(300));
+            GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000215"), Localizer.Format("#autoLOC_AmpYear_1000216")), Textures.SectionTitleStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000215 = Emergency Shutdown Procedures - Module Defaults		// #autoLOC_AmpYear_1000216 = Default values for ESP system
 
-            foreach (KeyValuePair<string, ESPValues> validentry in _inputPartModuleEmergShutDnDflt)
+            foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in _inputPartModuleEmergShutDnDflt)
             {
                 if (!KKPresent &&
-                    (validentry.Key == "Climate Control" || validentry.Key == "Smooth Jazz" || validentry.Key == "Massage Chair"))
+                    (validentry.Key.Name == "ClimateControl" || validentry.Key.Name == "SmoothJazz" || validentry.Key.Name == "MassageChair"))
                     continue;
                 GUILayout.BeginHorizontal();
-                GUILayout.Box(validentry.Key, Textures.StatusStyle, GUILayout.Width(300));
+                GUILayout.Box(Localizer.Format(validentry.Key.displayName), Textures.StatusStyle, GUILayout.Width(300));
                 bool tmpBool = validentry.Value.EmergShutDnDflt;
-                tmpBool = GUILayout.Toggle(tmpBool, new GUIContent("", "If ON any Parts with this Module will be included in Emergency Shutdown Procedures, If OFF then it won't be included"), GUILayout.MinWidth(30.0F)); //you can play with the width of the text box
+                tmpBool = GUILayout.Toggle(tmpBool, new GUIContent("", Localizer.Format("#autoLOC_AmpYear_1000217")), GUILayout.MinWidth(30.0F)); //you can play with the width of the text box		// #autoLOC_AmpYear_1000217 = If ON any Parts with this Module will be included in Emergency Shutdown Procedures, If OFF then it won't be included
                 List<GUIContent> tmpList = new List<GUIContent>();
-                tmpList.Add(new GUIContent(Textures.BtnPriority1, "Emergency Shutdown Procedures - Set Default for this Module to Priority One"));
-                tmpList.Add(new GUIContent(Textures.BtnPriority2, "Emergency Shutdown Procedures - Set Default for this Module to Priority Two"));
-                tmpList.Add(new GUIContent(Textures.BtnPriority3, "Emergency Shutdown Procedures - Set Default for this Module to Priority Three"));
+                tmpList.Add(new GUIContent(Textures.BtnPriority1, Localizer.Format("#autoLOC_AmpYear_1000218")));		// #autoLOC_AmpYear_1000218 = Emergency Shutdown Procedures - Set Default for this Module to Priority One
+                tmpList.Add(new GUIContent(Textures.BtnPriority2, Localizer.Format("#autoLOC_AmpYear_1000219")));		// #autoLOC_AmpYear_1000219 = Emergency Shutdown Procedures - Set Default for this Module to Priority Two
+                tmpList.Add(new GUIContent(Textures.BtnPriority3, Localizer.Format("#autoLOC_AmpYear_1000220")));		// #autoLOC_AmpYear_1000220 = Emergency Shutdown Procedures - Set Default for this Module to Priority Three
                 GUIContent[] tmpToggles = tmpList.ToArray();
                 List<GUIStyle> tmpStylesList = new List<GUIStyle>();
                 tmpStylesList.Add(Textures.PrioritybtnStyle);
@@ -417,7 +472,7 @@ namespace AY
                 int tmpESPPriority = Utilities.ToggleList((int)validentry.Value.EmergShutPriority - 1, tmpToggles, tmpStylesToggles, 20);
                 var tmpIndex = _inputPartModuleEmergShutDnDflt.FindIndex(a => a.Key == validentry.Key);
                 ESPValues tmpEspValues = new ESPValues(tmpBool, (ESPPriority)(tmpESPPriority + 1));
-                _inputPartModuleEmergShutDnDflt[tmpIndex] = new KeyValuePair<string, ESPValues>(validentry.Key, tmpEspValues);
+                _inputPartModuleEmergShutDnDflt[tmpIndex] = new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry.Key, tmpEspValues);
                 GUILayout.EndHorizontal();
             }
 
@@ -453,7 +508,7 @@ namespace AY
                 _inputVESPHighThreshold = ESPHighThreshold = 1;
                 _inputSESPHighThreshold = _inputVESPHighThreshold.ToString();
                 ScreenMessages.PostScreenMessage(
-                                    "ESP High Threshold must be 1% or greater. Reset to 1%", 5.0f,
+                                    Localizer.Format("#autoLOC_AmpYear_1000221"), 5.0f,		// #autoLOC_AmpYear_1000221 = ESP High Threshold must be 1% or greater. Reset to 1%
                                     ScreenMessageStyle.UPPER_CENTER);
             }
             if (_inputVESPMediumThreshold < ESPHighThreshold + 5)
@@ -461,7 +516,7 @@ namespace AY
                 _inputVESPMediumThreshold = ESPMediumThreshold = ESPHighThreshold + 5;
                 _inputSESPMediumThreshold = _inputVESPMediumThreshold.ToString();
                 ScreenMessages.PostScreenMessage(
-                                    "ESP Medium Threshold must be 5% More than High Threshhold. Reset to " + _inputVESPMediumThreshold.ToString("##") + "%", 5.0f,
+                                    Localizer.Format("#autoLOC_AmpYear_1000222", _inputVESPMediumThreshold.ToString("##")), 5.0f,		// #autoLOC_AmpYear_1000222 = ESP Medium Threshold must be 5% More than High Threshhold. Reset to 
                                     ScreenMessageStyle.UPPER_CENTER);
             }
             if (_inputVESPLowThreshold < ESPMediumThreshold + 5)
@@ -469,7 +524,7 @@ namespace AY
                 _inputVESPLowThreshold = ESPLowThreshold = ESPMediumThreshold + 5;
                 _inputSESPLowThreshold = _inputVESPLowThreshold.ToString();
                 ScreenMessages.PostScreenMessage(
-                                    "ESP Low Threshold must be 5% More than Medium Threshhold. Reset to " + _inputVESPLowThreshold.ToString("##") + "%", 5.0f,
+                                    Localizer.Format("#autoLOC_AmpYear_1000223", _inputVESPLowThreshold.ToString("##")), 5.0f,		// #autoLOC_AmpYear_1000223 = ESP Low Threshold must be 5% More than Medium Threshhold. Reset to 
                                     ScreenMessageStyle.UPPER_CENTER);
             }
             if (!Double.TryParse(_inputSEmgcyShutOverrideCooldown, out _inputVEmgcyShutOverrideCooldown))
@@ -481,7 +536,7 @@ namespace AY
                 _inputVEmgcyShutOverrideCooldown = 30;
                 _inputSEmgcyShutOverrideCooldown = "30";
                 ScreenMessages.PostScreenMessage(
-                                    "ESP Cooldown Period must be at least 30 secs. Reset to 30 secs.", 5.0f,ScreenMessageStyle.UPPER_CENTER);
+                                    Localizer.Format("#autoLOC_AmpYear_1000224"), 5.0f,ScreenMessageStyle.UPPER_CENTER);		// #autoLOC_AmpYear_1000224 = ESP Cooldown Period must be at least 30 secs. Reset to 30 secs.
             }
 
             if (KKPresent)
@@ -528,7 +583,7 @@ namespace AY
                 }
             }
 
-            if (GUILayout.Button(new GUIContent("Save Settings", "This will save you settings changes to the config.cfg file")))
+            if (GUILayout.Button(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000225"), Localizer.Format("#autoLOC_AmpYear_1000226"))))		// #autoLOC_AmpYear_1000225 = Save Settings		// #autoLOC_AmpYear_1000226 = This will save you settings changes to the config.cfg file
             {
                 CLIMATE_BASE_DRAIN_FACTOR = _inputVccbdf;
                 CLIMATE_TARGET_TEMP = _inputVctt;
@@ -556,16 +611,19 @@ namespace AY
                 ESPLowThreshold = _inputVESPLowThreshold;
                 EmgcyShutOverrideCooldown = _inputVEmgcyShutOverrideCooldown;
                 AYMonitoringUseEC = _inputAYMonitoringUseEC;
+                ProdPartHighlightColor = _inputProdPartHighlightColor;
+                ConsPartHighlightColor = _inputConsPartHighlightColor;
+                //Textures.SetupHighLightStyles(ProdPartHighlightColor, ConsPartHighlightColor);
                 PartModuleEmergShutDnDflt.Clear();
-                foreach (KeyValuePair<string, ESPValues> validentry in _inputPartModuleEmergShutDnDflt)
+                foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in _inputPartModuleEmergShutDnDflt)
                 {
-                    PartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry.Key, validentry.Value));
+                    PartModuleEmergShutDnDflt.Add(new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry.Key, validentry.Value));
                 }
                 LoadSettingsSC = true;
                 if (KKPresent)
                     SaveKKSettings();
             }
-            if (GUILayout.Button(new GUIContent("Reset Settings", "This will reload the settings from the config.cfg without saving your changes")))
+            if (GUILayout.Button(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000227"), Localizer.Format("#autoLOC_AmpYear_1000228"))))		// #autoLOC_AmpYear_1000227 = Reset Settings		// #autoLOC_AmpYear_1000228 = This will reload the settings from the config.cfg without saving your changes
             {
                 LoadSettingsSC = true;
             }
@@ -619,10 +677,12 @@ namespace AY
             ESPLowThreshold = _aYsettings.ESPLowThreshold;
             EmgcyShutOverrideCooldown = _aYsettings.EmgcyShutOverrideCooldown;
             AYMonitoringUseEC = _aYsettings.AYMonitoringUseEC;
+            ProdPartHighlightColor = _aYsettings.ProdPartHighlightColor;
+            ConsPartHighlightColor = _aYsettings.ConsPartHighlightColor;
             PartModuleEmergShutDnDflt.Clear();
-            foreach (KeyValuePair<string, ESPValues> validentry in _aYsettings.PartModuleEmergShutDnDflt)
+            foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in _aYsettings.PartModuleEmergShutDnDflt)
             {
-                PartModuleEmergShutDnDflt.Add(new KeyValuePair<string, ESPValues>(validentry.Key, validentry.Value));
+                PartModuleEmergShutDnDflt.Add(new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry.Key, validentry.Value));
             }
             Utilities.Log_Debug("AYController Load end");
         }
@@ -643,11 +703,14 @@ namespace AY
             _aYsettings.ESPLowThreshold = ESPLowThreshold;
             _aYsettings.EmgcyShutOverrideCooldown = EmgcyShutOverrideCooldown;
             _aYsettings.AYMonitoringUseEC = AYMonitoringUseEC;
+            _aYsettings.ProdPartHighlightColor = ProdPartHighlightColor;
+            _aYsettings.ConsPartHighlightColor = ConsPartHighlightColor;
             _aYsettings.PartModuleEmergShutDnDflt.Clear();
-            foreach (KeyValuePair<string, ESPValues> validentry in PartModuleEmergShutDnDflt)
+            foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in PartModuleEmergShutDnDflt)
             {
-                _aYsettings.PartModuleEmergShutDnDflt.Add(validentry); 
+                _aYsettings.PartModuleEmergShutDnDflt.Add(new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry.Key, validentry.Value)); 
             }
+            Textures.SetupHighLightStyles(ProdPartHighlightColor, ConsPartHighlightColor);
             Utilities.Log_Debug("AYSController Save end");
         }
 

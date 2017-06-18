@@ -16,8 +16,10 @@
 *
 */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Highlighting;
 
 namespace AY
 {
@@ -29,11 +31,13 @@ namespace AY
         public string PrtName { get; set; }
         public string PrtTitle { get; set; }
         public string PrtModuleName { get; set; }
+        public Part PrtReference { get; set; }
         public bool PrtSubsystem { get; set; }
         public string PrtPower { get; set; }
         public float PrtPowerF { get; set; }
         public bool PrtActive { get; set; }
         private bool _prtEditorInclude;
+        public bool HighlightOn { get; set; }
 
         public bool PrtEditorInclude
         {
@@ -90,10 +94,12 @@ namespace AY
         }
 
         public PwrPartList(string prtName, string prtTitle, string prtModuleName, bool prtSubsystem, string prtPower, float prtPowerF, bool prtActive,
-            bool prtSolarDependant)
+            bool prtSolarDependant, Part prtRef)
         {
             PrtName = prtName;
             PrtTitle = prtTitle;
+            PrtReference = prtRef;
+            HighlightOn = false;
             PrtModuleName = prtModuleName;
             PrtSubsystem = prtSubsystem;
             PrtPower = prtPower;
@@ -102,12 +108,12 @@ namespace AY
             PrtSolarDependant = prtSolarDependant;
             PrtEditorInclude = true;
             PrtUserEditorInclude = true;
-            ValidprtEmergShutDn = AYSettings.ValidPartModuleEmergShutDn.Contains(prtModuleName);
+            ValidprtEmergShutDn = AmpYear.Instance.AYsettings.ValidPartModuleEmergShutDn.Any(x => x.Name == prtModuleName);
             PrtEmergShutDnInclude = ValidprtEmergShutDn;
             PrtPreEmergShutDnStateActive = prtActive;
-            KeyValuePair<string, ESPValues> tmpEspPair = AmpYear.Instance.AYsettings.PartModuleEmergShutDnDflt
+            KeyValuePair<ValidEmergencyPartModule, ESPValues>  tmpEspPair = AmpYear.Instance.AYsettings.PartModuleEmergShutDnDflt
                 .FirstOrDefault(
-                    a => a.Key == prtModuleName);
+                    a => a.Key.Name == prtModuleName);
             PrtEmergShutDnPriority = tmpEspPair.Key != null ? tmpEspPair.Value.EmergShutPriority : ESPPriority.MEDIUM;
         }
 
@@ -124,7 +130,7 @@ namespace AY
             node.TryGetValue("PrtActive", ref prtActive);
             node.TryGetValue("PrtSolarDependant", ref prtSolarDependant);
             
-            PwrPartList info = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, prtPower, prtPowerF, prtActive, prtSolarDependant);
+            PwrPartList info = new PwrPartList(prtName, prtTitle, prtModuleName, prtSubsystem, prtPower, prtPowerF, prtActive, prtSolarDependant, null);
 
             node.TryGetValue("PrtEditorInclude", ref info._prtEditorInclude);
             node.TryGetValue("PrtUserEditorInclude", ref info._prtUserEditorInclude);
