@@ -88,11 +88,12 @@ namespace AY
         private int _darkTargetSelection = -1;
         private int _selectedDarkTarget = -1;
         //private string _selectedHighlitePart = "";
-        private int _showDarkOrbit = 100;
+        private int _showDarkOrbitAp = 100;
+        private int _showDarkOrbitPe = 100;
         private List<CelestialBody> _darkBodies = new List<CelestialBody>();
         private Rect _fwindowPos = new Rect(40, Screen.height / 2 - 100, FWINDOW_WIDTH, 200); // Flight Window position and size
         private Rect _ewindowPos = new Rect(40, Screen.height / 2 - 100, EWINDOW_WIDTH, 200); // Editor Window position and size
-        private Rect _dwindowPos = new Rect(40, Screen.height / 2 - 100, 320, 200); // DarkSide Window position and size
+        private Rect _dwindowPos = new Rect(40, Screen.height / 2 - 100, 360, 200); // DarkSide Window position and size
         private Rect _epLwindowPos = new Rect(270, Screen.height / 2 - 100, 650, 600); //Extended Parts List Window position and size
         private float _eplPartName, _eplPartModuleName, _eplec, _eplProdListHeight, _eplConsListHeight;
         private Rect _eplHeaders2, _eplProdlistbox, _eplConslistbox;
@@ -111,8 +112,10 @@ namespace AY
         private bool tmpShowDarkSideWindow;
         private float _totalProdPower = 0f;
         private string partModuleName = string.Empty;
-        private int Orbit;
-        private string strOrbit;
+        private int OrbitAp;
+        private string strOrbitAp;
+        private int OrbitPe;
+        private string strOrbitPe;
         private int tmpESPPriority;
         private bool tmpPrtConsEditorIncludeAll, tmpPrtConsEmergShutDnIncludeAll, tmpPrtConsOneAll, tmpPrtConsThreeAll, tmpPrtConsTwoAll;
         private bool prodPartsHighlightAll = false;
@@ -241,7 +244,7 @@ namespace AY
                 try
                 {
                     _dwindowPos.ClampToScreen();
-                    _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, Localizer.Format("#autoLOC_AmpYear_1000006"), GUILayout.MinWidth(330), GUILayout.MinHeight(320));		// #autoLOC_AmpYear_1000006 = AmpYear Dark-Side & Solar SOI
+                    _dwindowPos = GUILayout.Window(_dwindowId, _dwindowPos, WindowD, Localizer.Format("#autoLOC_AmpYear_1000006"), GUILayout.MinWidth(360), GUILayout.MinHeight(320));		// #autoLOC_AmpYear_1000006 = AmpYear Dark-Side & Solar SOI
                 }
                 catch (Exception ex)
                 {
@@ -1407,7 +1410,7 @@ namespace AY
 
             GUILayout.BeginVertical();
             GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000119"), Localizer.Format("#autoLOC_AmpYear_1000120")), Textures.SectionTitleStyle, GUILayout.Width(280));		// #autoLOC_AmpYear_1000119 = Select Body		// #autoLOC_AmpYear_1000120 = Select the body for darkside period and Solar Panel usage EC calculations
-            _dSscrollViewVector = GUILayout.BeginScrollView(_dSscrollViewVector, GUILayout.Height(300), GUILayout.Width(320));
+            _dSscrollViewVector = GUILayout.BeginScrollView(_dSscrollViewVector, GUILayout.Height(300), GUILayout.Width(330));
             string[] darkBodiesBtnNames = new string[_darkBodies.Count];
             for (int i = 0; i < _darkBodies.Count; i++)
             {
@@ -1425,28 +1428,52 @@ namespace AY
             GUILayout.Space(10);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000121"), Localizer.Format("#autoLOC_AmpYear_1000122")), Textures.StatusStyleLeft, GUILayout.Width(140));		// #autoLOC_AmpYear_1000121 = Enter Orbit height: 		// #autoLOC_AmpYear_1000122 = The orbit height to use in Kilometers
-            strOrbit = _showDarkOrbit.ToString();
-            Orbit = _showDarkOrbit;
-            strOrbit = GUILayout.TextField(strOrbit, GUILayout.Width(40));
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000121"), Localizer.Format("#autoLOC_AmpYear_1000122")), Textures.StatusStyleLeft, GUILayout.Width(200));		// #autoLOC_AmpYear_1000121 = Enter Orbit Apoapsis: 		// #autoLOC_AmpYear_1000122 = The orbit Apoapsis to use in Kilometers
+            strOrbitAp = _showDarkOrbitAp.ToString();
+            OrbitAp = _showDarkOrbitAp;
+            strOrbitAp = GUILayout.TextField(strOrbitAp, GUILayout.Width(40));
             GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000123"), GUILayout.Width(30));		// #autoLOC_AmpYear_1000123 = (Km)
             GUILayout.EndHorizontal();
-            if (int.TryParse(strOrbit, out Orbit))
-                _showDarkOrbit = Orbit;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000298"), Localizer.Format("#autoLOC_AmpYear_1000299")), Textures.StatusStyleLeft, GUILayout.Width(200));		// #autoLOC_AmpYear_1000298 = Enter Orbit Periapsis: 		// #autoLOC_AmpYear_1000299 = The orbit Periapsis to use in Kilometers
+            strOrbitPe = _showDarkOrbitPe.ToString();
+            OrbitPe = _showDarkOrbitPe;
+            strOrbitPe = GUILayout.TextField(strOrbitPe, GUILayout.Width(40));
+            GUILayout.Label(Localizer.Format("#autoLOC_AmpYear_1000123"), GUILayout.Width(30));		// #autoLOC_AmpYear_1000123 = (Km)
+            GUILayout.EndHorizontal();
+            if (int.TryParse(strOrbitAp, out OrbitAp))
+                _showDarkOrbitAp = OrbitAp;
+            if (int.TryParse(strOrbitPe, out OrbitPe))
+                _showDarkOrbitPe = OrbitPe;
 
             if (_bodyTarget != null)
             {
                 GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000124", _darkBodies[_selectedDarkTarget].displayName), Localizer.Format("#autoLOC_AmpYear_1000125")), Textures.PartListPartStyle, GUILayout.Width(280));		// #autoLOC_AmpYear_1000124 = Selected Body:		// #autoLOC_AmpYear_1000125 = Currently selected body for Dark-Side and Solar Panel EC production calculations
                 //Get the distance and direction to Sun from the currently selected target body
                 Utilities.CelestialBodyDistancetoSun(FlightGlobals.Bodies[_selectedDarkTarget], out sun_dir, out sun_dist);
-                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000126", sun_dist.ToString("###,###,###,###,###,##0")), _selectedDarkTarget == 0 ? Localizer.Format("#autoLOC_AmpYear_1000127") : Localizer.Format("#autoLOC_AmpYear_1000128")), Textures.PartListPartStyle, GUILayout.Width(280));		// #autoLOC_AmpYear_1000126 = Sun Distance:		// #autoLOC_AmpYear_1000127 = Assumes you are in orbit at 700,000km from the Sun		// #autoLOC_AmpYear_1000128 = The Distance to the sun from the selected body
-                rotPeriod = _darkBodies[_selectedDarkTarget].rotationPeriod;
-                if (_darkBodies[_selectedDarkTarget].orbit != null)
+                GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000126", sun_dist.ToString("###,###,###,###,###,##0")), _selectedDarkTarget == 0 ? Localizer.Format("#autoLOC_AmpYear_1000127") : Localizer.Format("#autoLOC_AmpYear_1000128")), Textures.PartListPartStyle, GUILayout.Width(280));      // #autoLOC_AmpYear_1000126 = Sun Distance:		// #autoLOC_AmpYear_1000127 = Assumes you are in orbit at 700,000km from the Sun		// #autoLOC_AmpYear_1000128 = The Distance to the sun from the selected body
+                CelestialBody sun = FlightGlobals.Bodies[0];
+                if (FlightGlobals.Bodies[_selectedDarkTarget] == FlightGlobals.Bodies[0])
                 {
-                    rotPeriod = _darkBodies[_selectedDarkTarget].orbit.period * rotPeriod / (_darkBodies[_selectedDarkTarget].orbit.period - rotPeriod);
+                    rotPeriod = 0;
                 }
-                GUILayout.Label( new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000129", KSPUtil.PrintTimeCompact((int)rotPeriod, true)), Localizer.Format("#autoLOC_AmpYear_1000130")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000129 = Surface Darkness Time:		// #autoLOC_AmpYear_1000130 = Darkness Time on the surface
-                darkTime = CalculatePeriod(_bodyTarget, Orbit);
+                else
+                {
+                    rotPeriod = _darkBodies[_selectedDarkTarget].rotationPeriod;
+                }
+                //if (rotPeriod != 0 && _darkBodies[_selectedDarkTarget].orbit != null)
+                //{
+                //    rotPeriod = _darkBodies[_selectedDarkTarget].orbit.period * rotPeriod / (_darkBodies[_selectedDarkTarget].orbit.period - rotPeriod);
+                //}
+                GUILayout.Label( new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000129", KSPUtil.PrintTimeCompact(rotPeriod / 2, true)), Localizer.Format("#autoLOC_AmpYear_1000130")), Textures.StatusStyleLeft, GUILayout.Width(300));       // #autoLOC_AmpYear_1000129 = Surface Darkness Time:		// #autoLOC_AmpYear_1000130 = Darkness Time on the surface
+                if (rotPeriod == 0)
+                {
+                    darkTime = 0;
+                }
+                else
+                {
+                    darkTime = CalculatePeriod(_bodyTarget, OrbitAp, OrbitPe);
+                }
                 GUILayout.Label(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000131", KSPUtil.PrintTimeCompact((int)darkTime, true)), Localizer.Format("#autoLOC_AmpYear_1000132")), Textures.StatusStyleLeft, GUILayout.Width(300));		// #autoLOC_AmpYear_1000131 = Dark-Side Transit Period: 		// #autoLOC_AmpYear_1000132 = The time it will take to transit the Darkside
                 if (TotalPowerDrain > 0)
                 {
@@ -1455,9 +1482,9 @@ namespace AY
                     ECprodfordarkTime = 0;
                     ECprodfordarkTimeSurface = 0;
                     ECreqdfordarkTime = TotalPowerDrain * darkTime;
-                    ECreqdfordarkTimeSurface = TotalPowerDrain * rotPeriod;
+                    ECreqdfordarkTimeSurface = TotalPowerDrain * (rotPeriod / 2);
                     ECprodfordarkTime = TotalPowerProduced * darkTime;
-                    ECprodfordarkTimeSurface = TotalPowerProduced * rotPeriod;
+                    ECprodfordarkTimeSurface = TotalPowerProduced * (rotPeriod / 2);
                     if (AYsettings.showSI)
                     {
                         tmpPrtPowerV = Utilities.ConvertECtoSI(ECreqdfordarkTimeSurface, out Units);
