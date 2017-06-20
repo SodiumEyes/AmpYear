@@ -963,14 +963,14 @@ namespace AY
                     subsystem_drain += _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]];
                     if (!KKPresent && (LoadGlobals.SubsystemArrayCache[i] == Subsystem.CLIMATE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MASSAGE || LoadGlobals.SubsystemArrayCache[i] == Subsystem.MUSIC))
                         continue;
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false, currentVessel.rootPart);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, SubsystemName(LoadGlobals.SubsystemArrayCache[i]), true, true, _subsystemDrain[(int)LoadGlobals.SubsystemArrayCache[i]], false, false, EditorLogic.RootPart);
                     
                 }
                 manager_drain = ManagerCurrentDrain;
                 if (AYsettings.AYMonitoringUseEC)
                 {
                     prtName = "AmpYear Manager";
-                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain,false, false, currentVessel.rootPart);
+                    AYVesselPartLists.AddPart(partId, prtName, prtName, prtName, true, _managerEnabled, manager_drain,false, false, EditorLogic.RootPart);
                 }
                 hasPower = true;
                 HasReservePower = true;
@@ -1640,16 +1640,26 @@ namespace AY
         #region BodyDarkness
 
         //Calculate the darkness period for a body based on a roughly circular orbit with Ap = apoapsis in Km
-        private double CalculatePeriod(CelestialBody body, double Ap)
+        private double CalculatePeriod(CelestialBody body, double Ap, double Pe)
         {
-            double returnPeriod = 0d;
+            /*double returnPeriod = 0d;
             double rA = body.Radius / 1000 + Ap;
             double GM = body.gMagnitudeAtCenter / 1000000000;
             double h = Math.Sqrt(rA * GM);
             returnPeriod = 2 * (rA * rA) / h * Math.Asin(body.Radius / 1000 / rA);
-            return returnPeriod;
+            return returnPeriod;*/
+
+            double radiusapoapsis = Ap + body.Radius;
+            double radiusperiapsis = Pe + body.Radius;
+            double semimajaxis = (radiusapoapsis + radiusperiapsis) / 2;
+            double semiminaxis = Math.Sqrt(radiusapoapsis * radiusperiapsis);
+            double eccentricity = (radiusapoapsis - radiusperiapsis) / (radiusapoapsis + radiusperiapsis);
+            double semilatusrectum = 2 * radiusapoapsis * radiusperiapsis / (radiusapoapsis + radiusperiapsis);
+            double specangularmomentum = Math.Sqrt(semilatusrectum * 6.67384e-11 * body.Mass);
+            return (2 * semimajaxis * semiminaxis / specangularmomentum * (Math.Asin(body.Radius / semiminaxis) + eccentricity * body.Radius / semiminaxis));
         }
 
         #endregion BodyDarkness
     }
 }
+ 
