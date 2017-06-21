@@ -890,6 +890,7 @@ namespace AY
         private bool IONRCSPresent = false;
         private bool KERBALISMPresent = false;
         private bool KopernicusPresent = false;
+        private bool DSEVPresent = false;
 
         internal void ProcessModPartModule(Part currentPart, PartModule module)
         {
@@ -898,10 +899,11 @@ namespace AY
                 {
                     checkKAS(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong KAS library version - disabled.");
-                    //KASPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    KASPresent = false;
                 }
 
             if (_rt2Present)
@@ -909,10 +911,11 @@ namespace AY
                 {
                     checkRT2(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong Remote Tech 2 library version - disabled.");
-                    //RT2Present = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    _rt2Present = false;
                 }
 
             if (ALPresent)
@@ -920,10 +923,11 @@ namespace AY
                 {
                     checkAv(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log_Debug("Wrong Aviation Lights library version - disabled.");
-                    //ALPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    ALPresent = false;
                 }
 
             if (NFEPresent)
@@ -931,30 +935,33 @@ namespace AY
                 {
                     checkNFE(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong Near Future library version - disabled.");
-                    //NFEPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    NFEPresent = false;
                 }
             if (NFSPresent)
                 try
                 {
                     checkNFS(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log_Debug("Wrong Near Future solar library version - disabled.");
-                    //NFSPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    NFSPresent = false;
                 }
             if (NFPPresent)
                 try
                 {
                     checkNFP(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log_Debug("Wrong Near Future Propulsion library version - disabled.");
-                    //NFSPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    NFSPresent = false;
                 }
 
             if (ScSPresent)
@@ -962,9 +969,10 @@ namespace AY
                 {
                     checkSCANsat(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong SCANsat library version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     ScSPresent = false;
                 }
 
@@ -973,9 +981,10 @@ namespace AY
                 {
                     checkTel(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong Telemachus library version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     TelPresent = false;
                 }
 
@@ -984,10 +993,11 @@ namespace AY
                 {
                     checkAntR(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong AntennaRange library version - disabled.");
-                    //AntRPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    AntRPresent = false;
                 }
 
             if (TACLPresent)
@@ -995,10 +1005,11 @@ namespace AY
                 {
                     checkTACL(module, currentPart, false);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong TACLS library version - disabled.");
-                    //TACLPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    TACLPresent = false;
                 }
 
             if (TFCPresent)
@@ -1006,9 +1017,10 @@ namespace AY
                 {
                     checkTFC(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong ToggleFuelCell version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     TFCPresent = false;
                 }
 
@@ -1027,9 +1039,10 @@ namespace AY
                 {
                     checkDF(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong DeepFreeze version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     DFPresent = false;
                 }
             if (KPBSPresent)
@@ -1037,9 +1050,10 @@ namespace AY
                 {
                     checkKPBS(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong KPBS version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     KPBSPresent = false;
                 }
             if (USILSPresent)
@@ -1047,19 +1061,21 @@ namespace AY
                 {
                     checkUSILS(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong USI LS version - disabled.");
-                    //KPBSPresent = false;
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    KPBSPresent = false;
                 }
             if (KERBALISMPresent)
                 try
                 {
                     checkKerbalism(module, currentPart);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong kerbalism version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     KERBALISMPresent = false;
                 }
             if (KopernicusPresent)
@@ -1067,12 +1083,23 @@ namespace AY
                 {
                     checkKopernicus(module, currentPart);
                 }
-                catch
+                catch (Exception ex)
                 {
                     Utilities.Log("Wrong Kopernicus library version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
                     KopernicusPresent = false;
                 }
-
+            if (DSEVPresent)
+                try
+                {
+                    checkDSEV(module, currentPart);
+                }
+                catch (Exception ex)
+                {
+                    Utilities.Log("Wrong DSEV library version - disabled.");
+                    Utilities.Log("Error message: {0}", ex.Message);
+                    //DSEVPresent = false;
+                }
             /*if (KKPresent)
             {
                 checkKK(module, current_part);
@@ -1890,8 +1917,55 @@ namespace AY
         {
             if (psdpart.moduleName == "KopernicusSolarPanel")
                 ProcessModuleDeployableSolarPanel(prtName, currentPart, psdpart);
+            
         }
-          
+
+        private static double DSEVcurrentElectricCharge = 0;
+
+        private void checkDSEV(PartModule psdpart, Part currentPart)
+        {
+            if (psdpart.moduleName == "ModuleFusionReactor")
+                ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, 0);
+            if (psdpart.moduleName == "ModuleEnginesFXWBI")
+                ProcessModuleEnginesFX(prtName, currentPart, psdpart, altRate);
+            if (psdpart.moduleName == "SupernovaController")
+            {
+                prtName = currentPart.name;
+                prtPower = "";
+                prtActive = false;
+                tmpPower = 0;
+                DSEVWrapper.SupernovaController tmpDSEVSNController = new DSEVWrapper.SupernovaController(psdpart);
+                DSEVWrapper.SupernovaController.EReactorStates reactorstate = tmpDSEVSNController.reactorState;
+                if (Utilities.GameModeisEditor)
+                {
+                    prtActive = true;
+                    tmpPower = tmpDSEVSNController.ecNeededToStart;
+                }
+                else
+                {
+                    prtActive = reactorstate == DSEVWrapper.SupernovaController.EReactorStates.Charging;
+                    if (prtActive)
+                    {
+                        double tmpECcharge = tmpDSEVSNController.currentElectricCharge; //Get currentEC level
+                        if (tmpECcharge > 0 && tmpECcharge > DSEVcurrentElectricCharge) //If it's > 0 and increasing
+                        {
+                            //tmpPower = tmpDSEVSNController.ecChargePerSec;
+                            tmpPower = tmpECcharge - DSEVcurrentElectricCharge; //Set EC usage to currentEC level - previous level
+                            DSEVcurrentElectricCharge = tmpECcharge; //Set previous level = current level
+                        }
+                    }
+                    else
+                    {
+                        DSEVcurrentElectricCharge = 0;
+                    }
+                }
+
+                AYVesselPartLists.AddPart(currentPart.craftID, prtName, currentPart.partInfo.title, psdpart.moduleName, false, prtActive, tmpPower, false, false, currentPart);
+
+                ProcessPartEmergencyShutdownProcedures(currentPart, psdpart, prtActive);
+            }
+        }
+
 
         #endregion OtherMods
 

@@ -1,6 +1,7 @@
 ﻿V1.4.9.0 "Bugs"
 	Fixed log spam in editor. (SPH/VAB)
 	Fixed Dark Side calcs.
+	Added support for DSEV mod.
 V1.4.8.0 "Do you Speaka my Language?"
     Localization ready - All languages appear in English. But looking for volunteers to translate. ;)
 	(This also means the Planet names now don't show the language tags in the DarkSide UI windows.)

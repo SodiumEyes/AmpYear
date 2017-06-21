@@ -66,6 +66,7 @@
     </Compile>
     <Compile Include="APIs\ALWrapper.cs" />
     <Compile Include="AmpYear.cs" />
+    <Compile Include="APIs\DSEVWrapper.cs" />
     <Compile Include="APIs\DFWrapper.cs" />
     <Compile Include="APIs\IONRCSWrapper.cs" />
     <Compile Include="APIs\KKWrapper.cs" />

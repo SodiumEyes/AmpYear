@@ -252,6 +252,7 @@ namespace AY
             IONRCSPresent = Utilities.IsModInstalled("IONRCS");
             KERBALISMPresent = Utilities.IsModInstalled("Kerbalism");
             KopernicusPresent = Utilities.IsModInstalled("Kopernicus");
+            DSEVPresent = Utilities.IsModInstalled("DSEVUtils");
             Utilities.Log_Debug(KKPresent ? "KabinKraziness present" : "KabinKraziness NOT present");
             //if (KKPresent)  //Moved to FixedUpdate
             //{
@@ -403,7 +404,17 @@ namespace AY
                 }
             }
 
-            
+            if (DSEVPresent)
+            {
+                Utilities.Log_Debug("DSEV present");
+                DSEVWrapper.InitDSEVWrapper();
+                if (!DSEVWrapper.APIReady)
+                {
+                    DSEVPresent = false;
+                    Utilities.Log("Ampyear - DSEV Interface Failed");
+                }
+            }
+
 
             //check if inflight and active vessel set currentvesselid and load config settings for this vessel
             if (FlightGlobals.fetch != null && FlightGlobals.ActiveVessel != null)
