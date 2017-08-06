@@ -1065,7 +1065,7 @@ namespace AY
                 {
                     Utilities.Log("Wrong USI LS version - disabled.");
                     Utilities.Log("Error message: {0}", ex.Message);
-                    KPBSPresent = false;
+                    USILSPresent = false;                    
                 }
             if (KERBALISMPresent)
                 try
