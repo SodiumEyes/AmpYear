@@ -1697,7 +1697,7 @@ namespace AY
                                         ProcessModuleActiveRadiator(currentPart.name, currentPart, psdpart);
                                         break;
                                     default:
-                                        Utilities.Log("MSC: " + converter.moduleName + " (" + currentPart.name + ")");
+                                        //Utilities.Log("MSC: " + converter.moduleName + " (" + currentPart.name + ")");
                                         break;
                                 }
                             }
