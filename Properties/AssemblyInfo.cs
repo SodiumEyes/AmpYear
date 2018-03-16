@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Jamie Leighton")]
 [assembly: AssemblyProduct("AmpYear")]
-[assembly: AssemblyCopyright("Copyright © Jamie Leighton 2015/6")]
+[assembly: AssemblyCopyright("Copyright © Jamie Leighton 2015-18")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -28,5 +28,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.5.1")]
+[assembly: AssemblyVersion("1.5.2")]
 [assembly: KSPAssembly("AmpYear", 1, 5)] 
