@@ -1,4 +1,7 @@
-﻿V1.5.3.0
+﻿V1.5.4.0
+	Re-compile for KSP 1.6.1
+	Fixed UI tooltips showing behind the actual AmpYear UI.
+V1.5.3.0
 	Re-compile for KSP 1.5.1
 V1.5.2.0
 	Re-compile for KSP 1.4.1
