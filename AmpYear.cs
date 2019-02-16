@@ -85,42 +85,8 @@ namespace AY
         }
         
     }
-
-    [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
-    public class AddScenarioModules : MonoBehaviour
-    {
-        private void Start()
-        {
-            var currentgame = HighLogic.CurrentGame;
-            Utilities.Log("AmpYear  AddScenarioModules ScenarioModules Start");
-            ProtoScenarioModule protoscenmod = currentgame.scenarios.Find(s => s.moduleName == typeof(AmpYear).Name);
-
-            if (protoscenmod == null)
-            {
-                Utilities.Log("AmpYear  AddScenarioModules Adding the scenario module.");
-                protoscenmod = currentgame.AddProtoScenarioModule(typeof(AmpYear), GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR);
-            }
-            else
-            {
-                if (protoscenmod.targetScenes.All(s => s != GameScenes.SPACECENTER))
-                {
-                    Utilities.Log("AmpYear  AddScenarioModules Adding the SpaceCenter scenario module.");
-                    protoscenmod.targetScenes.Add(GameScenes.SPACECENTER);
-                }
-                if (protoscenmod.targetScenes.All(s => s != GameScenes.FLIGHT))
-                {
-                    Utilities.Log("AmpYear  AddScenarioModules Adding the flight scenario module.");
-                    protoscenmod.targetScenes.Add(GameScenes.FLIGHT);
-                }
-                if (protoscenmod.targetScenes.All(s => s != GameScenes.EDITOR))
-                {
-                    Utilities.Log("AmpYear  AddScenarioModules Adding the Editor scenario module.");
-                    protoscenmod.targetScenes.Add(GameScenes.EDITOR);
-                }
-            }
-        }
-    }
-
+    
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.SPACECENTER, GameScenes.EDITOR, GameScenes.FLIGHT)]
     public class AmpYear : ScenarioModule
     {
         public static AmpYear Instance { get; private set; }
