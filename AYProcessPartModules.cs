@@ -1684,12 +1684,16 @@ namespace AY
                                 {
                                     case "ModuleLifeSupportRecycler":
                                     case "ModuleHabitation":
+                                    case "ModuleLifeSupportExtender":
                                     case "USILS_LifeSupportExtenderSwapOption":
+                                    case "ModuleResourceConverter_USI":
                                     case "USI_Converter":
                                     case "ModuleEfficiencyPart":
+                                    case "ModuleBulkConverter":
                                     case "MKS_BulkConverterSwapOption":
                                         ProcessModuleResourceConverter(currentPart.name, currentPart, converter, 0, bayname);
                                         break;
+                                    case "ModuleRessourceHarvester_USI":
                                     case "USI_Harvester":
                                         ProcessModuleResourceharvester(currentPart.name, currentPart, converter);
                                         break;
@@ -1706,12 +1710,16 @@ namespace AY
                     break;
                 case "ModuleLifeSupportRecycler":
                 case "ModuleHabitation":
+                case "ModuleLifeSupportExtender":
                 case "USILS_LifeSupportExtenderSwapOption":
+                case "ModuleResourceConverter_USI":
                 case "USI_Converter":
                 case "ModuleEfficiencyPart":
+                case "ModuleBulkConverter":
                 case "MKS_BulkConverterSwapOption":
                     ProcessModuleResourceConverter(currentPart.name, currentPart, psdpart, 0);
                     break;
+                case "ModuleRessourceHarvester_USI":
                 case "USI_Harvester":
                     ProcessModuleResourceharvester(currentPart.name, currentPart, psdpart);
                     break;
