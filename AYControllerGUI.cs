@@ -209,7 +209,7 @@ namespace AY
                     if (_lowEcWarningWindowDisplay)
                     {
                         PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "AmpYear Warning!", Localizer.Format("#autoLOC_AmpYear_1000003"),		// #autoLOC_AmpYear_1000003 = AmpYear Warning!
-                            Localizer.Format("#autoLOC_AmpYear_1000004"), Localizer.Format("#autoLOC_AmpYear_1000005"), false, HighLogic.UISkin);		// #autoLOC_AmpYear_1000004 = Ship Electric charge has dropped below the Warp Warning Percentage.\n This will not trigger again until Electric charge > Warning Percentage again.		// #autoLOC_AmpYear_1000005 = OK
+                            Localizer.Format("#autoLOC_AmpYear_1000004"), Localizer.Format("#autoLOC_AmpYear_1000005"), false, HighLogic.UISkin, false);		// #autoLOC_AmpYear_1000004 = Ship Electric charge has dropped below the Warp Warning Percentage.\n This will not trigger again until Electric charge > Warning Percentage again.		// #autoLOC_AmpYear_1000005 = OK
                         _lowEcWarningWindowDisplay = false;
                     }
                 }
