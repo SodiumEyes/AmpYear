@@ -1,5 +1,6 @@
 ﻿V1.5.7.0
 	Re-compile for KSP 1.9.x
+	Fixed errors in the Settings UI screen at the KSC.
 V1.5.6.0
 	Re-compile for KSP 1.8.x
 V1.5.5.0
