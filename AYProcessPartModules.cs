@@ -1271,7 +1271,7 @@ namespace AY
             tmpPower = 0;
             switch (psdpart.moduleName)
             {
-                case "Curved Solar Panel":
+                case "ModuleCurvedSolarPanel":
                     NFSCPtmpGen = new NFSWrapper.NFSCurvedPanel(psdpart);
                     if (Utilities.GameModeisFlight && NFSCPtmpGen.State == ModuleDeployablePart.DeployState.EXTENDED)
                     {
