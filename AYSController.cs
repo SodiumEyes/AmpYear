@@ -450,8 +450,9 @@ namespace AY
 
             GUILayout.Box(new GUIContent(Localizer.Format("#autoLOC_AmpYear_1000215"), Localizer.Format("#autoLOC_AmpYear_1000216")), Textures.SectionTitleStyle, GUILayout.Width(300));		// #autoLOC_AmpYear_1000215 = Emergency Shutdown Procedures - Module Defaults		// #autoLOC_AmpYear_1000216 = Default values for ESP system
 
-            foreach (KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry in _inputPartModuleEmergShutDnDflt)
+            for (int i = _inputPartModuleEmergShutDnDflt.Count; i-- > 0;)
             {
+                KeyValuePair<ValidEmergencyPartModule, ESPValues> validentry = _inputPartModuleEmergShutDnDflt[i];
                 if (!KKPresent &&
                     (validentry.Key.Name == "ClimateControl" || validentry.Key.Name == "SmoothJazz" || validentry.Key.Name == "MassageChair"))
                     continue;
@@ -475,7 +476,7 @@ namespace AY
                 _inputPartModuleEmergShutDnDflt[tmpIndex] = new KeyValuePair<ValidEmergencyPartModule, ESPValues>(validentry.Key, tmpEspValues);
                 GUILayout.EndHorizontal();
             }
-
+           
             GUILayout.EndScrollView();
 
             GUILayout.EndVertical();
