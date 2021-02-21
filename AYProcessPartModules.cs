@@ -2501,7 +2501,7 @@ namespace AY
                 case "SCANsat":
                     if (prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
                     {
-                        ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(currentPart);
+                        ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(module);
                         tmpSs.stopScan();
                         ScreenMessages.PostScreenMessage(Localizer.Format("#autoLOC_AmpYear_1000246"), 5.0f, ScreenMessageStyle.UPPER_LEFT);		// #autoLOC_AmpYear_1000246 = Electricity Levels Critical! Turning off SCANsat!
                         Utilities.Log("Turning off SCANsat");
@@ -2734,7 +2734,7 @@ namespace AY
                 case "SCANsat":
                     if (partFnd.PrtPreEmergShutDnStateActive && !prtActive && _espPriority == partFnd.PrtEmergShutDnPriority)
                     {
-                        ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(currentPart);
+                        ScanSatWrapper.SCANsat tmpSs = new ScanSatWrapper.SCANsat(module);
                         tmpSs.startScan();
                         ScreenMessages.PostScreenMessage(
                             Localizer.Format("#autoLOC_AmpYear_1000265"), 5.0f,		// #autoLOC_AmpYear_1000265 = Electricity Levels OK Enable SCANsat!
